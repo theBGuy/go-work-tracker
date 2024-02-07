@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import GitHubIcon from '@mui/icons-material/GitHub';
 import {
   StartTimer,
   StopTimer,
@@ -462,6 +463,19 @@ function App() {
 
       {/* Notifcation container */}
       <ToastContainer />
+
+      <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <IconButton color="inherit">
+              <a href="https://github.com/theBGuy" target="_blank">
+                <GitHubIcon />
+              </a>
+            </IconButton>
+              theBGuy
+          </Typography>
+        </Toolbar>
+      </AppBar>
     </div>
   )
 }
