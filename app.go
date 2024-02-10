@@ -204,6 +204,7 @@ func (a *App) TimeElapsed() int {
 // GetWorkTime returns the total seconds worked
 func (a *App) GetWorkTime(date string, organization string) (seconds int, err error) {
 	if date == "" || organization == "" {
+		// fmt.Println("Date or organization is empty", date, organization)
 		return 0, nil
 	}
 	row := a.db.QueryRow("SELECT seconds FROM work_hours WHERE date = ? AND organization = ?", date, organization)
@@ -224,7 +225,7 @@ func (a *App) GetWorkTime(date string, organization string) (seconds int, err er
 // GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
 func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTimes []int, err error) {
 	rows, err := a.db.Query(
-		"SELECT strftime('%m', date), SUM(seconds) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date)",
+		"SELECT strftime('%m', date), COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date)",
 		strconv.Itoa(year), organization)
 	if err != nil {
 		return nil, err
@@ -250,7 +251,7 @@ func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTime
 
 // GetYearlyWorkTime returns the total seconds worked for the specified year
 func (a *App) GetYearlyWorkTime(year int, organization string) (yearlyWorkTime int, err error) {
-	row := a.db.QueryRow("SELECT SUM(seconds) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ?",
+	row := a.db.QueryRow("SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ?",
 		strconv.Itoa(year), organization)
 
 	err = row.Scan(&yearlyWorkTime)
