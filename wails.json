@@ -9,5 +9,11 @@
   "author": {
     "name": "theBGuy",
     "email": "60308670+theBGuy@users.noreply.github.com"
+  },
+  "info": {
+    "productName": "go-work-tracker",
+    "description": "A simple work tracker written in Go and Wails",
+    "license": "MIT",
+    "productVersion": "0.0.1"
   }
 }
