@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -21,6 +23,15 @@ type App struct {
 	startTime    time.Time
 	isRunning    bool
 	organization string
+	version      string
+}
+
+type WailsConfig struct {
+	Info Info `json:"info"`
+}
+
+type Info struct {
+	ProductVersion string `json:"productVersion"`
 }
 
 // NewApp creates a new App application struct
@@ -35,11 +46,28 @@ func NewApp() *App {
 			organization TEXT NOT NULL,
 			seconds INTEGER NOT NULL,
 			PRIMARY KEY (date, organization)
-    )`)
+		)`)
 	if err != nil {
 		panic(err)
 	}
-	return &App{db: db}
+
+	jsonFile, err := os.Open("wails.json")
+	if err != nil {
+		panic(err)
+	}
+	defer jsonFile.Close()
+
+	byteValue, _ := io.ReadAll(jsonFile)
+
+	var config WailsConfig
+	json.Unmarshal(byteValue, &config)
+	version := config.Info.ProductVersion
+
+	return &App{db: db, version: version}
+}
+
+func (a *App) GetVersion() string {
+	return a.version
 }
 
 // startup is called when the app starts. The context is saved

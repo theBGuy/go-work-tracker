@@ -26,6 +26,10 @@ export function GetOrganizations() {
   return window['go']['main']['App']['GetOrganizations']();
 }
 
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
+}
+
 export function GetWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetWorkTime'](arg1, arg2);
 }

@@ -47,7 +47,8 @@ import {
   ExportCSVByMonth,
   ExportCSVByYear,
   GetYearlyWorkTime,
-  GetMonthlyWorkTime
+  GetMonthlyWorkTime,
+  GetVersion
 } from "../wailsjs/go/main/App";
 
 function App() {
@@ -56,6 +57,11 @@ function App() {
   const [workTime, setWorkTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const elapsedTimeRef = useRef(elapsedTime);
+  const [version, setVersion] = useState('');
+
+  useEffect(() => {
+    GetVersion().then(setVersion);
+  }, []);
 
   // Variables for handling work time totals
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -473,6 +479,9 @@ function App() {
               </a>
             </IconButton>
               theBGuy
+          </Typography>
+          <Typography variant="h6" component="div">
+            v{version}
           </Typography>
         </Toolbar>
       </AppBar>

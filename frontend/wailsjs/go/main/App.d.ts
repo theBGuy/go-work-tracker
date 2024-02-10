@@ -14,6 +14,8 @@ export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<Array<number
 
 export function GetOrganizations():Promise<Array<string>>;
 
+export function GetVersion():Promise<string>;
+
 export function GetWorkTime(arg1:string,arg2:string):Promise<number>;
 
 export function GetYearlyWorkTime(arg1:number,arg2:string):Promise<number>;
