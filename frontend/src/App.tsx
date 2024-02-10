@@ -67,6 +67,8 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyWorkTime, setYearlyWorkTime] = useState(0);
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
+  const [currentDay, setCurrentDay] = useState(new Date().getDate());
+  const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
   const [organizations, setOrganizations] = useState<string[]>([]);
@@ -96,12 +98,25 @@ function App() {
   const currentMonth = new Date().getMonth();
   const years = Array.from({length: currentYear - 1999}, (_, i) => 2000 + i);
 
+  useEffect(() => {
+    currentDayRef.current = currentDay;
+  }, [currentDay]);
+
   const formatTime = (timeInSeconds: number) => {
     let hours = String(Math.floor(timeInSeconds / 3600)).padStart(2, '0');
     let minutes = String(Math.floor((timeInSeconds % 3600) / 60)).padStart(2, '0');
     let seconds = String(Math.floor(timeInSeconds % 60)).padStart(2, '0');
   
     return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const dateString = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    return dateString;
   };
 
   const handleDialogClose = (canceled?: boolean, rename?: boolean) => {
@@ -217,13 +232,23 @@ function App() {
    * This is used to display today's total work time and updates if the user switches organizations
    */
   useEffect(() => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-    GetWorkTime(dateString, selectedOrganization)
+    GetWorkTime(dateString(), selectedOrganization)
       .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
+  }, [selectedOrganization]);
+
+  /**
+   * Check the day every minute and update the day if it changes
+   * Update workTime when the day changes and reset the timer
+   */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (currentDayRef.current !== new Date().getDate()) {
+        setCurrentDay(new Date().getDate());
+        GetWorkTime(dateString(), selectedOrganization)
+          .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
+      }
+    }, 1000 * 5);
+    return () => clearInterval(interval);
   }, [selectedOrganization]);
 
   /**
