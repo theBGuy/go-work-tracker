@@ -49,7 +49,7 @@ type Release struct {
 	Assets  []Asset
 }
 
-func GetSaveDir() (string, error) {
+func getSaveDir() (string, error) {
 	if os.Getenv("APP_ENV") != "production" {
 		fmt.Println("Running in development mode")
 		wd, _ := os.Getwd()
@@ -75,7 +75,7 @@ func GetSaveDir() (string, error) {
 	return saveDir, nil
 }
 
-func ReadWailsConfig(WailsConfigFile []byte) (string, error) {
+func readWailsConfig(WailsConfigFile []byte) (string, error) {
 	var wailsConfig WailsConfig
 	err := json.Unmarshal(WailsConfigFile, &wailsConfig)
 	if err != nil {
@@ -99,7 +99,7 @@ func doUpdate(url string) error {
 	return err
 }
 
-func CheckForUpdates(version string) {
+func checkForUpdates(version string) {
 	resp, err := http.Get("https://api.github.com/repos/thebguy/go-work-tracker/releases/latest")
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -140,17 +140,17 @@ func CheckForUpdates(version string) {
 func NewApp() *App {
 	version := os.Getenv("APP_ENV")
 	if version == "" {
-		version, _ = ReadWailsConfig(WailsConfigFile)
+		version, _ = readWailsConfig(WailsConfigFile)
 	}
 
-	dbDir, err := GetSaveDir()
+	dbDir, err := getSaveDir()
 	if err != nil {
 		panic(err)
 	}
 
 	// Check for updates
 	if os.Getenv("APP_ENV") == "production" {
-		CheckForUpdates(version)
+		checkForUpdates(version)
 	}
 
 	db, err := sql.Open("sqlite3", filepath.Join(dbDir, "worktracker.sqlite"))

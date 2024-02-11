@@ -3,7 +3,7 @@ const file = require("../wails.json");
 
 const vString = process.argv[2];
 if (!vString || !vString.startsWith("v") || vString.split(".").length !== 3) {
-  throw new Error("No version or invalid format. Please use v0.0.0 format.");
+  throw new Error("No version or invalid format. Please use v0.0.0 format.", vString);
 }
 
 console.log(`changing version to ${vString} and environment to production`)
