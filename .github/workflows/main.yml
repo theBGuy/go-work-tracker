@@ -31,11 +31,13 @@ jobs:
           submodules: recursive
       - name: Extract version from tag
         id: version
+        shell: bash
         run: |
           echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "version is: ${{ env.version }}"
       - name: Update wails.json
-        run: node build/updateConfig.cjs ${{ GITHUB_REF#refs/tags/ }}
+        shell: bash
+        run: node build/updateConfig.cjs ${{ env.version }}
       - name: Build & Publish
         uses: dAppServer/wails-build-action@v2.2
         with:
@@ -46,4 +48,4 @@ jobs:
           nsis: ${{ matrix.build.nsis }}
         env:
           APP_ENV: production
-          APP_VERSION: ${{ GITHUB_REF#refs/tags/ }}
+          APP_VERSION: ${{ env.version }}
