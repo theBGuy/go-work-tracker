@@ -31,9 +31,9 @@ jobs:
           submodules: recursive
       - name: Extract version from tag
         id: version
-        run: echo "::set-output name=version::${GITHUB_REF#refs/tags/}"
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: Update wails.json
-        run: node build/updateConfig.cjs ${{ steps.version.outputs.version }}
+        run: node build/updateConfig.cjs ${{ env.version }}
       - name: Build & Publish
         uses: dAppServer/wails-build-action@v2.2
         with:
@@ -44,4 +44,4 @@ jobs:
           nsis: ${{ matrix.build.nsis }}
         env:
           APP_ENV: production
-          APP_VERSION: ${{ steps.version.outputs.version }}
+          APP_VERSION: ${{ env.version }}
