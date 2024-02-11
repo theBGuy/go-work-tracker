@@ -57,6 +57,6 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ${{runner.os}}-${{ matrix.build.name }
+          name: ${{runner.os}}-${{ matrix.build.name }}
           path: |
             ./build/bin/*
