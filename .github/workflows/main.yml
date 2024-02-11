@@ -56,7 +56,7 @@ jobs:
             */bin/
             *\bin\*
       - name: Publish release
-        use: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           files: |
             */bin/*
