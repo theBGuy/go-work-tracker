@@ -51,12 +51,6 @@ jobs:
             await github.exec('go install github.com/wailsapp/wails/v2/cmd/wails@latest');
             // Building step
             await github.exec('wails build --platform ${{ matrix.build.platform }} -o ${{ matrix.build.name }} -nsis ${{ matrix.build.nsis }}');
-        with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
-          go-version: '1.21'
-          node-version: '20'
-          nsis: ${{ matrix.build.nsis }}
         env:
           APP_ENV: production
           APP_VERSION: ${{ env.version }}
