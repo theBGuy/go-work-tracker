@@ -36,26 +36,27 @@ jobs:
       - name: Update wails.json
         shell: bash
         run: node build/updateConfig.cjs ${{ env.version }}
-      - name: Setup GoLang
-        uses: actions/setup-go@v2
+      - name: Build & Publish
+        uses: dAppServer/wails-build-action@v2.2
         with:
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
           go-version: '1.21'
-      - name: Setup NodeJS
-        uses: actions/setup-node@v2
-        with:
           node-version: '20'
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-        shell: bash
-      - name: Build App
-        run: wails build --platform ${{ matrix.build.platform }} -o ${{ matrix.build.name }} -nsis ${{ matrix.build.nsis }}
-        shell: bash
+          nsis: ${{ matrix.build.nsis }}
+          package: false
         env:
           APP_ENV: production
           APP_VERSION: ${{ env.version }}
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: ${{runner.os}}-${{ matrix.build.name }}
           path: |
-            ./build/bin/*
+            */bin/
+            *\bin\*
+      - name: Publish release
+        use: softprops/action-gh-release@v1
+        with:
+          files: |
+            */bin/*
