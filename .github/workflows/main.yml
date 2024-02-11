@@ -32,14 +32,25 @@ jobs:
       - name: Extract version from tag
         id: version
         shell: bash
-        run: |
-          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.version }}"
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: Update wails.json
         shell: bash
         run: node build/updateConfig.cjs ${{ env.version }}
+      # - name: Build & Publish
+      #   uses: dAppServer/wails-build-action@v2.2
       - name: Build & Publish
-        uses: dAppServer/wails-build-action@v2.2
+        uses: actions/github-script@v5
+        with:
+          script: |
+            // Setup and configure GoLang
+            await github.run({uses: 'actions/setup-go@v4', with: {check-latest: true, go-version: '1.21'}});
+            await github.exec('go version');
+            // Setup and configure NodeJS
+            await github.run({uses: 'actions/setup-node@v3', with: {node-version: '20'}});
+            // install wails
+            await github.exec('go install github.com/wailsapp/wails/v2/cmd/wails@latest');
+            // Building step
+            await github.exec('wails build --platform ${{ matrix.build.platform }} -o ${{ matrix.build.name }} -nsis ${{ matrix.build.nsis }}');
         with:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
@@ -49,3 +60,9 @@ jobs:
         env:
           APP_ENV: production
           APP_VERSION: ${{ env.version }}
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{runner.os}}-${{ matrix.build.name }
+          path: |
+            ./build/bin/*
