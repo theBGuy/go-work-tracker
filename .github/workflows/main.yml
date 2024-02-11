@@ -32,6 +32,8 @@ jobs:
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Print version
+        run: echo ${{ env.version }}
       - name: Update wails.json
         run: node build/updateConfig.cjs ${{ env.version }}
       - name: Build & Publish
