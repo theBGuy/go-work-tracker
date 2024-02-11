@@ -6,14 +6,17 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
+	"github.com/blang/semver"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/minio/selfupdate"
 )
 
 // App struct
@@ -32,11 +35,125 @@ type WailsConfig struct {
 
 type Info struct {
 	ProductVersion string `json:"productVersion"`
+	Environment    string `json:"environment"`
+}
+
+type Asset struct {
+	Name        string `json:"name"`
+	DownloadUrl string `json:"browser_download_url"`
+}
+
+type Release struct {
+	Name    string `json:"name"`
+	TagName string `json:"tag_name"`
+	Assets  []Asset
+}
+
+func GetSaveDir() (string, error) {
+	if os.Getenv("APP_ENV") != "production" {
+		fmt.Println("Running in development mode")
+		wd, _ := os.Getwd()
+		fmt.Println("Current working directory: ", wd)
+		return os.Getwd()
+	}
+	var dataDir string
+	switch runtime.GOOS {
+	case "windows":
+		dataDir = os.Getenv("APPDATA")
+	case "darwin":
+		dataDir = filepath.Join(os.Getenv("HOME"), "Library", "Application Support")
+	default: // Unix-like system
+		dataDir = os.Getenv("XDG_DATA_HOME")
+		if dataDir == "" {
+			dataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+		}
+	}
+	saveDir := filepath.Join(dataDir, "worktracker")
+	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
+		os.Mkdir(saveDir, 0755)
+	}
+	return saveDir, nil
+}
+
+func ReadWailsConfig(WailsConfigFile []byte) (string, error) {
+	var wailsConfig WailsConfig
+	err := json.Unmarshal(WailsConfigFile, &wailsConfig)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(wailsConfig.Info)
+	return wailsConfig.Info.ProductVersion, nil
+}
+
+func doUpdate(url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	err = selfupdate.Apply(resp.Body, selfupdate.Options{})
+	if err != nil {
+		// error handling
+		fmt.Println("Error: ", err)
+	}
+	return err
+}
+
+func CheckForUpdates(version string) {
+	resp, err := http.Get("https://api.github.com/repos/thebguy/go-work-tracker/releases/latest")
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var release Release
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	currentVersion, err := semver.Parse(version)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	latestVersion, err := semver.Parse(release.TagName)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	if len(release.Assets) == 0 {
+		fmt.Println("No release files exist for " + release.Name)
+		return
+	}
+
+	if latestVersion.GT(currentVersion) {
+		fmt.Println("New version available: ", release.TagName)
+		doUpdate(release.Assets[0].DownloadUrl)
+	}
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	db, err := sql.Open("sqlite3", "./worktracker.sqlite")
+	version := os.Getenv("APP_ENV")
+	if version == "" {
+		version, _ = ReadWailsConfig(WailsConfigFile)
+	}
+
+	dbDir, err := GetSaveDir()
+	if err != nil {
+		panic(err)
+	}
+
+	// Check for updates
+	if os.Getenv("APP_ENV") == "production" {
+		CheckForUpdates(version)
+	}
+
+	db, err := sql.Open("sqlite3", filepath.Join(dbDir, "worktracker.sqlite"))
 	if err != nil {
 		panic(err)
 	}
@@ -50,18 +167,6 @@ func NewApp() *App {
 	if err != nil {
 		panic(err)
 	}
-
-	jsonFile, err := os.Open("wails.json")
-	if err != nil {
-		panic(err)
-	}
-	defer jsonFile.Close()
-
-	byteValue, _ := io.ReadAll(jsonFile)
-
-	var config WailsConfig
-	json.Unmarshal(byteValue, &config)
-	version := config.Info.ProductVersion
 
 	return &App{db: db, version: version}
 }

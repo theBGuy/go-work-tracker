@@ -9,8 +9,11 @@ require (
 	github.com/wailsapp/wails/v2 v2.7.1
 )
 
+require aead.dev/minisign v0.2.0 // indirect
+
 require (
 	github.com/bep/debounce v1.2.1 // indirect
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -23,6 +26,7 @@ require (
 	github.com/leaanthony/u v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/minio/selfupdate v0.6.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect

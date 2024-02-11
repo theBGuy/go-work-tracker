@@ -6,6 +6,9 @@ on:
     # Match any new tag
       - 'v*'
 
+env:
+  APP_ENV: production
+
 permissions:
   contents: write
 
@@ -15,9 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         build: [
-          {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest},
-          {name: go-work-tracker, platform: windows/amd64, os: windows-latest},
-          {name: go-work-tracker, platform: darwin/universal, os: macos-latest}
+          {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest, nsis: true},
+          {name: go-work-tracker, platform: windows/amd64, os: windows-latest, nsis: true},
+          {name: go-work-tracker, platform: windows/amd64, os: windows-latest, nsis: false},
+          {name: go-work-tracker, platform: darwin/universal, os: macos-latest, nsis: true}
         ]
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -25,6 +29,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+      - name: Extract version from tag
+        id: version
+        run: echo "::set-output name=version::${GITHUB_REF#refs/tags/}"
+      - name: Update wails.json
+        run: node build/updateConfig.cjs ${{ steps.version.outputs.version }}
       - name: Build & Publish
         uses: dAppServer/wails-build-action@v2.2
         with:
@@ -32,4 +41,7 @@ jobs:
           build-platform: ${{ matrix.build.platform }}
           go-version: '1.21'
           node-version: '20'
-          nsis: true
+          nsis: ${{ matrix.build.nsis }}
+        env:
+          APP_ENV: production
+          APP_VERSION: ${{ steps.version.outputs.version }}
