@@ -31,7 +31,9 @@ jobs:
           submodules: recursive
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.version }}"
       - name: Update wails.json
         run: node build/updateConfig.cjs ${{ GITHUB_REF#refs/tags/ }}
       - name: Build & Publish
