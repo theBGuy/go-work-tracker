@@ -18,9 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         build: [
+          {name: go-work-tracker.exe, platform: windows/amd64, os: windows-latest, nsis: true},
           {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest, nsis: true},
-          {name: go-work-tracker, platform: windows/amd64, os: windows-latest, nsis: true},
-          {name: go-work-tracker, platform: windows/amd64, os: windows-latest, nsis: false},
           {name: go-work-tracker, platform: darwin/universal, os: macos-latest, nsis: true}
         ]
     runs-on: ${{ matrix.build.os }}
