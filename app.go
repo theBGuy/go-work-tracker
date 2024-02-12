@@ -27,6 +27,7 @@ type App struct {
 	isRunning    bool
 	organization string
 	version      string
+	environment  string
 }
 
 type WailsConfig struct {
@@ -49,11 +50,9 @@ type Release struct {
 	Assets  []Asset
 }
 
-func getSaveDir() (string, error) {
-	if os.Getenv("APP_ENV") != "production" {
+func getSaveDir(environment string) (string, error) {
+	if environment != "production" {
 		fmt.Println("Running in development mode")
-		wd, _ := os.Getwd()
-		fmt.Println("Current working directory: ", wd)
 		return os.Getwd()
 	}
 	var dataDir string
@@ -68,21 +67,29 @@ func getSaveDir() (string, error) {
 			dataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
 		}
 	}
-	saveDir := filepath.Join(dataDir, "worktracker")
+	saveDir := filepath.Join(dataDir, "Go-Work-Tracker")
 	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
 		os.Mkdir(saveDir, 0755)
 	}
 	return saveDir, nil
 }
 
-func readWailsConfig(WailsConfigFile []byte) (string, error) {
+func readVersionConfig(WailsConfigFile []byte) (string, error) {
 	var wailsConfig WailsConfig
 	err := json.Unmarshal(WailsConfigFile, &wailsConfig)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(wailsConfig.Info)
 	return wailsConfig.Info.ProductVersion, nil
+}
+
+func readEnvConfig(WailsConfigFile []byte) (string, error) {
+	var wailsConfig WailsConfig
+	err := json.Unmarshal(WailsConfigFile, &wailsConfig)
+	if err != nil {
+		return "", err
+	}
+	return wailsConfig.Info.Environment, nil
 }
 
 func doUpdate(url string) error {
@@ -140,16 +147,22 @@ func checkForUpdates(version string) {
 func NewApp() *App {
 	version := os.Getenv("APP_ENV")
 	if version == "" {
-		version, _ = readWailsConfig(WailsConfigFile)
+		version, _ = readVersionConfig(WailsConfigFile)
 	}
 
-	dbDir, err := getSaveDir()
+	environment := os.Getenv("APP_ENV")
+	if environment == "" {
+		environment, _ = readEnvConfig(WailsConfigFile)
+	}
+
+	dbDir, err := getSaveDir(environment)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Starting Go Work Tracker. \nVersion: ", version, "\nEnvironment: ", environment, "\nSave directory: ", dbDir)
 
 	// Check for updates
-	if os.Getenv("APP_ENV") == "production" {
+	if environment == "production" {
 		checkForUpdates(version)
 	}
 
@@ -168,7 +181,7 @@ func NewApp() *App {
 		panic(err)
 	}
 
-	return &App{db: db, version: version}
+	return &App{db: db, version: version, environment: environment}
 }
 
 func (a *App) GetVersion() string {
@@ -415,8 +428,14 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 		panic(err)
 	}
 
+	// Get the save directory
+	dbDir, err := getSaveDir(a.environment)
+	if err != nil {
+		panic(err)
+	}
+
 	// Create the directories for the organization, year, and month
-	dir := filepath.Join("csv", organization, strconv.Itoa(year), month.String())
+	dir := filepath.Join(dbDir, "csv", organization, strconv.Itoa(year), month.String())
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		panic(err)
 	}
@@ -489,8 +508,14 @@ func (a *App) ExportCSVByYear(organization string, year int) {
 		panic(err)
 	}
 
+	// Get the save directory
+	dbDir, err := getSaveDir(a.environment)
+	if err != nil {
+		panic(err)
+	}
+
 	// Create the directories for the organization and year
-	dir := filepath.Join("csv", organization, strconv.Itoa(year))
+	dir := filepath.Join(dbDir, "csv", organization, strconv.Itoa(year))
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		panic(err)
 	}
