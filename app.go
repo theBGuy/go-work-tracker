@@ -138,9 +138,25 @@ func checkForUpdates(version string) {
 		return
 	}
 
-	if latestVersion.GT(currentVersion) {
-		fmt.Println("New version available: ", release.TagName)
-		// doUpdate(release.Assets[0].DownloadUrl)
+	// Get browser download URL for the asset based on os
+	var asset_name string
+	switch runtime.GOOS {
+	case "windows":
+		asset_name = "go-work-tracker.exe"
+	case "darwin":
+		asset_name = "go-work-tracker.app.zip"
+	default: // Unix-like system
+		asset_name = "go-work-tracker"
+	}
+
+	for _, asset := range release.Assets {
+		if asset.Name == asset_name {
+			if latestVersion.GT(currentVersion) {
+				fmt.Println("New version available: ", release.TagName)
+				doUpdate(asset.DownloadUrl)
+			}
+			break
+		}
 	}
 }
 
