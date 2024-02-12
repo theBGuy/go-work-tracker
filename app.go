@@ -139,7 +139,7 @@ func checkForUpdates(version string) {
 
 	if latestVersion.GT(currentVersion) {
 		fmt.Println("New version available: ", release.TagName)
-		doUpdate(release.Assets[0].DownloadUrl)
+		// doUpdate(release.Assets[0].DownloadUrl)
 	}
 }
 
