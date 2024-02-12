@@ -119,6 +119,7 @@ func checkForUpdates(version string) {
 		fmt.Println("Error: ", err)
 		return
 	}
+	version = version[1:]
 
 	currentVersion, err := semver.Parse(version)
 	if err != nil {
