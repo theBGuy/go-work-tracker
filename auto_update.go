@@ -3,60 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"github.com/blang/semver"
 	"github.com/minio/selfupdate"
-	"golang.org/x/sys/windows"
 )
-
-func runMeElevated() {
-	var cmd *exec.Cmd
-
-	switch runtime.GOOS {
-	case "windows":
-		verb := "runas"
-		exe, _ := os.Executable()
-		cwd, _ := os.Getwd()
-		args := strings.Join(os.Args[1:], " ")
-
-		verbPtr, _ := syscall.UTF16PtrFromString(verb)
-		exePtr, _ := syscall.UTF16PtrFromString(exe)
-		cwdPtr, _ := syscall.UTF16PtrFromString(cwd)
-		argPtr, _ := syscall.UTF16PtrFromString(args)
-
-		var showCmd int32 = 1 //SW_NORMAL
-
-		err := windows.ShellExecute(0, verbPtr, exePtr, argPtr, cwdPtr, showCmd)
-		if err != nil {
-			log.Fatal(err)
-		}
-		os.Exit(0)
-	case "darwin", "linux":
-		// On macOS and Linux, you can use the "sudo" command to run a command with elevated privileges
-		exe, _ := os.Executable()
-		args := os.Args[1:]
-
-		cmd = exec.Command("sudo", append([]string{exe}, args...)...)
-
-		// Set the command to run in a new session
-		// cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	default:
-		log.Fatalf("Unsupported platform: %s", runtime.GOOS)
-	}
-
-	// Run the command
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func restartSelf() error {
 	self, err := os.Executable()
