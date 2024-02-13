@@ -14,10 +14,6 @@ export function ExportCSVByYear(arg1, arg2) {
   return window['go']['main']['App']['ExportCSVByYear'](arg1, arg2);
 }
 
-export function GenerateFakeData(arg1) {
-  return window['go']['main']['App']['GenerateFakeData'](arg1);
-}
-
 export function GetMonthlyWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetMonthlyWorkTime'](arg1, arg2);
 }
@@ -64,4 +60,8 @@ export function StopTimer(arg1) {
 
 export function TimeElapsed() {
   return window['go']['main']['App']['TimeElapsed']();
+}
+
+export function UpdateAvailable() {
+  return window['go']['main']['App']['UpdateAvailable']();
 }

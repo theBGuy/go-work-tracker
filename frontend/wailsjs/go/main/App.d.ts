@@ -8,8 +8,6 @@ export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promis
 
 export function ExportCSVByYear(arg1:string,arg2:number):Promise<void>;
 
-export function GenerateFakeData(arg1:string):Promise<void>;
-
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<Array<number>>;
 
 export function GetOrganizations():Promise<Array<string>>;
@@ -33,3 +31,5 @@ export function StartTimer(arg1:string):Promise<void>;
 export function StopTimer(arg1:string):Promise<void>;
 
 export function TimeElapsed():Promise<number>;
+
+export function UpdateAvailable():Promise<boolean>;
