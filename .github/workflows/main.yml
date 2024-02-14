@@ -49,7 +49,7 @@ jobs:
           APP_VERSION: ${{ env.version }}
       - name: Set executable permissions
         if: matrix.build.platform != 'windows/amd64'
-        run: chmod +x ./bin/*
+        run: chmod +x */bin/*
         shell: bash
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
