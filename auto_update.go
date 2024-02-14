@@ -14,8 +14,10 @@ import (
 )
 
 func restartSelf() error {
+	fmt.Println("Restarting application...")
 	self, err := os.Executable()
 	if err != nil {
+		fmt.Println("Error getting executable path:", err)
 		return err
 	}
 	args := os.Args
@@ -33,7 +35,11 @@ func restartSelf() error {
 		}
 		return err
 	}
-	return syscall.Exec(self, args, env)
+	err = syscall.Exec("./go-work-tracker", args, env)
+	if err != nil {
+		fmt.Println("Error restarting application:", err)
+	}
+	return err
 }
 
 func doUpdate(url string) {
