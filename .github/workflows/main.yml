@@ -6,6 +6,9 @@ on:
     # Match any new tag
       - 'v*'
 
+env:
+  APP_ENV: production
+
 permissions:
   contents: write
 
@@ -15,16 +18,23 @@ jobs:
       fail-fast: false
       matrix:
         build: [
-          {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest},
-          {name: go-work-tracker, platform: windows/amd64, os: windows-latest},
-          {name: go-work-tracker, platform: darwin/universal, os: macos-latest}
+          {name: go-work-tracker.exe, platform: windows/amd64, os: windows-latest, nsis: true},
+          {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest, nsis: true},
+          {name: go-work-tracker, platform: darwin/universal, os: macos-latest, nsis: true}
         ]
     runs-on: ${{ matrix.build.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Update wails.json
+        shell: bash
+        run: node build/updateConfig.cjs ${{ env.version }}
       - name: Build & Publish
         uses: dAppServer/wails-build-action@v2.2
         with:
@@ -32,4 +42,20 @@ jobs:
           build-platform: ${{ matrix.build.platform }}
           go-version: '1.21'
           node-version: '20'
-          nsis: true
+          nsis: ${{ matrix.build.nsis }}
+          package: false
+        env:
+          APP_ENV: production
+          APP_VERSION: ${{ env.version }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{runner.os}}-${{ matrix.build.name }}
+          path: |
+            */bin/
+            *\bin\*
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            */bin/*

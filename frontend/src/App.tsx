@@ -30,11 +30,13 @@ import {
   DialogContentText,
   DialogTitle,
   TextField,
-  Menu
+  Menu,
+  Tooltip
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import {
   StartTimer,
   StopTimer,
@@ -48,19 +50,25 @@ import {
   ExportCSVByYear,
   GetYearlyWorkTime,
   GetMonthlyWorkTime,
-  GetVersion
+  GetVersion,
+  UpdateAvailable
 } from "../wailsjs/go/main/App";
 
 function App() {
+  // Misc Info
+  const [version, setVersion] = useState('');
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  
   // Variables for timer
   const [timerRunning, setTimerRunning] = useState(false);
   const [workTime, setWorkTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const elapsedTimeRef = useRef(elapsedTime);
-  const [version, setVersion] = useState('');
 
   useEffect(() => {
     GetVersion().then(setVersion);
+    UpdateAvailable().then(setUpdateAvailable);
+    setUpdateAvailable(true);
   }, []);
 
   // Variables for handling work time totals
@@ -371,7 +379,6 @@ function App() {
             <Button onClick={startTimer}>Start Timer</Button>
           )}
       </div>
-      {/* <p>{exportStatus}</p> */}
       
       {/* Table to display our totals */}
       <Accordion>
@@ -497,6 +504,17 @@ function App() {
 
       <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
         <Toolbar>
+          {updateAvailable && (
+            <Typography variant="h6" component="div">
+              <Tooltip title="Restart to apply update" placement="top-end">
+                <IconButton color="inherit">
+                  <SystemUpdateIcon />
+                </IconButton>
+              </Tooltip>
+                UPDATE AVAILABLE
+            </Typography>
+            )
+          }
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <IconButton color="inherit">
               <a href="https://github.com/theBGuy" target="_blank">
