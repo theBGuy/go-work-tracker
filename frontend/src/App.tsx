@@ -64,6 +64,7 @@ function App() {
   const [workTime, setWorkTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const elapsedTimeRef = useRef(elapsedTime);
+  const [openConfirm, setOpenConfirm] = useState(false);
 
   useEffect(() => {
     GetVersion().then(setVersion);
@@ -171,6 +172,7 @@ function App() {
       .then(setMonthlyWorkTimes);
     setTimerRunning(false);
     setElapsedTime(0);
+    setOpenConfirm(false);
   };
   
   const exportYearlyCSV = () => {
@@ -286,42 +288,34 @@ function App() {
     }
   }, [timerRunning]);
 
-  // const handleConfirm = () => {
-  //   const timeout = setTimeout(() => {
-  //     alert("You didn't confirm within two minutes. The timer will be stopped.");
-  //     stopTimer();
-  //   }, 1000 * 60 * 2);
+  useEffect(() => {
+    let interval: number | null | undefined = null;
 
-  //   if (window.confirm("Are you still working?")) {
-  //     console.log("User is still working");
-  //     clearTimeout(timeout);
-  //   } else {
-  //     console.log("User is not working");
-  //     clearTimeout(timeout);
-  //     stopTimer();
-  //   }
-  // }
+    if (timerRunning && !openConfirm) {
+      interval = setInterval(() => {
+        setOpenConfirm(true);
+      }, 1000 * 60 * 30); // Show the alert every 30 minutes - TODO: make this configurable
+    }
 
-  // useEffect(() => {
-  //   if (timerRunning) {
-  //     const interval = setInterval(() => {
-  //       setOpenConfirm(true);
-  //       return () => clearInterval(interval);
-  //     }, 1000 * 60 * 0.30); // Show the alert every hour
-  //   }
-  // }, [timerRunning]);
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+}, [timerRunning, openConfirm]);
 
-  // useEffect(() => {
-  //   if (openConfirm) {
-  //     const timeout = setTimeout(() => {
-  //       if (timerRunning) {
-  //         alert("You didn't confirm within two minutes. The timer will be stopped.");
-  //         stopTimer();
-  //       }
-  //     }, 1000 * 60 * 0.30);
-  //     return () => clearTimeout(timeout);
-  //   }
-  // }, [openConfirm]);
+  useEffect(() => {
+    // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
+    if (openConfirm) {
+      const timeout = setTimeout(() => {
+        if (timerRunning) {
+          stopTimer();
+          alert("You didn't confirm within two minutes. The timer will be stopped.");
+        }
+      }, 1000 * 60 * 2);
+      return () => clearTimeout(timeout);
+    }
+  }, [openConfirm]);
 
   return (
     <div id="App">
@@ -429,7 +423,7 @@ function App() {
       </Accordion>
 
       {/* Handle confirming user still active */}
-      {/* <Dialog
+      <Dialog
         disableEscapeKeyDown
         open={openConfirm}
         onClose={() => setOpenConfirm(false)}
@@ -437,9 +431,9 @@ function App() {
         <DialogTitle>Are you still working?</DialogTitle>
         <DialogActions>
           <Button onClick={() => setOpenConfirm(false)}>Yes</Button>
-          <Button onClick={() => setOpenConfirm(false)}>No</Button>
+          <Button onClick={() => stopTimer()}>No</Button>
         </DialogActions>
-      </Dialog> */}
+      </Dialog>
       
       {/* Handle creating a new organization */}
       <Dialog
