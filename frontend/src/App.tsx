@@ -4,8 +4,6 @@ import './App.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// import { ConfirmProvider, useConfirm } from "material-ui-confirm";
-// import ConfirmTimer from './components/ConfirmTimer';
 import {
   AppBar,
   Toolbar,
@@ -31,12 +29,16 @@ import {
   DialogTitle,
   TextField,
   Menu,
-  Tooltip
+  Tooltip,
+  ListItemIcon,
+  InputLabel,
+  FormControl
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import SettingsIcon from '@mui/icons-material/Settings';
 import {
   StartTimer,
   StopTimer,
@@ -65,6 +67,8 @@ function App() {
   const [workTime, setWorkTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const elapsedTimeRef = useRef(elapsedTime);
+  const [alertTime, setAlertTime] = useState(30); // Default to 30 minutes
+  const [newAlertTime, setNewAlertTime] = useState(alertTime);
   const [openConfirm, setOpenConfirm] = useState(false);
 
   useEffect(() => {
@@ -84,8 +88,9 @@ function App() {
   const [organizations, setOrganizations] = useState<string[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState('');
   const [newOrganization, setNewOrganization] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openNewOrg, setopenNewOrg] = useState(false);
   const [openRename, setOpenRename] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [exportStatus, setExportStatus] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -134,7 +139,7 @@ function App() {
       toast.error("Organization name cannot be empty");
       return;
     }
-    const setDialog = rename ? setOpenRename : setOpenDialog;
+    const setDialog = rename ? setOpenRename : setopenNewOrg;
     if (canceled) {
       setDialog(false);
       return;
@@ -157,6 +162,9 @@ function App() {
   
   const handleMenuClose = () => {
     setAnchorEl(null);
+    setShowSettings(false);
+    setopenNewOrg(false);
+    setOpenRename(false);
   };
 
   const startTimer = () => {
@@ -207,6 +215,7 @@ function App() {
   };
 
   const handleDeleteOrganization = () => {
+    // TODO: Are you sure you want to delete this organization? This is a destructive action we should double check with the user
     handleMenuClose();
     if (organizations.length === 1) {
       toast.error("You cannot delete the last organization");
@@ -217,6 +226,19 @@ function App() {
       setSelectedOrganization(organizations[0]);
     });
     SetOrganization(selectedOrganization);
+  };
+
+  const handleUpdateSettings = () => {
+    handleMenuClose();
+    setShowSettings(false);
+    if (newAlertTime !== alertTime) {
+      setAlertTime(newAlertTime);
+      if (newAlertTime === 0) {
+        toast.success("Settings updated! Alert time disabled");
+      } else {
+        toast.success("Settings updated! Alert time set to " + newAlertTime + " minutes");
+      }
+    }
   };
 
   useEffect(() => {
@@ -230,7 +252,7 @@ function App() {
   useEffect(() => {
     GetOrganizations().then(orgs => {
       if (orgs.length === 0) {
-        setOpenDialog(true);
+        setopenNewOrg(true);
       } else {
         setOrganizations(orgs);
         setSelectedOrganization(orgs[0]);
@@ -292,12 +314,12 @@ function App() {
   useEffect(() => {
     let interval: number | null | undefined = null;
 
-    if (timerRunning && !openConfirm) {
+    if (timerRunning && !openConfirm && alertTime > 0) {
       interval = setInterval(() => {
         ShowWindow().then(() => {
           setOpenConfirm(true);
         });
-      }, 1000 * 60 * 30); // Show the alert every 30 minutes - TODO: make this configurable
+      }, 1000 * 60 * alertTime); // Show the alert every x minutes
     }
 
     return () => {
@@ -305,7 +327,7 @@ function App() {
         clearInterval(interval);
       }
     };
-}, [timerRunning, openConfirm]);
+}, [timerRunning, openConfirm, alertTime]);
 
   useEffect(() => {
     // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
@@ -341,7 +363,14 @@ function App() {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={() => setOpenDialog(true)}>Add New Organization</MenuItem>
+            {/* <MenuItem onClick={() => setShowSettings(true)}>Settings</MenuItem> */}
+            <MenuItem onClick={() => setShowSettings(true)}>
+              <ListItemIcon>
+                <SettingsIcon />
+              </ListItemIcon>
+              Settings
+            </MenuItem>
+            <MenuItem onClick={() => setopenNewOrg(true)}>Add New Organization</MenuItem>
             <MenuItem onClick={handleRenameOrganization}>Rename Current Organization</MenuItem>
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
           </Menu>
@@ -437,11 +466,49 @@ function App() {
           <Button onClick={() => stopTimer()}>No</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Handle settings dialog */}
+      <Dialog
+        disableEscapeKeyDown
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+      >
+        <DialogTitle>Settings</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Set the interval for the popup that confirms if you're still working.
+          </DialogContentText>
+
+          {/* TODO: Are there other configurable settings we need? */}
+          
+          <FormControl fullWidth sx={{ mt: 1 }}>
+            {/* Dropdown to select alert time interval */}
+            <InputLabel id="alert-time-select">Confirmation Popup Interval (minutes)</InputLabel>
+            <Select
+              value={newAlertTime}
+              label="Confirmation Popup Interval (minutes)"
+              labelId="alert-time-select"
+              autoWidth
+              onChange={(event) => setNewAlertTime(event.target.value as number)}
+            >
+              {[0, 5, 10, 15, 30, 60].map((minutes) => (
+                <MenuItem key={minutes} value={minutes}>
+                  {minutes}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleUpdateSettings}>Save</Button>
+          <Button onClick={handleMenuClose} color='error'>Close</Button>
+        </DialogActions>
+      </Dialog>
       
       {/* Handle creating a new organization */}
       <Dialog
         disableEscapeKeyDown
-        open={openDialog}
+        open={openNewOrg}
         onClose={() => handleDialogClose()}
       >
         <DialogTitle>Add New Organization</DialogTitle>
