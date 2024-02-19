@@ -9,7 +9,22 @@ import (
 	"time"
 )
 
-func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) {
+var monthMap = map[int]string{
+	1:  "January",
+	2:  "February",
+	3:  "March",
+	4:  "April",
+	5:  "May",
+	6:  "June",
+	7:  "July",
+	8:  "August",
+	9:  "September",
+	10: "October",
+	11: "November",
+	12: "December",
+}
+
+func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) string {
 	// Query the database for all entries in the specified month and organization
 	rows, err := a.db.Query(
 		"SELECT date, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
@@ -66,7 +81,8 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	}
 
 	// Create the CSV file
-	csvFile, err := os.Create(filepath.Join(dir, "work_hours.csv"))
+	csvFilePath := filepath.Join(dir, "work_hours.csv")
+	csvFile, err := os.Create(csvFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -75,30 +91,34 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
 
-	// Write the daily totals to the CSV file
-	writer.Write([]string{"Date", "Seconds", "Time (HH:MM:SS)"})
-	for _, date := range dates {
-		seconds := dailyTotals[date]
-		time := formatTime(seconds)
-		writer.Write([]string{date, strconv.Itoa(seconds), time})
-	}
+	// Write the monthly total to the CSV file
+	writer.Write([]string{"Month total for " + organization})
+	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
+	time := formatTime(monthlyTotal)
+	writer.Write([]string{month.String(), strconv.Itoa(monthlyTotal), time})
 
 	// Write the weekly totals to the CSV file
 	writer.Write([]string{})
+	writer.Write([]string{"Weekly breakdown"})
 	writer.Write([]string{"Week", "Seconds", "Time (HH:MM:SS)"})
 	for week, seconds := range weeklyTotals {
 		time := formatTime(seconds)
 		writer.Write([]string{strconv.Itoa(week), strconv.Itoa(seconds), time})
 	}
 
-	// Write the monthly total to the CSV file
+	// Write the daily totals to the CSV file
 	writer.Write([]string{})
-	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
-	time := formatTime(monthlyTotal)
-	writer.Write([]string{month.String(), strconv.Itoa(monthlyTotal), time})
+	writer.Write([]string{"Daily breakdown"})
+	writer.Write([]string{"Date", "Seconds", "Time (HH:MM:SS)"})
+	for _, date := range dates {
+		seconds := dailyTotals[date]
+		time := formatTime(seconds)
+		writer.Write([]string{date, strconv.Itoa(seconds), time})
+	}
+	return csvFilePath
 }
 
-func (a *App) ExportCSVByYear(organization string, year int) {
+func (a *App) ExportCSVByYear(organization string, year int) string {
 	// Query the database for all entries in the given year
 	rows, err := a.db.Query(
 		"SELECT date, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
@@ -146,7 +166,8 @@ func (a *App) ExportCSVByYear(organization string, year int) {
 	}
 
 	// Create the CSV file
-	csvFile, err := os.Create(filepath.Join(dir, "work_hours_yearly.csv"))
+	csvFilePath := filepath.Join(dir, "work_hours_yearly.csv")
+	csvFile, err := os.Create(csvFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -155,17 +176,22 @@ func (a *App) ExportCSVByYear(organization string, year int) {
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
 
-	// Write the monthly totals to the CSV file
-	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
-	for _, seconds := range monthlyTotals {
-		time := formatTime(seconds)
-		writer.Write([]string{time, strconv.Itoa(seconds), time})
-	}
-
 	// Write the yearly total to the CSV file
+	writer.Write([]string{"Yearly total for " + organization})
 	writer.Write([]string{"Year", "Seconds", "Time (HH:MM:SS)"})
 	time := formatTime(yearlyTotal)
 	writer.Write([]string{strconv.Itoa(year), strconv.Itoa(yearlyTotal), time})
+
+	// Write the monthly totals to the CSV file
+	writer.Write([]string{})
+	writer.Write([]string{"Monthly breakdown"})
+	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
+	for index, seconds := range monthlyTotals {
+		time := formatTime(seconds)
+		monthName := monthMap[index]
+		writer.Write([]string{monthName, strconv.Itoa(seconds), time})
+	}
+	return csvFilePath
 }
 
 func formatTime(seconds int) string {
