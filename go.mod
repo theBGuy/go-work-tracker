@@ -1,4 +1,4 @@
-module go-work-tracker
+module github.com/theBGuy/go-work-tracker
 
 go 1.21
 

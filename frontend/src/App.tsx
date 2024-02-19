@@ -379,7 +379,6 @@ function App() {
             <Button onClick={startTimer}>Start Timer</Button>
           )}
       </div>
-      {/* <p>{exportStatus}</p> */}
       
       {/* Table to display our totals */}
       <Accordion>

@@ -3,39 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 )
-
-// Check if the application has write permission in the save directory -- hacky but works
-func checkWritePermission() bool {
-	tmpfile, err := os.Create("test" + strconv.Itoa(rand.Intn(1000)) + ".tmp")
-	if err != nil {
-		fmt.Println(err)
-		tmpfile.Close()
-		return false
-	}
-	tmpfile.Close()
-
-	// Remove all .tmp files in the directory
-	files, err := filepath.Glob("*.tmp")
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			fmt.Println(err)
-			return false
-		}
-	}
-
-	return true
-}
 
 func getSaveDir(environment string) (string, error) {
 	var dataDir string

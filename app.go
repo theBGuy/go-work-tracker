@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/theBGuy/go-work-tracker/auto_update"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -33,17 +35,6 @@ type Info struct {
 	Environment    string `json:"environment"`
 }
 
-type Asset struct {
-	Name        string `json:"name"`
-	DownloadUrl string `json:"browser_download_url"`
-}
-
-type Release struct {
-	Name    string `json:"name"`
-	TagName string `json:"tag_name"`
-	Assets  []Asset
-}
-
 // NewApp creates a new App application struct
 func NewApp() *App {
 	version := os.Getenv("APP_ENV")
@@ -65,7 +56,7 @@ func NewApp() *App {
 	// Check for updates
 	var newVersonAvailable bool
 	if environment == "production" {
-		newVersonAvailable = checkForUpdates(version)
+		newVersonAvailable = auto_update.CheckForUpdates(version)
 	}
 
 	db, err := sql.Open("sqlite3", filepath.Join(dbDir, "worktracker.sqlite"))
@@ -116,13 +107,10 @@ func (a *App) shutdown(ctx context.Context) {
 func (a *App) MonitorTime() {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
-					a.StopTimer(a.organization)
-					a.StartTimer(a.organization)
-				}
+		for range ticker.C {
+			if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
+				a.StopTimer(a.organization)
+				a.StartTimer(a.organization)
 			}
 		}
 	}()

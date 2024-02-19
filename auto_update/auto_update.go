@@ -1,17 +1,58 @@
-package main
+package auto_update
 
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 
 	"github.com/blang/semver"
 	"github.com/minio/selfupdate"
 )
+
+type Asset struct {
+	Name        string `json:"name"`
+	DownloadUrl string `json:"browser_download_url"`
+}
+
+type Release struct {
+	Name    string `json:"name"`
+	TagName string `json:"tag_name"`
+	Assets  []Asset
+}
+
+// Check if the application has write permission in the save directory -- hacky but works
+func checkWritePermission() bool {
+	tmpfile, err := os.Create("test" + strconv.Itoa(rand.Intn(1000)) + ".tmp")
+	if err != nil {
+		fmt.Println(err)
+		tmpfile.Close()
+		return false
+	}
+	tmpfile.Close()
+
+	// Remove all .tmp files in the directory
+	files, err := filepath.Glob("*.tmp")
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			fmt.Println(err)
+			return false
+		}
+	}
+
+	return true
+}
 
 func restartSelf() error {
 	fmt.Println("Restarting application...")
@@ -58,7 +99,7 @@ func doUpdate(url string) {
 	restartSelf()
 }
 
-func checkForUpdates(version string) bool {
+func CheckForUpdates(version string) bool {
 	resp, err := http.Get("https://api.github.com/repos/thebguy/go-work-tracker/releases/latest")
 	if err != nil {
 		fmt.Println("Error: ", err.Error(), " while checking for updates")

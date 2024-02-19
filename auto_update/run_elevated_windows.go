@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package main
+package auto_update
 
 import (
 	"log"
