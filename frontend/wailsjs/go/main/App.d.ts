@@ -4,9 +4,9 @@ import {time} from '../models';
 
 export function DeleteOrganization(arg1:string):Promise<void>;
 
-export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promise<void>;
+export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promise<string>;
 
-export function ExportCSVByYear(arg1:string,arg2:number):Promise<void>;
+export function ExportCSVByYear(arg1:string,arg2:number):Promise<string>;
 
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<Array<number>>;
 

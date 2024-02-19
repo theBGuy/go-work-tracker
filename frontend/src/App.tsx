@@ -175,17 +175,17 @@ function App() {
   
   const exportYearlyCSV = () => {
     setExportStatus("Exporting...");
-    ExportCSVByYear(selectedOrganization, selectedYear).then(() => {
+    ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
       setExportStatus("Export complete!");
-      toast.success("Yearly CSV export complete!");
+      toast.success("Yearly CSV export complete! File saved to " + path);
     });
   };
   
   const exportMonthlyCSV = (month: number) => {
     setExportStatus("Exporting...");
-    ExportCSVByMonth(selectedOrganization, selectedYear, month).then(() => {
+    ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
       setExportStatus("Export complete!");
-      toast.success("Monthly CSV export complete!");
+      toast.success("Monthly CSV export complete! File saved to " + path);
     });
   };
     
