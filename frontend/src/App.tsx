@@ -297,7 +297,7 @@ function App() {
         ShowWindow().then(() => {
           setOpenConfirm(true);
         });
-      }, 1000 * 60 * 0.30); // Show the alert every 30 minutes - TODO: make this configurable
+      }, 1000 * 60 * 30); // Show the alert every 30 minutes - TODO: make this configurable
     }
 
     return () => {
