@@ -51,7 +51,8 @@ import {
   GetYearlyWorkTime,
   GetMonthlyWorkTime,
   GetVersion,
-  UpdateAvailable
+  UpdateAvailable,
+  ShowWindow
 } from "../wailsjs/go/main/App";
 
 function App() {
@@ -293,8 +294,10 @@ function App() {
 
     if (timerRunning && !openConfirm) {
       interval = setInterval(() => {
-        setOpenConfirm(true);
-      }, 1000 * 60 * 30); // Show the alert every 30 minutes - TODO: make this configurable
+        ShowWindow().then(() => {
+          setOpenConfirm(true);
+        });
+      }, 1000 * 60 * 0.30); // Show the alert every 30 minutes - TODO: make this configurable
     }
 
     return () => {

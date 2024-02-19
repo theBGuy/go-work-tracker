@@ -26,6 +26,8 @@ export function RenameOrganization(arg1:string,arg2:string):Promise<void>;
 
 export function SetOrganization(arg1:string):Promise<void>;
 
+export function ShowWindow():Promise<void>;
+
 export function StartTimer(arg1:string):Promise<void>;
 
 export function StopTimer(arg1:string):Promise<void>;
