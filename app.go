@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/theBGuy/go-work-tracker/auto_update"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -216,6 +217,10 @@ func (a *App) TimeElapsed() int {
 		return int(time.Since(a.startTime).Seconds())
 	}
 	return 0
+}
+
+func (a *App) ShowWindow() {
+	runtime.WindowShow(a.ctx)
 }
 
 // GetWorkTime returns the total seconds worked
