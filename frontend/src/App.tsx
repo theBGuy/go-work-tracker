@@ -234,9 +234,19 @@ function App() {
     if (newAlertTime !== alertTime) {
       setAlertTime(newAlertTime);
       if (newAlertTime === 0) {
-        toast.success("Settings updated! Alert time disabled");
+        toast.success(
+          <div>
+            Settings updated! <br />
+            `Are you still working?` notification disabled
+          </div>
+        );
       } else {
-        toast.success("Settings updated! Alert time set to " + newAlertTime + " minutes");
+        toast.success(
+          <div>
+            Settings updated! <br />
+            `Are you still working?` interval set to every {newAlertTime} minutes
+          </div>
+        );
       }
     }
   };
@@ -476,12 +486,12 @@ function App() {
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Set the interval for the popup that confirms if you're still working.
+            Set the time interval for the `Are you still working?` notification.
           </DialogContentText>
 
           {/* TODO: Are there other configurable settings we need? */}
           
-          <FormControl fullWidth sx={{ mt: 1 }}>
+          <FormControl fullWidth sx={{ mt: 2 }}>
             {/* Dropdown to select alert time interval */}
             <InputLabel id="alert-time-select">Confirmation Popup Interval (minutes)</InputLabel>
             <Select
@@ -491,7 +501,7 @@ function App() {
               autoWidth
               onChange={(event) => setNewAlertTime(event.target.value as number)}
             >
-              {[0, 5, 10, 15, 30, 60].map((minutes) => (
+              {[0, 1, 5, 10, 15, 30, 60].map((minutes) => (
                 <MenuItem key={minutes} value={minutes}>
                   {minutes}
                 </MenuItem>
