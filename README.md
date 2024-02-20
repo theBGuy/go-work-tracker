@@ -1,4 +1,5 @@
 # Go-Work-Tracker
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/theBGuy/go-work-tracker/total?style=for-the-badge)
 
 Work Tracker is a time tracking application that allows you to record and total your work time for each day, month, and year, and per organization. It provides a simple and intuitive interface for starting and stopping the timer, changing the organization, and viewing the total work time.
 
@@ -18,6 +19,11 @@ You can configure the project by editing `wails.json`. More information about th
 here: https://wails.io/docs/reference/project-config -->
 
 ## Development
+
+### Requirements
+- `Wails CLI v^2.8.0` [Install Wails](https://wails.io/docs/gettingstarted/installation)
+- `Go v^1.18` [Install Go](https://go.dev/doc/install)
+- `Node v^15.0.0` [Install Node](https://nodejs.org/en/download/current)
 
 ### Live Development
 
