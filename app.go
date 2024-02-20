@@ -223,6 +223,21 @@ func (a *App) ShowWindow() {
 	runtime.WindowShow(a.ctx)
 }
 
+// Display a confirmation dialog
+func (a *App) ConfirmAction(title string, message string) bool {
+	selection, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+		Type:          runtime.QuestionDialog,
+		Title:         title,
+		Message:       message,
+		DefaultButton: "No",
+	})
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	return selection == "Yes"
+}
+
 // GetWorkTime returns the total seconds worked
 func (a *App) GetWorkTime(date string, organization string) (seconds int, err error) {
 	if date == "" || organization == "" {

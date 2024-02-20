@@ -54,7 +54,8 @@ import {
   GetMonthlyWorkTime,
   GetVersion,
   UpdateAvailable,
-  ShowWindow
+  ShowWindow,
+  ConfirmAction
 } from "../wailsjs/go/main/App";
 
 function App() {
@@ -215,17 +216,24 @@ function App() {
   };
 
   const handleDeleteOrganization = () => {
-    // TODO: Are you sure you want to delete this organization? This is a destructive action we should double check with the user
-    handleMenuClose();
-    if (organizations.length === 1) {
-      toast.error("You cannot delete the last organization");
-      return;
-    }
-    DeleteOrganization(selectedOrganization).then(() => {
-      setOrganizations(orgs => orgs.filter(org => org !== selectedOrganization));
-      setSelectedOrganization(organizations[0]);
+    // if (window.confirm("Are you sure you want to delete this organization?") === false) {
+    //   return;
+    // }
+    ConfirmAction(`Delete ${selectedOrganization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
+      if (confirmed === false) {
+        return;
+      }
+      handleMenuClose();
+      if (organizations.length === 1) {
+        toast.error("You cannot delete the last organization");
+        return;
+      }
+      DeleteOrganization(selectedOrganization).then(() => {
+        setOrganizations(orgs => orgs.filter(org => org !== selectedOrganization));
+        setSelectedOrganization(organizations[0]);
+      });
+      SetOrganization(selectedOrganization);
     });
-    SetOrganization(selectedOrganization);
   };
 
   const handleUpdateSettings = () => {
