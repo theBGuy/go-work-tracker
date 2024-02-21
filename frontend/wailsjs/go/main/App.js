@@ -18,6 +18,14 @@ export function ExportCSVByYear(arg1, arg2) {
   return window['go']['main']['App']['ExportCSVByYear'](arg1, arg2);
 }
 
+export function ExportPDFByMonth(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ExportPDFByMonth'](arg1, arg2, arg3);
+}
+
+export function ExportPDFByYear(arg1, arg2) {
+  return window['go']['main']['App']['ExportPDFByYear'](arg1, arg2);
+}
+
 export function GetMonthlyWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetMonthlyWorkTime'](arg1, arg2);
 }

@@ -32,13 +32,16 @@ import {
   Tooltip,
   ListItemIcon,
   InputLabel,
-  FormControl
+  FormControl,
+  SvgIconProps,
+  SvgIcon
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from '@mui/icons-material/Settings';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import {
   StartTimer,
   StopTimer,
@@ -50,6 +53,8 @@ import {
   DeleteOrganization,
   ExportCSVByMonth,
   ExportCSVByYear,
+  ExportPDFByMonth,
+  ExportPDFByYear,
   GetYearlyWorkTime,
   GetMonthlyWorkTime,
   GetVersion,
@@ -57,6 +62,16 @@ import {
   ShowWindow,
   ConfirmAction
 } from "../wailsjs/go/main/App";
+
+// const CSVIcon = (props: SvgIconProps) => (
+//   <SvgIcon {...props}>
+//     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 24">
+//       <path d="M0 0h30v24H0z" fill="none"/>
+//       <path d="M18 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+//       <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">CSV</text>
+//     </svg>
+//   </SvgIcon>
+// );
 
 function App() {
   // Misc Info
@@ -200,6 +215,22 @@ function App() {
       toast.success("Monthly CSV export complete! File saved to " + path);
     });
   };
+
+  const exportYearlyPDF = () => {
+    setExportStatus("Exporting...");
+    ExportPDFByYear(selectedOrganization, selectedYear).then((path) => {
+      setExportStatus("Export complete!");
+      toast.success("Yearly PDF export complete! File saved to " + path);
+    });
+  }
+
+  const exportMonthlyPDF = (month: number) => {
+    setExportStatus("Exporting...");
+    ExportPDFByMonth(selectedOrganization, selectedYear, month).then((path) => {
+      setExportStatus("Export complete!");
+      toast.success("Monthly PDF export complete! File saved to " + path);
+    });
+  }
     
   const setOrganization = async (newOrganization: string) => {
     if (timerRunning) {
@@ -445,6 +476,11 @@ function App() {
             Total Work Time: {formatTime(yearlyWorkTime)}
           </Typography>
           <Button onClick={exportYearlyCSV}>Export Yearly CSV</Button>
+          <Tooltip title="Export Yearly PDF" placement="top-end">
+            <IconButton onClick={exportYearlyPDF}>
+              <PictureAsPdfIcon />
+            </IconButton>
+          </Tooltip>
         </AccordionSummary>
         <AccordionDetails>
           <TableContainer component={Paper}>
@@ -463,6 +499,11 @@ function App() {
                     <TableCell align="right">{formatTime(workTime)}</TableCell>
                     <TableCell align="right">
                       <Button onClick={() => exportMonthlyCSV(index + 1)}>Export Monthly CSV</Button>
+                      <Tooltip title="Export Monthly PDF" placement="top-end">
+                        <IconButton onClick={() => exportMonthlyPDF(index + 1)}>
+                          <PictureAsPdfIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

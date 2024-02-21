@@ -10,6 +10,10 @@ export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promis
 
 export function ExportCSVByYear(arg1:string,arg2:number):Promise<string>;
 
+export function ExportPDFByMonth(arg1:string,arg2:number,arg3:time.Month):Promise<string>;
+
+export function ExportPDFByYear(arg1:string,arg2:number):Promise<string>;
+
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<Array<number>>;
 
 export function GetOrganizations():Promise<Array<string>>;
