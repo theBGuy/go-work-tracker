@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var monthMap = map[int]string{
@@ -115,6 +117,7 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 		time := formatTime(seconds)
 		writer.Write([]string{date, strconv.Itoa(seconds), time})
 	}
+	runtime.ClipboardSetText(a.ctx, csvFilePath)
 	return csvFilePath
 }
 
@@ -191,6 +194,7 @@ func (a *App) ExportCSVByYear(organization string, year int) string {
 		monthName := monthMap[index]
 		writer.Write([]string{monthName, strconv.Itoa(seconds), time})
 	}
+	runtime.ClipboardSetText(a.ctx, csvFilePath)
 	return csvFilePath
 }
 
