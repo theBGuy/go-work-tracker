@@ -108,7 +108,6 @@ function App() {
   const [openRename, setOpenRename] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const [exportStatus, setExportStatus] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const currentYear = new Date().getFullYear();
@@ -201,33 +200,37 @@ function App() {
   };
   
   const exportYearlyCSV = () => {
-    setExportStatus("Exporting...");
     ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
-      setExportStatus("Export complete!");
-      toast.success("Yearly CSV export complete! File saved to " + path);
+      toast.success(
+        <div>
+          <strong>Yearly CSV export complete!</strong> <br />
+          <strong>Path copied to clipboard</strong> <br />
+          File saved to {path}
+        </div>
+      );
     });
   };
   
   const exportMonthlyCSV = (month: number) => {
-    setExportStatus("Exporting...");
     ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
-      setExportStatus("Export complete!");
-      toast.success("Monthly CSV export complete! File saved to " + path);
+      toast.success(
+        <div>
+          <strong>Monthly CSV export complete!</strong> <br />
+          <strong>Path copied to clipboard</strong> <br />
+          File saved to {path}
+        </div>
+      );
     });
   };
 
   const exportYearlyPDF = () => {
-    setExportStatus("Exporting...");
     ExportPDFByYear(selectedOrganization, selectedYear).then((path) => {
-      setExportStatus("Export complete!");
       toast.success("Yearly PDF export complete! File saved to " + path);
     });
   }
 
   const exportMonthlyPDF = (month: number) => {
-    setExportStatus("Exporting...");
     ExportPDFByMonth(selectedOrganization, selectedYear, month).then((path) => {
-      setExportStatus("Export complete!");
       toast.success("Monthly PDF export complete! File saved to " + path);
     });
   }
@@ -275,15 +278,15 @@ function App() {
       if (newAlertTime === 0) {
         toast.success(
           <div>
-            Settings updated! <br />
-            `Are you still working?` notification disabled
+            <strong>Settings updated!</strong> <br />
+            <em>`Are you still working?`</em> notification disabled
           </div>
         );
       } else {
         toast.success(
           <div>
-            Settings updated! <br />
-            `Are you still working?` interval set to every {newAlertTime} minutes
+            <strong>Settings updated!</strong> <br />
+            <em>`Are you still working?`</em> interval set to every {newAlertTime} minutes
           </div>
         );
       }
