@@ -22,6 +22,7 @@ type App struct {
 	startTime          time.Time
 	isRunning          bool
 	organization       string
+	project            string
 	version            string
 	environment        string
 	newVersonAvailable bool
@@ -66,11 +67,12 @@ func NewApp() *App {
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS work_hours (
-			date TEXT NOT NULL,
-			organization TEXT NOT NULL,
-			seconds INTEGER NOT NULL,
-			PRIMARY KEY (date, organization)
-		)`)
+        date TEXT NOT NULL,
+        organization TEXT NOT NULL,
+        project TEXT NOT NULL,
+        seconds INTEGER NOT NULL,
+        PRIMARY KEY (date, organization, project)
+    )`)
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +103,7 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called at termination
 func (a *App) shutdown(ctx context.Context) {
 	if a.isRunning {
-		a.StopTimer(a.organization)
+		a.StopTimer(a.organization, a.project)
 	}
 }
 
@@ -110,27 +112,29 @@ func (a *App) MonitorTime() {
 	go func() {
 		for range ticker.C {
 			if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
-				a.StopTimer(a.organization)
-				a.StartTimer(a.organization)
+				a.StopTimer(a.organization, a.project)
+				a.StartTimer(a.organization, a.project)
 			}
 		}
 	}()
 }
 
-func (a *App) NewOrganization(organization string) {
+func (a *App) NewOrganization(organization string, project string) {
 	if organization == "" {
 		return
 	}
 	currentDate := time.Now().Format("2006-01-02")
-	_, err := a.db.Exec("INSERT INTO work_hours(date, organization, seconds) VALUES(?, ?, ?)", currentDate, organization, 0)
+	_, err := a.db.Exec(
+		"INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?)",
+		currentDate, organization, project, 0)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (a *App) SetOrganization(organization string) {
+func (a *App) SetOrganization(organization string, project string) {
 	if a.isRunning {
-		a.StopTimer(a.organization)
+		a.StopTimer(a.organization, a.project)
 	}
 	// check if the new organization exists
 	row := a.db.QueryRow("SELECT organization FROM work_hours WHERE organization = ?", organization)
@@ -139,11 +143,12 @@ func (a *App) SetOrganization(organization string) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No entry for the given organization
-			a.NewOrganization(organization)
+			a.NewOrganization(organization, project)
 		}
 	}
 
 	a.organization = organization
+	a.project = project
 }
 
 func (a *App) RenameOrganization(oldName string, newName string) {
@@ -154,6 +159,57 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (a *App) SetProject(project string) {
+	if a.isRunning {
+		a.StopTimer(a.organization, a.project)
+	}
+	a.project = project
+}
+
+func (a *App) RenameProject(oldName string, newName string) {
+	if newName == "" {
+		return
+	}
+	_, err := a.db.Exec("UPDATE work_hours SET project = ? WHERE project = ?", newName, oldName)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (a *App) DeleteProject(project string) {
+	if project == "" {
+		return
+	}
+	_, err := a.db.Exec("DELETE FROM work_hours WHERE project = ?", project)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// GetProjects returns the list of projects for the specified organization
+func (a *App) GetProjects(organization string) (projects []string, err error) {
+	projects = []string{}
+	rows, err := a.db.Query("SELECT DISTINCT project FROM work_hours WHERE organization = ?", organization)
+	if err != nil {
+		return projects, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		if err := rows.Scan(&project); err != nil {
+			return projects, err
+		}
+		projects = append(projects, project)
+	}
+
+	if err := rows.Err(); err != nil {
+		return projects, err
+	}
+
+	return projects, nil
 }
 
 func (a *App) DeleteOrganization(organization string) {
@@ -189,13 +245,14 @@ func (a *App) GetOrganizations() (organizations []string, err error) {
 	return organizations, nil
 }
 
-func (a *App) StartTimer(organization string) {
+func (a *App) StartTimer(organization string, project string) {
 	a.startTime = time.Now()
 	a.organization = organization
+	a.project = project
 	a.isRunning = true
 }
 
-func (a *App) StopTimer(organization string) {
+func (a *App) StopTimer(organization string, project string) {
 	if !a.isRunning {
 		return
 	}
@@ -203,8 +260,8 @@ func (a *App) StopTimer(organization string) {
 	secsWorked := int(endTime.Sub(a.startTime).Seconds())
 	date := a.startTime.Format("2006-01-02")
 
-	_, err := a.db.Exec("INSERT INTO work_hours(date, organization, seconds) VALUES(?, ?, ?) "+
-		"ON CONFLICT(date, organization) DO UPDATE SET seconds=seconds+?", date, organization, secsWorked, secsWorked)
+	_, err := a.db.Exec("INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?) "+
+		"ON CONFLICT(date, organization, project) DO UPDATE SET seconds=seconds+?", date, organization, project, secsWorked, secsWorked)
 	if err != nil {
 		panic(err)
 	}
@@ -259,6 +316,25 @@ func (a *App) GetWorkTime(date string, organization string) (seconds int, err er
 	return seconds, nil
 }
 
+// GetWorkTimeByProject returns the total seconds worked for the specified project
+func (a *App) GetWorkTimeByProject(project string, organization string) (seconds int, err error) {
+	if project == "" || organization == "" {
+		return 0, nil
+	}
+	row := a.db.QueryRow("SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE project = ? AND organization = ?", project, organization)
+
+	err = row.Scan(&seconds)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No entry for the given project
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return seconds, nil
+}
+
 // GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
 func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTimes []int, err error) {
 	rows, err := a.db.Query(
@@ -286,6 +362,33 @@ func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTime
 	return monthlyWorkTimes, nil
 }
 
+// GetMonthlyWorktimeByProject returns the total seconds worked for each project for the specified month
+func (a *App) GetMonthlyWorktimeByProject(year int, month time.Month, organization string) (monthlyWorkTimes map[string]int, err error) {
+	monthlyWorkTimes = make(map[string]int)
+	rows, err := a.db.Query(
+		"SELECT project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? GROUP BY project",
+		fmt.Sprintf("%04d-%02d", year, month), organization)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		var seconds int
+		if err := rows.Scan(&project, &seconds); err != nil {
+			return nil, err
+		}
+		monthlyWorkTimes[project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return monthlyWorkTimes, nil
+}
+
 // GetYearlyWorkTime returns the total seconds worked for the specified year
 func (a *App) GetYearlyWorkTime(year int, organization string) (yearlyWorkTime int, err error) {
 	row := a.db.QueryRow("SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ?",
@@ -301,4 +404,31 @@ func (a *App) GetYearlyWorkTime(year int, organization string) (yearlyWorkTime i
 	}
 
 	return yearlyWorkTime, nil
+}
+
+// GetYearlyWorkTimeByProject returns the total seconds worked for each project for the specified year
+func (a *App) GetYearlyWorkTimeByProject(year int, organization string) (yearlyWorkTimes map[string]int, err error) {
+	yearlyWorkTimes = make(map[string]int)
+	rows, err := a.db.Query(
+		"SELECT project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY project",
+		strconv.Itoa(year), organization)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		var seconds int
+		if err := rows.Scan(&project, &seconds); err != nil {
+			return nil, err
+		}
+		yearlyWorkTimes[project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return yearlyWorkTimes, nil
 }

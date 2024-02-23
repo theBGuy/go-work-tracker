@@ -4,24 +4,18 @@ import './App.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import WorkTimeAccordion from './components/WorkTimeAccordian';
+import ActiveConfirmationDialog from './components/ActiveConfirmationDialog';
+import AppFooter from './components/AppFooter';
+
 import {
   AppBar,
   Toolbar,
   Typography,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Select,
   MenuItem,
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Dialog,
   DialogActions,
   DialogContent,
@@ -35,9 +29,6 @@ import {
   FormControl
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from '@mui/icons-material/Settings';
 import {
   StartTimer,
@@ -48,21 +39,20 @@ import {
   SetOrganization,
   RenameOrganization,
   DeleteOrganization,
-  ExportCSVByMonth,
-  ExportCSVByYear,
+  GetProjects,
+  SetProject,
+  RenameProject,
+  DeleteProject,
   GetYearlyWorkTime,
+  GetYearlyWorkTimeByProject,
   GetMonthlyWorkTime,
-  GetVersion,
-  UpdateAvailable,
+  GetMonthlyWorktimeByProject,
   ShowWindow,
   ConfirmAction
 } from "../wailsjs/go/main/App";
 
+// TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
-  // Misc Info
-  const [version, setVersion] = useState('');
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  
   // Variables for timer
   const [timerRunning, setTimerRunning] = useState(false);
   const [workTime, setWorkTime] = useState(0);
@@ -72,15 +62,7 @@ function App() {
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
   const [openConfirm, setOpenConfirm] = useState(false);
 
-  useEffect(() => {
-    GetVersion().then(setVersion);
-    UpdateAvailable().then(setUpdateAvailable);
-    setUpdateAvailable(true);
-  }, []);
-
   // Variables for handling work time totals
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [yearlyWorkTime, setYearlyWorkTime] = useState(0);
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const currentDayRef = useRef(currentDay);
@@ -91,9 +73,13 @@ function App() {
   const [newOrganization, setNewOrganization] = useState('');
   const [openNewOrg, setopenNewOrg] = useState(false);
   const [openRename, setOpenRename] = useState(false);
+
+  const [projects, setProjects] = useState<string[]>([]);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [newProject, setNewProject] = useState('');
+  
   const [showSettings, setShowSettings] = useState(false);
 
-  const [exportStatus, setExportStatus] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const currentYear = new Date().getFullYear();
@@ -112,7 +98,6 @@ function App() {
     "December"
   ];
   const currentMonth = new Date().getMonth();
-  const years = Array.from({length: currentYear - 1999}, (_, i) => 2000 + i);
 
   useEffect(() => {
     currentDayRef.current = currentDay;
@@ -145,10 +130,11 @@ function App() {
       setDialog(false);
       return;
     }
+    console.log(`OrgName: ${newOrganization}, ProjName: ${newProject}`);
     (
       rename
       ? RenameOrganization(selectedOrganization, newOrganization)
-      : SetOrganization(newOrganization)
+      : SetOrganization(newOrganization, newProject)
     ).then(() => {
       setOrganizations(orgs => [...orgs, newOrganization]);
       setNewOrganization('');
@@ -169,44 +155,28 @@ function App() {
   };
 
   const startTimer = () => {
-    StartTimer(selectedOrganization).then(() => {
+    StartTimer(selectedOrganization, selectedProject).then(() => {
       setTimerRunning(true);
     });
   };
 
   const stopTimer = async () => {
-    await StopTimer(selectedOrganization);
-    GetYearlyWorkTime(selectedYear, selectedOrganization)
-      .then(setYearlyWorkTime);
-    GetMonthlyWorkTime(selectedYear, selectedOrganization)
+    await StopTimer(selectedOrganization, selectedProject);
+    GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
     setTimerRunning(false);
     setElapsedTime(0);
     setOpenConfirm(false);
-  };
-  
-  const exportYearlyCSV = () => {
-    setExportStatus("Exporting...");
-    ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
-      setExportStatus("Export complete!");
-      toast.success("Yearly CSV export complete! File saved to " + path);
-    });
-  };
-  
-  const exportMonthlyCSV = (month: number) => {
-    setExportStatus("Exporting...");
-    ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
-      setExportStatus("Export complete!");
-      toast.success("Monthly CSV export complete! File saved to " + path);
-    });
   };
     
   const setOrganization = async (newOrganization: string) => {
     if (timerRunning) {
       await stopTimer();
     }
-    SetOrganization(newOrganization).then(() => {
+    const projs = await GetProjects(newOrganization);
+    SetOrganization(newOrganization, projs[0]).then(() => {
       setSelectedOrganization(newOrganization);
+      setProjects(projs);
     });
   };
 
@@ -216,9 +186,6 @@ function App() {
   };
 
   const handleDeleteOrganization = () => {
-    // if (window.confirm("Are you sure you want to delete this organization?") === false) {
-    //   return;
-    // }
     ConfirmAction(`Delete ${selectedOrganization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
       if (confirmed === false) {
         return;
@@ -231,8 +198,12 @@ function App() {
       DeleteOrganization(selectedOrganization).then(() => {
         setOrganizations(orgs => orgs.filter(org => org !== selectedOrganization));
         setSelectedOrganization(organizations[0]);
+        GetProjects(organizations[0]).then(projs => {
+          setProjects(projs);
+          setSelectedProject(projs[0]);
+        });
+        SetOrganization(selectedOrganization, selectedProject);
       });
-      SetOrganization(selectedOrganization);
     });
   };
 
@@ -274,6 +245,10 @@ function App() {
       } else {
         setOrganizations(orgs);
         setSelectedOrganization(orgs[0]);
+        GetProjects(orgs[0]).then(projs => {
+          setProjects(projs);
+          setSelectedProject(projs[0]);
+        });
       }
     });
   }, []);
@@ -285,6 +260,10 @@ function App() {
   useEffect(() => {
     GetWorkTime(dateString(), selectedOrganization)
       .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
+    GetProjects(selectedOrganization).then(projs => {
+      setProjects(projs);
+      setSelectedProject(projs[0]);
+    });
   }, [selectedOrganization]);
 
   /**
@@ -308,11 +287,9 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetYearlyWorkTime(selectedYear, selectedOrganization)
-      .then(setYearlyWorkTime);
-    GetMonthlyWorkTime(selectedYear, selectedOrganization)
+    GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
-  }, [selectedYear, selectedOrganization]);
+  }, [selectedOrganization]);
 
   /**
    * Update the work time every second if the timer is running
@@ -347,18 +324,18 @@ function App() {
     };
 }, [timerRunning, openConfirm, alertTime]);
 
-  useEffect(() => {
-    // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
-    if (openConfirm) {
-      const timeout = setTimeout(() => {
-        if (timerRunning) {
-          stopTimer();
-          alert("You didn't confirm within two minutes. The timer will be stopped.");
-        }
-      }, 1000 * 60 * 2);
-      return () => clearTimeout(timeout);
-    }
-  }, [openConfirm]);
+  // useEffect(() => {
+  //   // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
+  //   if (openConfirm) {
+  //     const timeout = setTimeout(() => {
+  //       if (timerRunning) {
+  //         stopTimer();
+  //         alert("You didn't confirm within two minutes. The timer will be stopped.");
+  //       }
+  //     }, 1000 * 60 * 2);
+  //     return () => clearTimeout(timeout);
+  //   }
+  // }, [openConfirm]);
 
   return (
     <div id="App">
@@ -409,6 +386,22 @@ function App() {
               </MenuItem>
             ))}
           </Select>
+
+          {/* Dropdown to select project */}
+          <Select
+            value={selectedProject}
+            onChange={(event) => {
+              SetProject(event.target.value as string).then(() => {
+                setSelectedProject(event.target.value as string);
+              });
+            }}
+          >
+            {projects.map((project) => (
+              <MenuItem key={project} value={project}>
+                {project}
+              </MenuItem>
+            ))}
+          </Select>
         </Toolbar>
       </AppBar>
       
@@ -425,65 +418,20 @@ function App() {
       </div>
       
       {/* Table to display our totals */}
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
-          <Select
-            value={selectedYear}
-            onChange={(event) => setSelectedYear(event.target.value as number)}
-          >
-            {years.map((year) => (
-              <MenuItem key={year} value={year}>
-                {year}
-              </MenuItem>
-            ))}
-          </Select>
-          <Typography mt={2} sx={{ flexGrow: 1 }}>
-            Total Work Time: {formatTime(yearlyWorkTime)}
-          </Typography>
-          <Button onClick={exportYearlyCSV}>Export Yearly CSV</Button>
-        </AccordionSummary>
-        <AccordionDetails>
-          <TableContainer component={Paper}>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Month</TableCell>
-                  <TableCell align="right">Work Time</TableCell>
-                  <TableCell align="right">Export</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {monthlyWorkTimes.map((workTime, index) => (
-                  <TableRow key={index}>
-                    <TableCell component="th" scope="row">{months[index]}</TableCell>
-                    <TableCell align="right">{formatTime(workTime)}</TableCell>
-                    <TableCell align="right">
-                      <Button onClick={() => exportMonthlyCSV(index + 1)}>Export Monthly CSV</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </AccordionDetails>
-      </Accordion>
+      <WorkTimeAccordion
+        timerRunning={timerRunning}
+        selectedOrganization={selectedOrganization}
+        months={months}
+        formatTime={formatTime}
+      />
 
       {/* Handle confirming user still active */}
-      <Dialog
-        disableEscapeKeyDown
-        open={openConfirm}
-        onClose={() => setOpenConfirm(false)}
-      >
-        <DialogTitle>Are you still working?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setOpenConfirm(false)}>Yes</Button>
-          <Button onClick={() => stopTimer()}>No</Button>
-        </DialogActions>
-      </Dialog>
+      <ActiveConfirmationDialog
+        openConfirm={openConfirm}
+        timerRunning={timerRunning}
+        setOpenConfirm={setOpenConfirm}
+        stopTimer={stopTimer}
+      />
 
       {/* Handle settings dialog */}
       <Dialog
@@ -544,6 +492,19 @@ function App() {
             value={newOrganization}
             onChange={(event) => setNewOrganization(event.target.value)}
           />
+          <br />
+          <DialogContentText>
+            Please enter the name of the new project.
+          </DialogContentText>
+          <TextField
+            margin="dense"
+            id="name"
+            label="Project Name"
+            type="text"
+            fullWidth
+            value={newProject}
+            onChange={(event) => setNewProject(event.target.value)}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => handleDialogClose(false)}>Confirm</Button>
@@ -584,32 +545,7 @@ function App() {
       {/* Notifcation container */}
       <ToastContainer />
 
-      <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
-        <Toolbar>
-          {updateAvailable && (
-            <Typography variant="h6" component="div">
-              <Tooltip title="Restart to apply update" placement="top-end">
-                <IconButton color="inherit">
-                  <SystemUpdateIcon />
-                </IconButton>
-              </Tooltip>
-                UPDATE AVAILABLE
-            </Typography>
-            )
-          }
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <IconButton color="inherit">
-              <a href="https://github.com/theBGuy" target="_blank">
-                <GitHubIcon />
-              </a>
-            </IconButton>
-              theBGuy
-          </Typography>
-          <Typography variant="h6" component="div">
-            v{version}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <AppFooter />
     </div>
   )
 }
