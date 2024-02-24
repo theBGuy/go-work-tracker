@@ -1,8 +1,17 @@
 // WorkTimeAccordion.tsx
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Accordion, AccordionSummary, Typography, Button, Select, MenuItem, AccordionDetails, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { AccordionSummary, Typography, Button, Select, MenuItem, AccordionDetails, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
+import { styled } from '@mui/system';
+import MuiAccordion from '@mui/material/Accordion';
+
+const Accordion = styled(MuiAccordion)(({ theme }) => ({
+  '&.Mui-expanded': {
+    margin: theme.spacing(5),
+  },
+}));
 
 import {
   GetYearlyWorkTime,
@@ -55,7 +64,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   };
 
   return (
-    <Accordion>
+    <Accordion sx={{ margin: 5, minWidth: 600 }}>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         aria-controls="panel1a-content"
@@ -77,7 +86,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
         </Typography>
         <Button onClick={exportYearlyCSV}>Export Yearly CSV</Button>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails sx={{ margin: (theme) => `${theme.spacing(5)}px !important` }}>
         <TableContainer component={Paper}>
             <Table size='small'>
               <TableHead>

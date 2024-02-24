@@ -6,9 +6,13 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import WorkTimeAccordion from './components/WorkTimeAccordian';
 import ActiveConfirmationDialog from './components/ActiveConfirmationDialog';
+import SettingsDialog from './components/SettingsDialog';
+import NewOrganizationDialog from './components/NewOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
 import {
+  Tab,
+  Tabs,
   AppBar,
   Toolbar,
   Typography,
@@ -23,10 +27,15 @@ import {
   DialogTitle,
   TextField,
   Menu,
-  Tooltip,
   ListItemIcon,
-  InputLabel,
-  FormControl
+  List,
+  ListItem,
+  ListItemText,
+  Grid,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -43,8 +52,6 @@ import {
   SetProject,
   RenameProject,
   DeleteProject,
-  GetYearlyWorkTime,
-  GetYearlyWorkTimeByProject,
   GetMonthlyWorkTime,
   GetMonthlyWorktimeByProject,
   ShowWindow,
@@ -53,6 +60,12 @@ import {
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
+  const TabMap = {
+    WorkTime: 0,
+    YearlyTable: 1
+  };
+  const [selectedTab, setSelectedTab] = useState(TabMap.WorkTime);
+  
   // Variables for timer
   const [timerRunning, setTimerRunning] = useState(false);
   const [workTime, setWorkTime] = useState(0);
@@ -64,6 +77,7 @@ function App() {
 
   // Variables for handling work time totals
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
+  const [monthlyProjectWorkTimes, setMonthlyProjectWorkTimes] = useState<Record<string, number>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const currentDayRef = useRef(currentDay);
 
@@ -289,6 +303,8 @@ function App() {
   useEffect(() => {
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
+    GetMonthlyWorktimeByProject(currentYear, currentMonth + 1, selectedOrganization)
+      .then(times => setMonthlyProjectWorkTimes(times));
   }, [selectedOrganization]);
 
   /**
@@ -324,21 +340,12 @@ function App() {
     };
 }, [timerRunning, openConfirm, alertTime]);
 
-  // useEffect(() => {
-  //   // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
-  //   if (openConfirm) {
-  //     const timeout = setTimeout(() => {
-  //       if (timerRunning) {
-  //         stopTimer();
-  //         alert("You didn't confirm within two minutes. The timer will be stopped.");
-  //       }
-  //     }, 1000 * 60 * 2);
-  //     return () => clearTimeout(timeout);
-  //   }
-  // }, [openConfirm]);
-
   return (
     <div id="App">
+      {/* Notifcation container */}
+      <ToastContainer />
+
+      {/* Our app bar */}
       <AppBar position="static">
         <Toolbar>
           <IconButton
@@ -404,26 +411,89 @@ function App() {
           </Select>
         </Toolbar>
       </AppBar>
+
+      <Tabs
+        variant="fullWidth"
+        value={selectedTab}
+        onChange={(event, newValue) => setSelectedTab(newValue as number)}>
+        <Tab label="Work Time" id={`${TabMap.WorkTime}`} />
+        <Tab label="Yearly Table" id={`${TabMap.YearlyTable}`} />
+      </Tabs>
       
       {/* The main portion, our timer */}
-      <h2>Work total for month of {months[currentMonth]}: {formatTime(monthlyWorkTimes[currentMonth])}</h2>
-      <h2>Today's Work Total: {formatTime(workTime)}</h2>
-      <div>
-        <p>Current work session: {timerRunning ? formatTime(elapsedTime) : '00h 00m 00s'}</p>
-          {timerRunning ? (
-            <Button onClick={stopTimer}>Stop Timer</Button>
-          ) : (
-            <Button onClick={startTimer}>Start Timer</Button>
-          )}
+      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 10 }}>
+        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+          <Grid item xs={12} sm={4} md={4}>
+            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+              Today's Work Total
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary={`Project (${selectedProject}):`} />
+              </ListItem>
+            </List>
+          </Grid>
+
+          <Grid item xs={12} sm={4} md={4}>
+            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+              Weekly Work Total
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary={`Organization: ${formatTime(0)}`} />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary={`Project (${selectedProject}): ${formatTime(0)}`} />
+              </ListItem>
+            </List>
+          </Grid>
+          
+          <Grid item xs={12} sm={4} md={4}>
+            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+              {months[currentMonth]}'s work totals
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`} />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`} />
+              </ListItem>
+            </List>
+          </Grid>
+        </Grid>
+
+        {/* Current session */}
+        <Card sx={{ display: 'inline-block', transform: 'scale(0.9)' }}>
+          <CardContent>
+            <CardHeader title="Current Work Session" />
+            <Typography variant="h5" component="h2">
+              {timerRunning ? formatTime(elapsedTime) : '00h 00m 00s'}
+            </Typography>
+          </CardContent>
+            <CardActions sx={{ justifyContent: 'flex-end' }}>
+              {timerRunning ? (
+                <Button onClick={stopTimer} color='error'>Stop Timer</Button>
+              ) : (
+                <Button onClick={startTimer}>Start Timer</Button>
+              )}
+            </CardActions>
+        </Card>
       </div>
       
       {/* Table to display our totals */}
-      <WorkTimeAccordion
-        timerRunning={timerRunning}
-        selectedOrganization={selectedOrganization}
-        months={months}
-        formatTime={formatTime}
-      />
+      <div hidden={selectedTab !== TabMap.YearlyTable}>
+        <h2>Yearly Work Time</h2>
+        <WorkTimeAccordion
+          timerRunning={timerRunning}
+          selectedOrganization={selectedOrganization}
+          months={months}
+          formatTime={formatTime}
+        />
+      </div>
 
       {/* Handle confirming user still active */}
       <ActiveConfirmationDialog
@@ -434,85 +504,25 @@ function App() {
       />
 
       {/* Handle settings dialog */}
-      <Dialog
-        disableEscapeKeyDown
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-      >
-        <DialogTitle>Settings</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Set the time interval for the `Are you still working?` notification.
-          </DialogContentText>
-
-          {/* TODO: Are there other configurable settings we need? */}
-          
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            {/* Dropdown to select alert time interval */}
-            <InputLabel id="alert-time-select">Confirmation Popup Interval (minutes)</InputLabel>
-            <Select
-              value={newAlertTime}
-              label="Confirmation Popup Interval (minutes)"
-              labelId="alert-time-select"
-              autoWidth
-              onChange={(event) => setNewAlertTime(event.target.value as number)}
-            >
-              {[0, 1, 5, 10, 15, 30, 60].map((minutes) => (
-                <MenuItem key={minutes} value={minutes}>
-                  {minutes}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleUpdateSettings}>Save</Button>
-          <Button onClick={handleMenuClose} color='error'>Close</Button>
-        </DialogActions>
-      </Dialog>
+      <SettingsDialog
+        showSettings={showSettings}
+        setShowSettings={setShowSettings}
+        newAlertTime={newAlertTime}
+        setNewAlertTime={setNewAlertTime}
+        handleUpdateSettings={handleUpdateSettings}
+        handleMenuClose={handleMenuClose}
+      />
       
       {/* Handle creating a new organization */}
-      <Dialog
-        disableEscapeKeyDown
-        open={openNewOrg}
-        onClose={() => handleDialogClose()}
-      >
-        <DialogTitle>Add New Organization</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Please enter the name of the new organization.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Organization Name"
-            type="text"
-            fullWidth
-            value={newOrganization}
-            onChange={(event) => setNewOrganization(event.target.value)}
-          />
-          <br />
-          <DialogContentText>
-            Please enter the name of the new project.
-          </DialogContentText>
-          <TextField
-            margin="dense"
-            id="name"
-            label="Project Name"
-            type="text"
-            fullWidth
-            value={newProject}
-            onChange={(event) => setNewProject(event.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleDialogClose(false)}>Confirm</Button>
-          {organizations.length >= 1 && (
-            <Button onClick={() => handleDialogClose(true)} color='error'>Close</Button>
-          )}
-        </DialogActions>
-      </Dialog>
+      <NewOrganizationDialog
+        openNewOrg={openNewOrg}
+        handleDialogClose={handleDialogClose}
+        newOrganization={newOrganization}
+        setNewOrganization={setNewOrganization}
+        newProject={newProject}
+        setNewProject={setNewProject}
+        organizations={organizations}
+      />
 
       {/* Handle renaming current organization */}
       <Dialog
@@ -541,9 +551,6 @@ function App() {
           <Button onClick={() => handleDialogClose(true, true)} color='error'>Close</Button>
         </DialogActions>
       </Dialog>
-
-      {/* Notifcation container */}
-      <ToastContainer />
 
       <AppFooter />
     </div>
