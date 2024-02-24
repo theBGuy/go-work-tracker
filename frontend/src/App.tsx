@@ -10,6 +10,7 @@ import SettingsDialog from './components/SettingsDialog';
 import NewOrganizationDialog from './components/NewOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
+import { useMediaQuery, Theme } from '@mui/material';
 import {
   Tab,
   Tabs,
@@ -60,6 +61,7 @@ import {
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
+  const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
   const TabMap = {
     WorkTime: 0,
     YearlyTable: 1
@@ -421,50 +423,52 @@ function App() {
       </Tabs>
       
       {/* The main portion, our timer */}
-      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 10 }}>
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
-          <Grid item xs={12} sm={4} md={4}>
-            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
-              Today's Work Total
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
-              </ListItem>
-              <ListItem>
-                <ListItemText primary={`Project (${selectedProject}):`} />
-              </ListItem>
-            </List>
-          </Grid>
+      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 10, minHeight: 375, minWidth: 500 }}>
+        {!isScreenHeightLessThan510px && (
+          <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+            <Grid item xs={12} sm={4} md={4}>
+              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+                Today's Work Total
+              </Typography>
+              <List>
+                <ListItem>
+                  <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary={`Project (${selectedProject}):`} />
+                </ListItem>
+              </List>
+            </Grid>
 
-          <Grid item xs={12} sm={4} md={4}>
-            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
-              Weekly Work Total
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemText primary={`Organization: ${formatTime(0)}`} />
-              </ListItem>
-              <ListItem>
-                <ListItemText primary={`Project (${selectedProject}): ${formatTime(0)}`} />
-              </ListItem>
-            </List>
+            <Grid item xs={12} sm={4} md={4}>
+              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+                Weekly Work Total
+              </Typography>
+              <List>
+                <ListItem>
+                  <ListItemText primary={`Organization: ${formatTime(0)}`} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(0)}`} />
+                </ListItem>
+              </List>
+            </Grid>
+            
+            <Grid item xs={12} sm={4} md={4}>
+              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+                {months[currentMonth]}'s work totals
+              </Typography>
+              <List>
+                <ListItem>
+                  <ListItemText primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`} />
+                </ListItem>
+              </List>
+            </Grid>
           </Grid>
-          
-          <Grid item xs={12} sm={4} md={4}>
-            <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
-              {months[currentMonth]}'s work totals
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemText primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`} />
-              </ListItem>
-              <ListItem>
-                <ListItemText primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`} />
-              </ListItem>
-            </List>
-          </Grid>
-        </Grid>
+        )}
 
         {/* Current session */}
         <Card sx={{ display: 'inline-block', transform: 'scale(0.9)' }}>
