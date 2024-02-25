@@ -11,23 +11,50 @@ import {
   Select
 } from '@mui/material';
 
+import { toast } from 'react-toastify';
+
 interface SettingsDialogProps {
   showSettings: boolean;
-  setShowSettings: (show: boolean) => void;
+  alertTime: number;
   newAlertTime: number;
+  setShowSettings: (show: boolean) => void;
+  setAlertTime: (time: number) => void;
   setNewAlertTime: (time: number) => void;
-  handleUpdateSettings: () => void;
   handleMenuClose: () => void;
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({
   showSettings,
-  setShowSettings,
+  alertTime,
   newAlertTime,
+  setShowSettings,
+  setAlertTime,
   setNewAlertTime,
-  handleUpdateSettings,
   handleMenuClose
 }) => {
+  const handleUpdateSettings = () => {
+    handleMenuClose();
+    setShowSettings(false);
+    if (newAlertTime !== alertTime) {
+      setAlertTime(newAlertTime);
+      if (newAlertTime === 0) {
+        toast.success(
+          <div>
+            Settings updated! <br />
+            `Are you still working?` notification disabled
+          </div>
+        );
+      } else {
+        toast.success(
+          <div>
+            Settings updated! <br />
+            `Are you still working?` interval set to every {newAlertTime} minutes
+          </div>
+        );
+      }
+    }
+  };
+  
   return (
     <Dialog
       disableEscapeKeyDown

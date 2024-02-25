@@ -295,7 +295,7 @@ func (a *App) ConfirmAction(title string, message string) bool {
 	return selection == "Yes"
 }
 
-// GetWorkTime returns the total seconds worked
+// GetWorkTime returns the total seconds worked on the specified date
 func (a *App) GetWorkTime(date string, organization string) (seconds int, err error) {
 	if date == "" || organization == "" {
 		// fmt.Println("Date or organization is empty", date, organization)
@@ -316,12 +316,17 @@ func (a *App) GetWorkTime(date string, organization string) (seconds int, err er
 	return seconds, nil
 }
 
-// GetWorkTimeByProject returns the total seconds worked for the specified project
-func (a *App) GetWorkTimeByProject(project string, organization string) (seconds int, err error) {
+// GetWorkTimeByProject returns the total seconds worked for the specified project on specific date
+func (a *App) GetWorkTimeByProject(organization string, project string, date string) (seconds int, err error) {
 	if project == "" || organization == "" {
 		return 0, nil
 	}
-	row := a.db.QueryRow("SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE project = ? AND organization = ?", project, organization)
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+	row := a.db.QueryRow(
+		"SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE date = ? AND project = ? AND organization = ?",
+		date, project, organization)
 
 	err = row.Scan(&seconds)
 	if err != nil {
@@ -333,6 +338,33 @@ func (a *App) GetWorkTimeByProject(project string, organization string) (seconds
 	}
 
 	return seconds, nil
+}
+
+// GetWeeklyWorkTime returns the total seconds worked for each week of the specified month
+func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string) (weeklyWorkTimes map[int]int, err error) {
+	weeklyWorkTimes = make(map[int]int)
+	rows, err := a.db.Query(
+		"SELECT strftime('%W', date), COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? GROUP BY strftime('%W', date)",
+		fmt.Sprintf("%04d-%02d", year, month), organization)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var week int
+		var seconds int
+		if err := rows.Scan(&week, &seconds); err != nil {
+			return nil, err
+		}
+		weeklyWorkTimes[week] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return weeklyWorkTimes, nil
 }
 
 // GetMonthlyWorkTime returns the total seconds worked for each month of the specified year

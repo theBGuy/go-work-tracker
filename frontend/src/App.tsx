@@ -10,7 +10,7 @@ import SettingsDialog from './components/SettingsDialog';
 import NewOrganizationDialog from './components/NewOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
-import { useMediaQuery, Theme } from '@mui/material';
+import { useMediaQuery } from '@mui/material';
 import {
   Tab,
   Tabs,
@@ -45,6 +45,9 @@ import {
   StopTimer,
   TimeElapsed,
   GetWorkTime,
+  GetWorkTimeByProject,
+  GetMonthlyWorkTime,
+  GetMonthlyWorktimeByProject,
   GetOrganizations,
   SetOrganization,
   RenameOrganization,
@@ -53,15 +56,17 @@ import {
   SetProject,
   RenameProject,
   DeleteProject,
-  GetMonthlyWorkTime,
-  GetMonthlyWorktimeByProject,
   ShowWindow,
   ConfirmAction
 } from "../wailsjs/go/main/App";
 
+import { months, formatTime, dateString } from './utils/utils'
+
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
   const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
   const TabMap = {
     WorkTime: 0,
     YearlyTable: 1
@@ -71,6 +76,7 @@ function App() {
   // Variables for timer
   const [timerRunning, setTimerRunning] = useState(false);
   const [workTime, setWorkTime] = useState(0);
+  const [currProjectWorkTime, setCurrProjectWorkTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const elapsedTimeRef = useRef(elapsedTime);
   const [alertTime, setAlertTime] = useState(30); // Default to 30 minutes
@@ -98,43 +104,9 @@ function App() {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const currentYear = new Date().getFullYear();
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ];
-  const currentMonth = new Date().getMonth();
-
   useEffect(() => {
     currentDayRef.current = currentDay;
   }, [currentDay]);
-
-  const formatTime = (timeInSeconds: number) => {
-    let hours = String(Math.floor(timeInSeconds / 3600)).padStart(2, '0');
-    let minutes = String(Math.floor((timeInSeconds % 3600) / 60)).padStart(2, '0');
-    let seconds = String(Math.floor(timeInSeconds % 60)).padStart(2, '0');
-  
-    return `${hours}h ${minutes}m ${seconds}s`;
-  };
-
-  const dateString = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-    return dateString;
-  };
 
   const handleDialogClose = (canceled?: boolean, rename?: boolean) => {
     if (newOrganization === '' && organizations.length === 0) {
@@ -223,29 +195,6 @@ function App() {
     });
   };
 
-  const handleUpdateSettings = () => {
-    handleMenuClose();
-    setShowSettings(false);
-    if (newAlertTime !== alertTime) {
-      setAlertTime(newAlertTime);
-      if (newAlertTime === 0) {
-        toast.success(
-          <div>
-            Settings updated! <br />
-            `Are you still working?` notification disabled
-          </div>
-        );
-      } else {
-        toast.success(
-          <div>
-            Settings updated! <br />
-            `Are you still working?` interval set to every {newAlertTime} minutes
-          </div>
-        );
-      }
-    }
-  };
-
   useEffect(() => {
     elapsedTimeRef.current = elapsedTime;
   }, [elapsedTime]);
@@ -274,11 +223,14 @@ function App() {
    * This is used to display today's total work time and updates if the user switches organizations
    */
   useEffect(() => {
+    if (!selectedOrganization) return;
     GetWorkTime(dateString(), selectedOrganization)
       .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
     GetProjects(selectedOrganization).then(projs => {
       setProjects(projs);
       setSelectedProject(projs[0]);
+      GetWorkTimeByProject(selectedOrganization, projs[0], dateString())
+        .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
     });
   }, [selectedOrganization]);
 
@@ -435,7 +387,7 @@ function App() {
                   <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary={`Project (${selectedProject}):`} />
+                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(currProjectWorkTime)}`} />
                 </ListItem>
               </List>
             </Grid>
@@ -510,10 +462,11 @@ function App() {
       {/* Handle settings dialog */}
       <SettingsDialog
         showSettings={showSettings}
-        setShowSettings={setShowSettings}
+        alertTime={alertTime}
         newAlertTime={newAlertTime}
+        setShowSettings={setShowSettings}
+        setAlertTime={setAlertTime}
         setNewAlertTime={setNewAlertTime}
-        handleUpdateSettings={handleUpdateSettings}
         handleMenuClose={handleMenuClose}
       />
       

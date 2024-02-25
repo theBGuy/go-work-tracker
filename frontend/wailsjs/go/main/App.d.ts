@@ -22,9 +22,11 @@ export function GetProjects(arg1:string):Promise<Array<string>>;
 
 export function GetVersion():Promise<string>;
 
+export function GetWeeklyWorkTime(arg1:number,arg2:time.Month,arg3:string):Promise<{[key: number]: number}>;
+
 export function GetWorkTime(arg1:string,arg2:string):Promise<number>;
 
-export function GetWorkTimeByProject(arg1:string,arg2:string):Promise<number>;
+export function GetWorkTimeByProject(arg1:string,arg2:string,arg3:string):Promise<number>;
 
 export function GetYearlyWorkTime(arg1:number,arg2:string):Promise<number>;
 
