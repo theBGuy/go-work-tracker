@@ -146,6 +146,7 @@ func (a *App) SetOrganization(organization string, project string) {
 			a.NewOrganization(organization, project)
 		}
 	}
+	fmt.Println("Organization set to:", organization, ":: Project set to:", project)
 
 	a.organization = organization
 	a.project = project
@@ -161,10 +162,25 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	}
 }
 
+// Create a new project for the specified organization
+func (a *App) NewProject(organization string, project string) {
+	if project == "" || organization == "" {
+		return
+	}
+	currentDate := time.Now().Format("2006-01-02")
+	_, err := a.db.Exec(
+		"INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?)",
+		currentDate, organization, project, 0)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (a *App) SetProject(project string) {
 	if a.isRunning {
 		a.StopTimer(a.organization, a.project)
 	}
+	fmt.Println("Project set to:", project, "for Organization:", a.organization)
 	a.project = project
 }
 

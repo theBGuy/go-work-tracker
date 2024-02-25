@@ -8,10 +8,11 @@ import WorkTimeAccordion from './components/WorkTimeAccordian';
 import ActiveConfirmationDialog from './components/ActiveConfirmationDialog';
 import SettingsDialog from './components/SettingsDialog';
 import NewOrganizationDialog from './components/NewOrganizationDialog';
+import NewProjectDialog from './components/NewProjectDialog';
 import EditOrganizationDialog from './components/EditOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
-import { useMediaQuery } from '@mui/material';
+import { Tooltip, useMediaQuery } from '@mui/material';
 import {
   Tab,
   Tabs,
@@ -35,6 +36,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   StartTimer,
   StopTimer,
@@ -74,7 +76,6 @@ function App() {
   const elapsedTimeRef = useRef(elapsedTime);
   const [alertTime, setAlertTime] = useState(30); // Default to 30 minutes
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
-  const [openConfirm, setOpenConfirm] = useState(false);
 
   // Variables for handling work time totals
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
@@ -89,14 +90,20 @@ function App() {
   const [selectedProject, setSelectedProject] = useState('');
   
   // Dialogs
+  const [openConfirm, setOpenConfirm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [openNewOrg, setOpenNewOrg] = useState(false);
+  const [openNewProj, setOpenNewProj] = useState(false);
   const [openEditOrg, setOpenEditOrg] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     currentDayRef.current = currentDay;
   }, [currentDay]);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -119,6 +126,8 @@ function App() {
     await StopTimer(selectedOrganization, selectedProject);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
+    GetMonthlyWorktimeByProject(currentYear, currentMonth + 1, selectedOrganization)
+      .then(times => setMonthlyProjectWorkTimes(times));
     setTimerRunning(false);
     setElapsedTime(0);
     setOpenConfirm(false);
@@ -135,9 +144,19 @@ function App() {
     });
   };
 
+  const handleOpenSettings = () => {
+    setAnchorEl(null);
+    setShowSettings(true);
+  };
+
   const handleOpenNewOrg = () => {
     setAnchorEl(null);
-    setOpenEditOrg(true);
+    setOpenNewOrg(true);
+  };
+
+  const handleOpenNewProj = () => {
+    setAnchorEl(null);
+    setOpenNewProj(true);
   };
 
   const handleOpenRenameOrg = () => {
@@ -167,8 +186,8 @@ function App() {
     });
   };
 
-  const handleDeleteProject = () => {
-    ConfirmAction(`Delete ${selectedProject}`, "Are you sure you want to delete this project?").then((confirmed) => {
+  const handleDeleteProject = (project: string) => {
+    ConfirmAction(`Delete ${project}`, "Are you sure you want to delete this project?").then((confirmed) => {
       if (confirmed === false) {
         return;
       }
@@ -177,20 +196,17 @@ function App() {
         toast.error("You cannot delete the last project");
         return;
       }
-      DeleteProject(selectedOrganization, selectedProject).then(() => {
-        setProjects(projs => projs.filter(proj => proj !== selectedProject));
-        setSelectedProject(projects[0]);
-        SetProject(selectedProject).then(() => {
-          GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
-            .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
+      DeleteProject(selectedOrganization, project).then(() => {
+        setProjects(projs => projs.filter(proj => proj !== project));
+        const newSelectedProject = projects[0];
+        setSelectedProject(newSelectedProject);
+        SetProject(newSelectedProject).then(() => {
+          GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
+            .then(setCurrProjectWorkTime);
         });
       });
     });
   };
-
-  useEffect(() => {
-    elapsedTimeRef.current = elapsedTime;
-  }, [elapsedTime]);
 
   /**
    * Get organizations defined in database when the app loads
@@ -206,6 +222,7 @@ function App() {
         GetProjects(orgs[0]).then(projs => {
           setProjects(projs);
           setSelectedProject(projs[0]);
+          SetOrganization(orgs[0], projs[0]);
         });
       }
     });
@@ -217,15 +234,28 @@ function App() {
    */
   useEffect(() => {
     if (!selectedOrganization) return;
-    GetWorkTime(dateString(), selectedOrganization)
-      .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
+    console.log("Getting work time for organization", selectedOrganization);
+    GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
     GetProjects(selectedOrganization).then(projs => {
       setProjects(projs);
+      // Handle case where the old project name matches the new project name for different organizations
+      if (projs[0] === selectedProject) {
+        GetWorkTimeByProject(selectedOrganization, projs[0], dateString())
+          .then(setCurrProjectWorkTime);
+      }
       setSelectedProject(projs[0]);
-      GetWorkTimeByProject(selectedOrganization, projs[0], dateString())
-        .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
     });
   }, [selectedOrganization]);
+
+  /**
+   * Get the work time for the current project when the app loads
+   */
+  useEffect(() => {
+    if (!selectedProject) return;
+    console.log("Getting work time for project", selectedProject);
+    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
+      .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
+  }, [selectedProject]);
 
   /**
    * Check the day every minute and update the day if it changes
@@ -262,6 +292,7 @@ function App() {
       const interval = setInterval(() => {
         TimeElapsed().then(currentElapsedTime => {
           setWorkTime(prevWorkTime => prevWorkTime + (currentElapsedTime - elapsedTimeRef.current));
+          setCurrProjectWorkTime(prevProjectWorkTime => prevProjectWorkTime + (currentElapsedTime - elapsedTimeRef.current));
           setElapsedTime(currentElapsedTime);
         });
       }, 1000);
@@ -312,16 +343,16 @@ function App() {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={() => setShowSettings(true)}>
+            <MenuItem onClick={handleOpenSettings}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
               Settings
             </MenuItem>
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
+            <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
             <MenuItem onClick={handleOpenRenameOrg}>Edit Current Organization</MenuItem>
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
-            <MenuItem onClick={handleDeleteProject}>Delete Current Project</MenuItem>
           </Menu>
           
           {/* Our App Title */}
@@ -349,10 +380,23 @@ function App() {
                 setSelectedProject(event.target.value as string);
               });
             }}
+            renderValue={(selected) => <div>{selected}</div>}
           >
             {projects.map((project) => (
-              <MenuItem key={project} value={project}>
+              <MenuItem key={project} value={project} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 {project}
+                <Tooltip title="Delete project">
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={(event) => {
+                      event.stopPropagation(); // Prevents the Select onChange event
+                      handleDeleteProject(project);
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
               </MenuItem>
             ))}
           </Select>
@@ -368,7 +412,7 @@ function App() {
       </Tabs>
       
       {/* The main portion, our timer */}
-      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 10, minHeight: 375, minWidth: 500 }}>
+      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
         {!isScreenHeightLessThan510px && (
           <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
             <Grid item xs={12} sm={4} md={4}>
@@ -416,21 +460,23 @@ function App() {
         )}
 
         {/* Current session */}
-        <Card sx={{ display: 'inline-block', transform: 'scale(0.9)' }}>
-          <CardContent>
-            <CardHeader title="Current Work Session" />
-            <Typography variant="h5" component="h2">
-              {timerRunning ? formatTime(elapsedTime) : '00h 00m 00s'}
-            </Typography>
-          </CardContent>
-            <CardActions sx={{ justifyContent: 'flex-end' }}>
-              {timerRunning ? (
-                <Button onClick={stopTimer} color='error'>Stop Timer</Button>
-              ) : (
-                <Button onClick={startTimer}>Start Timer</Button>
-              )}
-            </CardActions>
-        </Card>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Card sx={{ display: 'inline-block', transform: 'scale(0.9)' }}>
+            <CardContent>
+              <CardHeader title="Current Work Session" />
+              <Typography variant="h5" component="h2">
+                {timerRunning ? formatTime(elapsedTime) : '00h 00m 00s'}
+              </Typography>
+            </CardContent>
+              <CardActions sx={{ justifyContent: 'flex-end' }}>
+                {timerRunning ? (
+                  <Button onClick={stopTimer} color='error'>Stop Timer</Button>
+                ) : (
+                  <Button onClick={startTimer}>Start Timer</Button>
+                )}
+              </CardActions>
+          </Card>
+        </div>
       </div>
       
       {/* Table to display our totals */}
@@ -475,13 +521,24 @@ function App() {
         setOpenNewOrg={setOpenNewOrg}
       />
 
-      {/* Handle renaming current organization */}
+      {/* Handle creating a new project for current selected organization */}
+      <NewProjectDialog
+        openNewProj={openNewProj}
+        organization={selectedOrganization}
+        projects={projects}
+        setSelectedProject={setSelectedProject}
+        setProjects={setProjects}
+        setMonthlyProjectWorkTimes={setMonthlyProjectWorkTimes}
+        setOpenNewProj={setOpenNewProj}
+      />
+
+      {/* Handle editing current organization */}
       <EditOrganizationDialog
         openEditOrg={openEditOrg}
-        selectedOrganization={selectedOrganization}
-        selectedProject={selectedProject}
-        projects={projects}
+        organization={selectedOrganization}
         organizations={organizations}
+        project={selectedProject}
+        projects={projects}
         setSelectedOrganization={setSelectedOrganization}
         setSelectedProject={setSelectedProject}
         setOrganizations={setOrganizations}

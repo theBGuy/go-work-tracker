@@ -7,10 +7,10 @@ import { RenameOrganization, RenameProject } from '../../wailsjs/go/main/App';
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
-  selectedOrganization: string;
-  selectedProject: string;
-  projects: string[];
+  organization: string;
   organizations: string[];
+  project: string;
+  projects: string[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
   setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
@@ -25,10 +25,10 @@ type Inputs = {
 
 const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   openEditOrg,
-  selectedOrganization,
-  selectedProject,
-  projects,
+  organization,
   organizations,
+  project,
+  projects,
   setSelectedOrganization,
   setSelectedProject,
   setOrganizations,
@@ -39,10 +39,10 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   const newOrg = watch("organization");
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    if (data.organization && data.organization !== selectedOrganization) {
-      await RenameOrganization(selectedOrganization, data.organization);
+    if (data.organization && data.organization !== organization) {
+      await RenameOrganization(organization, data.organization);
       setOrganizations(prevOrgs => {
-        const index = prevOrgs.indexOf(selectedOrganization);
+        const index = prevOrgs.indexOf(organization);
         if (index > -1) {
           prevOrgs[index] = data.organization;
         }
@@ -50,11 +50,11 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
       });
       setSelectedOrganization(data.organization);
     }
-    if (data.project && data.project !== selectedProject) {
-      console.log(`renaming project for ${selectedOrganization} from ${selectedProject} to ${data.project}`);
-      await RenameProject(selectedOrganization, selectedProject, data.project);
+    if (data.project && data.project !== project) {
+      console.log(`renaming project for ${organization} from ${project} to ${data.project}`);
+      await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.indexOf(selectedProject);
+        const index = prevProjects.indexOf(project);
         if (index > -1) {
           prevProjects[index] = data.project;
         }
@@ -78,7 +78,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             autoFocus
             margin="dense"
             id="name"
-            label="Organization Name"
+            label="New Organization Name"
             type="text"
             fullWidth
             error={organizations.includes(newOrg)}
@@ -89,7 +89,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
           <TextField
             margin="dense"
             id="name"
-            label="Project Name"
+            label="New Project Name"
             type="text"
             fullWidth
             error={projects.includes(newProj)}
@@ -98,17 +98,17 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
           />
         </DialogContent>
         <DialogActions>
-          <Button color='error' onClick={() => setOpenEditOrg(false)}>
-            Close
-          </Button>
           <Button
             type="submit"
             disabled={
-              (newOrg === '' && newProj === '')
+              (!newOrg && !newProj)
               || projects.includes(newProj)
               || organizations.includes(newOrg)
             }>
             Save
+          </Button>
+          <Button color='error' onClick={() => setOpenEditOrg(false)}>
+            Close
           </Button>
         </DialogActions>
       </form>

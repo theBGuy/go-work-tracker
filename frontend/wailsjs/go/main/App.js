@@ -70,6 +70,10 @@ export function NewOrganization(arg1, arg2) {
   return window['go']['main']['App']['NewOrganization'](arg1, arg2);
 }
 
+export function NewProject(arg1, arg2) {
+  return window['go']['main']['App']['NewProject'](arg1, arg2);
+}
+
 export function RenameOrganization(arg1, arg2) {
   return window['go']['main']['App']['RenameOrganization'](arg1, arg2);
 }

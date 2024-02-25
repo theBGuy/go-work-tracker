@@ -36,6 +36,8 @@ export function MonitorTime():Promise<void>;
 
 export function NewOrganization(arg1:string,arg2:string):Promise<void>;
 
+export function NewProject(arg1:string,arg2:string):Promise<void>;
+
 export function RenameOrganization(arg1:string,arg2:string):Promise<void>;
 
 export function RenameProject(arg1:string,arg2:string,arg3:string):Promise<void>;
