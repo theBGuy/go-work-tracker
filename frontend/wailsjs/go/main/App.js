@@ -10,8 +10,8 @@ export function DeleteOrganization(arg1) {
   return window['go']['main']['App']['DeleteOrganization'](arg1);
 }
 
-export function DeleteProject(arg1) {
-  return window['go']['main']['App']['DeleteProject'](arg1);
+export function DeleteProject(arg1, arg2) {
+  return window['go']['main']['App']['DeleteProject'](arg1, arg2);
 }
 
 export function ExportCSVByMonth(arg1, arg2, arg3) {

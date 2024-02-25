@@ -6,7 +6,7 @@ export function ConfirmAction(arg1:string,arg2:string):Promise<boolean>;
 
 export function DeleteOrganization(arg1:string):Promise<void>;
 
-export function DeleteProject(arg1:string):Promise<void>;
+export function DeleteProject(arg1:string,arg2:string):Promise<void>;
 
 export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promise<string>;
 

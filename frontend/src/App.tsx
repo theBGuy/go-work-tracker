@@ -167,6 +167,27 @@ function App() {
     });
   };
 
+  const handleDeleteProject = () => {
+    ConfirmAction(`Delete ${selectedProject}`, "Are you sure you want to delete this project?").then((confirmed) => {
+      if (confirmed === false) {
+        return;
+      }
+      handleMenuClose();
+      if (projects.length === 1) {
+        toast.error("You cannot delete the last project");
+        return;
+      }
+      DeleteProject(selectedOrganization, selectedProject).then(() => {
+        setProjects(projs => projs.filter(proj => proj !== selectedProject));
+        setSelectedProject(projects[0]);
+        SetProject(selectedProject).then(() => {
+          GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
+            .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
+        });
+      });
+    });
+  };
+
   useEffect(() => {
     elapsedTimeRef.current = elapsedTime;
   }, [elapsedTime]);
@@ -300,6 +321,7 @@ function App() {
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
             <MenuItem onClick={handleOpenRenameOrg}>Edit Current Organization</MenuItem>
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
+            <MenuItem onClick={handleDeleteProject}>Delete Current Project</MenuItem>
           </Menu>
           
           {/* Our App Title */}

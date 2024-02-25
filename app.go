@@ -180,11 +180,12 @@ func (a *App) RenameProject(organization string, oldName string, newName string)
 	}
 }
 
-func (a *App) DeleteProject(project string) {
-	if project == "" {
+func (a *App) DeleteProject(organization string, project string) {
+	if project == "" || organization == "" {
 		return
 	}
-	_, err := a.db.Exec("DELETE FROM work_hours WHERE project = ?", project)
+	_, err := a.db.Exec("DELETE FROM work_hours WHERE organization = ? AND project = ?",
+		organization, project)
 	if err != nil {
 		panic(err)
 	}

@@ -81,7 +81,15 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
           />
         </DialogContent>
         <DialogActions>
-          <Button type="submit">Confirm</Button>
+          <Button
+            type="submit"
+            disabled={
+              (newOrg === '' && newProj === '')
+              || projects.includes(newProj)
+              || organizations.includes(newOrg)
+            }>
+            Confirm
+          </Button>
           {organizations.length >= 1 && (
             <Button
               onClick={() => setOpenNewOrg(false)}
