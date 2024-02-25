@@ -8,6 +8,7 @@ import WorkTimeAccordion from './components/WorkTimeAccordian';
 import ActiveConfirmationDialog from './components/ActiveConfirmationDialog';
 import SettingsDialog from './components/SettingsDialog';
 import NewOrganizationDialog from './components/NewOrganizationDialog';
+import EditOrganizationDialog from './components/EditOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
 import { useMediaQuery } from '@mui/material';
@@ -21,12 +22,6 @@ import {
   IconButton,
   Select,
   MenuItem,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  TextField,
   Menu,
   ListItemIcon,
   List,
@@ -50,11 +45,9 @@ import {
   GetMonthlyWorktimeByProject,
   GetOrganizations,
   SetOrganization,
-  RenameOrganization,
   DeleteOrganization,
   GetProjects,
   SetProject,
-  RenameProject,
   DeleteProject,
   ShowWindow,
   ConfirmAction
@@ -92,44 +85,18 @@ function App() {
   // Variables for handling organizations
   const [organizations, setOrganizations] = useState<string[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState('');
-  const [newOrganization, setNewOrganization] = useState('');
-  const [openNewOrg, setopenNewOrg] = useState(false);
-  const [openRename, setOpenRename] = useState(false);
-
   const [projects, setProjects] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
-  const [newProject, setNewProject] = useState('');
   
+  // Dialogs
   const [showSettings, setShowSettings] = useState(false);
-
+  const [openNewOrg, setOpenNewOrg] = useState(false);
+  const [openEditOrg, setOpenEditOrg] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     currentDayRef.current = currentDay;
   }, [currentDay]);
-
-  const handleDialogClose = (canceled?: boolean, rename?: boolean) => {
-    if (newOrganization === '' && organizations.length === 0) {
-      toast.error("Organization name cannot be empty");
-      return;
-    }
-    const setDialog = rename ? setOpenRename : setopenNewOrg;
-    if (canceled) {
-      setDialog(false);
-      return;
-    }
-    console.log(`OrgName: ${newOrganization}, ProjName: ${newProject}`);
-    (
-      rename
-      ? RenameOrganization(selectedOrganization, newOrganization)
-      : SetOrganization(newOrganization, newProject)
-    ).then(() => {
-      setOrganizations(orgs => [...orgs, newOrganization]);
-      setNewOrganization('');
-      setSelectedOrganization(newOrganization);
-      setDialog(false);
-    });
-  };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -138,8 +105,8 @@ function App() {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setShowSettings(false);
-    setopenNewOrg(false);
-    setOpenRename(false);
+    setOpenNewOrg(false);
+    setOpenEditOrg(false);
   };
 
   const startTimer = () => {
@@ -168,9 +135,14 @@ function App() {
     });
   };
 
-  const handleRenameOrganization = () => {
-    handleMenuClose();
-    setOpenRename(true);
+  const handleOpenNewOrg = () => {
+    setAnchorEl(null);
+    setOpenEditOrg(true);
+  };
+
+  const handleOpenRenameOrg = () => {
+    setAnchorEl(null);
+    setOpenEditOrg(true);
   };
 
   const handleDeleteOrganization = () => {
@@ -206,7 +178,7 @@ function App() {
   useEffect(() => {
     GetOrganizations().then(orgs => {
       if (orgs.length === 0) {
-        setopenNewOrg(true);
+        setOpenNewOrg(true);
       } else {
         setOrganizations(orgs);
         setSelectedOrganization(orgs[0]);
@@ -319,15 +291,14 @@ function App() {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            {/* <MenuItem onClick={() => setShowSettings(true)}>Settings</MenuItem> */}
             <MenuItem onClick={() => setShowSettings(true)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
               Settings
             </MenuItem>
-            <MenuItem onClick={() => setopenNewOrg(true)}>Add New Organization</MenuItem>
-            <MenuItem onClick={handleRenameOrganization}>Rename Current Organization</MenuItem>
+            <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
+            <MenuItem onClick={handleOpenRenameOrg}>Edit Current Organization</MenuItem>
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
           </Menu>
           
@@ -473,41 +444,28 @@ function App() {
       {/* Handle creating a new organization */}
       <NewOrganizationDialog
         openNewOrg={openNewOrg}
-        handleDialogClose={handleDialogClose}
-        newOrganization={newOrganization}
-        setNewOrganization={setNewOrganization}
-        newProject={newProject}
-        setNewProject={setNewProject}
         organizations={organizations}
+        projects={projects}
+        setSelectedOrganization={setSelectedOrganization}
+        setSelectedProject={setSelectedProject}
+        setOrganizations={setOrganizations}
+        setProjects={setProjects}
+        setOpenNewOrg={setOpenNewOrg}
       />
 
       {/* Handle renaming current organization */}
-      <Dialog
-        disableEscapeKeyDown
-        open={openRename}
-        onClose={() => handleDialogClose(false, true)}
-      >
-        <DialogTitle>Rename Organization</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Please enter the new name of the organization.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Organization Name"
-            type="text"
-            fullWidth
-            value={newOrganization}
-            onChange={(event) => setNewOrganization(event.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleDialogClose(false, true)}>Confirm</Button>
-          <Button onClick={() => handleDialogClose(true, true)} color='error'>Close</Button>
-        </DialogActions>
-      </Dialog>
+      <EditOrganizationDialog
+        openEditOrg={openEditOrg}
+        selectedOrganization={selectedOrganization}
+        selectedProject={selectedProject}
+        projects={projects}
+        organizations={organizations}
+        setSelectedOrganization={setSelectedOrganization}
+        setSelectedProject={setSelectedProject}
+        setOrganizations={setOrganizations}
+        setProjects={setProjects}
+        setOpenEditOrg={setOpenEditOrg}
+      />
 
       <AppFooter />
     </div>

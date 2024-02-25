@@ -74,8 +74,8 @@ export function RenameOrganization(arg1, arg2) {
   return window['go']['main']['App']['RenameOrganization'](arg1, arg2);
 }
 
-export function RenameProject(arg1, arg2) {
-  return window['go']['main']['App']['RenameProject'](arg1, arg2);
+export function RenameProject(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RenameProject'](arg1, arg2, arg3);
 }
 
 export function SetOrganization(arg1, arg2) {

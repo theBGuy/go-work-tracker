@@ -38,7 +38,7 @@ export function NewOrganization(arg1:string,arg2:string):Promise<void>;
 
 export function RenameOrganization(arg1:string,arg2:string):Promise<void>;
 
-export function RenameProject(arg1:string,arg2:string):Promise<void>;
+export function RenameProject(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SetOrganization(arg1:string,arg2:string):Promise<void>;
 

@@ -168,11 +168,13 @@ func (a *App) SetProject(project string) {
 	a.project = project
 }
 
-func (a *App) RenameProject(oldName string, newName string) {
-	if newName == "" {
+func (a *App) RenameProject(organization string, oldName string, newName string) {
+	if newName == "" || organization == "" {
 		return
 	}
-	_, err := a.db.Exec("UPDATE work_hours SET project = ? WHERE project = ?", newName, oldName)
+	_, err := a.db.Exec(
+		"UPDATE work_hours SET project = ? WHERE organization = ? AND project = ?",
+		newName, organization, oldName)
 	if err != nil {
 		panic(err)
 	}
