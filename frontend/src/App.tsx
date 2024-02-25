@@ -37,6 +37,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   StartTimer,
   StopTimer,
@@ -58,6 +59,7 @@ import {
 } from "../wailsjs/go/main/App";
 
 import { months, formatTime, dateString, getCurrentWeekOfMonth } from './utils/utils'
+import EditProjectDialog from './components/EditProjectDialog';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
@@ -99,6 +101,7 @@ function App() {
   const [openNewOrg, setOpenNewOrg] = useState(false);
   const [openNewProj, setOpenNewProj] = useState(false);
   const [openEditOrg, setOpenEditOrg] = useState(false);
+  const [openEditProj, setOpenEditProj] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -169,7 +172,12 @@ function App() {
     setOpenEditOrg(true);
   };
 
-  const handleDeleteOrganization = () => {
+  const handleOpenRenameProj = () => {
+    setAnchorEl(null);
+    setOpenEditProj(true);
+  };
+
+  const handleDeleteOrganization = async () => {
     ConfirmAction(`Delete ${selectedOrganization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
       if (confirmed === false) {
         return;
@@ -181,12 +189,14 @@ function App() {
       }
       DeleteOrganization(selectedOrganization).then(() => {
         setOrganizations(orgs => orgs.filter(org => org !== selectedOrganization));
-        setSelectedOrganization(organizations[0]);
-        GetProjects(organizations[0]).then(projs => {
+        const newSelectedOrganization = organizations[0];
+        setSelectedOrganization(newSelectedOrganization);
+        GetProjects(newSelectedOrganization).then(projs => {
           setProjects(projs);
-          setSelectedProject(projs[0]);
+          const newSelectedProject = projs[0];
+          setSelectedProject(newSelectedProject);
+          SetOrganization(newSelectedOrganization, newSelectedProject);
         });
-        SetOrganization(selectedOrganization, selectedProject);
       });
     });
   };
@@ -400,12 +410,24 @@ function App() {
             {projects.map((project) => (
               <MenuItem key={project} value={project} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 {project}
+                <Tooltip title="Edit project">
+                  <IconButton
+                    edge="end"
+                    aria-label="edit"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenRenameProj();
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Delete project">
                   <IconButton
                     edge="end"
                     aria-label="delete"
                     onClick={(event) => {
-                      event.stopPropagation(); // Prevents the Select onChange event
+                      event.stopPropagation();
                       handleDeleteProject(project);
                     }}
                   >
@@ -571,6 +593,17 @@ function App() {
         setOrganizations={setOrganizations}
         setProjects={setProjects}
         setOpenEditOrg={setOpenEditOrg}
+      />
+
+      {/* Handle editing a project from the current organization */}
+      <EditProjectDialog
+        openEditProj={openEditProj}
+        organization={selectedOrganization}
+        project={selectedProject}
+        projects={projects}
+        setSelectedProject={setSelectedProject}
+        setProjects={setProjects}
+        setOpenEditProj={setOpenEditProj}
       />
 
       <AppFooter />
