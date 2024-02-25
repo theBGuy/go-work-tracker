@@ -363,7 +363,10 @@ func (a *App) GetWorkTimeByProject(organization string, project string, date str
 func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string) (weeklyWorkTimes map[int]int, err error) {
 	weeklyWorkTimes = make(map[int]int)
 	rows, err := a.db.Query(
-		"SELECT strftime('%W', date), COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? GROUP BY strftime('%W', date)",
+		`SELECT strftime('%W', date) - strftime('%W', date('now','start of month')) as week, COALESCE(SUM(seconds), 0) 
+        FROM work_hours 
+        WHERE strftime('%Y-%m', date) = ? AND organization = ? 
+        GROUP BY week`,
 		fmt.Sprintf("%04d-%02d", year, month), organization)
 	if err != nil {
 		return nil, err
@@ -377,6 +380,36 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string)
 			return nil, err
 		}
 		weeklyWorkTimes[week] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return weeklyWorkTimes, nil
+}
+
+// GetWeeklkyProjectWorktimes returns the total seconds worked for each project for the specified week
+func (a *App) GetWeeklyProjectWorktimes(year int, month time.Month, week int, organization string) (weeklyWorkTimes map[string]int, err error) {
+	weeklyWorkTimes = make(map[string]int)
+	rows, err := a.db.Query(
+		`SELECT project, COALESCE(SUM(seconds), 0) 
+				FROM work_hours 
+				WHERE strftime('%Y-%m', date) = ? AND organization = ? AND strftime('%W', date) - strftime('%W', date('now','start of month')) = ? 
+				GROUP BY project`,
+		fmt.Sprintf("%04d-%02d", year, month), organization, week)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		var seconds int
+		if err := rows.Scan(&project, &seconds); err != nil {
+			return nil, err
+		}
+		weeklyWorkTimes[project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {

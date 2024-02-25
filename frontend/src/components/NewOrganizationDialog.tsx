@@ -85,7 +85,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
           <Button
             type="submit"
             disabled={
-              (newOrg === '' && newProj === '')
+              (!newOrg && !newProj)
               || projects.includes(newProj)
               || organizations.includes(newOrg)
             }>

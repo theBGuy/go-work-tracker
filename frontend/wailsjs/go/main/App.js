@@ -42,6 +42,10 @@ export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
 
+export function GetWeeklyProjectWorktimes(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GetWeeklyProjectWorktimes'](arg1, arg2, arg3, arg4);
+}
+
 export function GetWeeklyWorkTime(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetWeeklyWorkTime'](arg1, arg2, arg3);
 }

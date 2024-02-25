@@ -43,6 +43,8 @@ import {
   TimeElapsed,
   GetWorkTime,
   GetWorkTimeByProject,
+  GetWeeklyWorkTime,
+  GetWeeklyProjectWorktimes,
   GetMonthlyWorkTime,
   GetMonthlyWorktimeByProject,
   GetOrganizations,
@@ -52,10 +54,10 @@ import {
   SetProject,
   DeleteProject,
   ShowWindow,
-  ConfirmAction
+  ConfirmAction,
 } from "../wailsjs/go/main/App";
 
-import { months, formatTime, dateString } from './utils/utils'
+import { months, formatTime, dateString, getCurrentWeekOfMonth } from './utils/utils'
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
@@ -78,6 +80,8 @@ function App() {
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
+  const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<string, number>>({});
+  const [weeklyProjectWorkTimes, setWeeklyProjectWorkTimes] = useState<Record<string, number>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
   const [monthlyProjectWorkTimes, setMonthlyProjectWorkTimes] = useState<Record<string, number>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
@@ -140,6 +144,7 @@ function App() {
     const projs = await GetProjects(newOrganization);
     SetOrganization(newOrganization, projs[0]).then(() => {
       setSelectedOrganization(newOrganization);
+      setSelectedProject(projs[0]);
       setProjects(projs);
     });
   };
@@ -278,6 +283,16 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
+    GetWeeklyWorkTime(currentYear, currentMonth + 1, selectedOrganization)
+      .then(weeklyWorkTimes => {
+        console.log("Weekly work times", weeklyWorkTimes);
+        setWeeklyWorkTimes(weeklyWorkTimes);
+      });
+    GetWeeklyProjectWorktimes(currentYear, currentMonth + 1, getCurrentWeekOfMonth(), selectedOrganization)
+      .then(times => {
+        console.log("Weekly project work times", times);
+        setWeeklyProjectWorkTimes(times);
+      });
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
     GetMonthlyWorktimeByProject(currentYear, currentMonth + 1, selectedOrganization)
@@ -414,17 +429,21 @@ function App() {
       {/* The main portion, our timer */}
       <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
         {!isScreenHeightLessThan510px && (
-          <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+          <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }} sx={{ marginBottom: 3 }}>
             <Grid item xs={12} sm={4} md={4}>
               <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
                 Today's Work Total
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
+                  <ListItemText
+                    primary={`Organization: ${formatTime(workTime)}`}
+                  />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(currProjectWorkTime)}`} />
+                  <ListItemText
+                    primary={`Project (${selectedProject}): ${formatTime(currProjectWorkTime)}`}
+                  />
                 </ListItem>
               </List>
             </Grid>
@@ -435,10 +454,14 @@ function App() {
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(0)}`} />
+                  <ListItemText
+                    primary={`Organization: ${formatTime(weeklyWorkTimes[getCurrentWeekOfMonth()] ?? 0)}`}
+                  />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(0)}`} />
+                  <ListItemText
+                    primary={`Project (${selectedProject}): ${formatTime(weeklyProjectWorkTimes[selectedProject] ?? 0)}`}
+                  />
                 </ListItem>
               </List>
             </Grid>
@@ -449,10 +472,14 @@ function App() {
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`} />
+                  <ListItemText
+                    primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`}
+                  />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`} />
+                  <ListItemText
+                    primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`}
+                  />
                 </ListItem>
               </List>
             </Grid>

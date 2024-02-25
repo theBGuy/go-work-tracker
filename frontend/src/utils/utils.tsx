@@ -29,3 +29,15 @@ export const dateString = () => {
   const dateString = `${year}-${month}-${day}`;
   return dateString;
 };
+
+export function getCurrentWeekOfMonth() {
+  const current = new Date();
+  const firstDayOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
+  let firstDayOfWeek = firstDayOfMonth.getDay();
+  
+  // Adjust the start of the week to Monday
+  firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  
+  const currentDayOfMonth = current.getDate();
+  return Math.ceil((currentDayOfMonth + firstDayOfWeek) / 7) - 1;
+};
