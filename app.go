@@ -390,13 +390,13 @@ func (a *App) GetWorkTimeByProject(organization string, project string, date str
 }
 
 // GetWeeklyWorkTime returns the total seconds worked for each week of the specified month
-func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string) (weeklyWorkTimes map[int]int, err error) {
-	weeklyWorkTimes = make(map[int]int)
+func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string) (weeklyWorkTimes map[int]map[string]int, err error) {
+	weeklyWorkTimes = make(map[int]map[string]int)
 	rows, err := a.db.Query(
-		`SELECT strftime('%W', date) - strftime('%W', date('now','start of month')) as week, COALESCE(SUM(seconds), 0) 
+		`SELECT strftime('%W', date) - strftime('%W', date('now','start of month')) as week, project, COALESCE(SUM(seconds), 0) 
         FROM work_hours 
         WHERE strftime('%Y-%m', date) = ? AND organization = ? 
-        GROUP BY week`,
+        GROUP BY week, project`,
 		fmt.Sprintf("%04d-%02d", year, month), organization)
 	if err != nil {
 		return nil, err
@@ -405,11 +405,15 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string)
 
 	for rows.Next() {
 		var week int
+		var project string
 		var seconds int
-		if err := rows.Scan(&week, &seconds); err != nil {
+		if err := rows.Scan(&week, &project, &seconds); err != nil {
 			return nil, err
 		}
-		weeklyWorkTimes[week] = seconds
+		if _, ok := weeklyWorkTimes[week]; !ok {
+			weeklyWorkTimes[week] = make(map[string]int)
+		}
+		weeklyWorkTimes[week][project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {
@@ -420,6 +424,8 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string)
 }
 
 // GetWeeklkyProjectWorktimes returns the total seconds worked for each project for the specified week
+//
+// Deprecated: Use GetWeeklyWorkTime instead - is there any reason to keep this function?
 func (a *App) GetWeeklyProjectWorktimes(year int, month time.Month, week int, organization string) (weeklyWorkTimes map[string]int, err error) {
 	weeklyWorkTimes = make(map[string]int)
 	rows, err := a.db.Query(

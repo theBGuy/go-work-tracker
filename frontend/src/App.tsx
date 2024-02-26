@@ -81,8 +81,7 @@ function App() {
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
-  const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<string, number>>({});
-  const [weeklyProjectWorkTimes, setWeeklyProjectWorkTimes] = useState<Record<string, number>>({});
+  const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const currentDayRef = useRef(currentDay);
@@ -110,6 +109,10 @@ function App() {
     elapsedTimeRef.current = elapsedTime;
   }, [elapsedTime]);
 
+  const sumWeekWorktime = (week: number) => {
+    return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
+  };
+  
   const sumMonthWorktime = (month: number) => {
     return Object.values(monthlyWorkTimes[month] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
@@ -133,6 +136,9 @@ function App() {
 
   const stopTimer = async () => {
     await StopTimer(selectedOrganization, selectedProject);
+
+    GetWeeklyWorkTime(currentYear, currentMonth + 1, selectedOrganization)
+      .then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
     setTimerRunning(false);
@@ -294,15 +300,7 @@ function App() {
    */
   useEffect(() => {
     GetWeeklyWorkTime(currentYear, currentMonth + 1, selectedOrganization)
-      .then(weeklyWorkTimes => {
-        console.log("Weekly work times", weeklyWorkTimes);
-        setWeeklyWorkTimes(weeklyWorkTimes);
-      });
-    GetWeeklyProjectWorktimes(currentYear, currentMonth + 1, getCurrentWeekOfMonth(), selectedOrganization)
-      .then(times => {
-        console.log("Weekly project work times", times);
-        setWeeklyProjectWorkTimes(times);
-      });
+      .then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
   }, [selectedOrganization]);
@@ -475,12 +473,12 @@ function App() {
               <List>
                 <ListItem>
                   <ListItemText
-                    primary={`Organization: ${formatTime(weeklyWorkTimes[getCurrentWeekOfMonth()] ?? 0)}`}
+                    primary={`Organization: ${formatTime(sumWeekWorktime(getCurrentWeekOfMonth()))}`}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(weeklyProjectWorkTimes[selectedProject] ?? 0)}`}
+                    primary={`Project (${selectedProject}): ${formatTime(weeklyWorkTimes[getCurrentWeekOfMonth()]?.[selectedProject] ?? 0)}`}
                   />
                 </ListItem>
               </List>
