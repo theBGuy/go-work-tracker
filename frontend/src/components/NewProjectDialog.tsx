@@ -16,7 +16,7 @@ interface NewProjectDialogProps {
   projects: string[];
   setSelectedProject: (proj: string) => void;
   setProjects: React.Dispatch<React.SetStateAction<string[]>>;
-  setMonthlyProjectWorkTimes: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  setMonthlyWorkTimes: React.Dispatch<React.SetStateAction<Record<number, Record<string, number>>>>;
   setOpenNewProj: (value: boolean) => void;
 }
 
@@ -30,7 +30,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   projects,
   setSelectedProject,
   setProjects,
-  setMonthlyProjectWorkTimes,
+  setMonthlyWorkTimes,
   setOpenNewProj,
 }) => {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
@@ -41,9 +41,10 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     await SetProject(project);
     setProjects(projs => [...projs, project]);
     setSelectedProject(project);
-    setMonthlyProjectWorkTimes(prev => {
-      prev[project] = 0;
-      return prev;
+    setMonthlyWorkTimes(prev => {
+      const currMonth = new Date().getMonth();
+      prev[currMonth][project] = 0;
+      return { ...prev };
     });
     setOpenNewProj(false);
     reset();

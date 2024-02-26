@@ -47,7 +47,6 @@ import {
   GetWeeklyWorkTime,
   GetWeeklyProjectWorktimes,
   GetMonthlyWorkTime,
-  GetMonthlyWorktimeByProject,
   GetOrganizations,
   SetOrganization,
   DeleteOrganization,
@@ -85,7 +84,6 @@ function App() {
   const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<string, number>>({});
   const [weeklyProjectWorkTimes, setWeeklyProjectWorkTimes] = useState<Record<string, number>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
-  const [monthlyProjectWorkTimes, setMonthlyProjectWorkTimes] = useState<Record<string, number>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const currentDayRef = useRef(currentDay);
 
@@ -112,6 +110,10 @@ function App() {
     elapsedTimeRef.current = elapsedTime;
   }, [elapsedTime]);
 
+  const sumMonthWorktime = (month: number) => {
+    return Object.values(monthlyWorkTimes[month] ?? {}).reduce((acc, curr) => acc + curr, 0);
+  };
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -133,8 +135,6 @@ function App() {
     await StopTimer(selectedOrganization, selectedProject);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
-    GetMonthlyWorktimeByProject(currentYear, currentMonth + 1, selectedOrganization)
-      .then(times => setMonthlyProjectWorkTimes(times));
     setTimerRunning(false);
     setElapsedTime(0);
     setOpenConfirm(false);
@@ -305,8 +305,6 @@ function App() {
       });
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
-    GetMonthlyWorktimeByProject(currentYear, currentMonth + 1, selectedOrganization)
-      .then(times => setMonthlyProjectWorkTimes(times));
   }, [selectedOrganization]);
 
   /**
@@ -495,12 +493,12 @@ function App() {
               <List>
                 <ListItem>
                   <ListItemText
-                    primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth]?.[selectedProject] ?? 0)}`}
+                    primary={`Organization: ${formatTime(sumMonthWorktime(currentMonth))}`}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(monthlyProjectWorkTimes[selectedProject])}`}
+                    primary={`Project (${selectedProject}): ${formatTime(monthlyWorkTimes[currentMonth]?.[selectedProject] ?? 0)}`}
                   />
                 </ListItem>
               </List>
@@ -577,7 +575,7 @@ function App() {
         projects={projects}
         setSelectedProject={setSelectedProject}
         setProjects={setProjects}
-        setMonthlyProjectWorkTimes={setMonthlyProjectWorkTimes}
+        setMonthlyWorkTimes={setMonthlyWorkTimes}
         setOpenNewProj={setOpenNewProj}
       />
 

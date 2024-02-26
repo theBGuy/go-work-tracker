@@ -481,6 +481,8 @@ func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTime
 }
 
 // GetMonthlyWorktimeByProject returns the total seconds worked for each project for the specified month
+//
+// Deprecated: Use GetMonthlyWorkTime instead - is there any reason to keep this function?
 func (a *App) GetMonthlyWorktimeByProject(year int, month time.Month, organization string) (monthlyWorkTimes map[string]int, err error) {
 	monthlyWorkTimes = make(map[string]int)
 	rows, err := a.db.Query(
