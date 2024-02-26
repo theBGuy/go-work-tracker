@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var monthMap = map[int]string{
@@ -27,7 +29,7 @@ var monthMap = map[int]string{
 func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) string {
 	// Query the database for all entries in the specified month and organization
 	rows, err := a.db.Query(
-		"SELECT date, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
+		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
 		fmt.Sprintf("%04d-%02d", year, month), organization)
 	if err != nil {
 		panic(err)
@@ -35,8 +37,9 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	defer rows.Close()
 
 	// Initialize variables to store the daily and weekly totals
-	dailyTotals := make(map[string]int)
-	weeklyTotals := make(map[int]int)
+	dailyTotals := make(map[string]map[string]int) // map[date]map[project]seconds
+	weeklyTotals := make(map[int]map[string]int)   // map[week]map[project]seconds
+	monthlyTotals := make(map[string]int)          // map[project]seconds
 	monthlyTotal := 0
 
 	var dates []string
@@ -44,23 +47,31 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	// Iterate over the rows and calculate the daily, weekly, and monthly totals
 	for rows.Next() {
 		var date string
+		var project string
 		var seconds int
-		if err := rows.Scan(&date, &seconds); err != nil {
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
 			panic(err)
 		}
 
 		if _, ok := dailyTotals[date]; !ok {
 			dates = append(dates, date)
+			dailyTotals[date] = make(map[string]int)
 		}
-		dailyTotals[date] += seconds
+		dailyTotals[date][project] += seconds
 		parsedDate, err := time.Parse("2006-01-02", date)
 		if err != nil {
 			panic(err)
 		}
-		// _, week := parsedDate.ISOWeek()
 		day := parsedDate.Day()
 		week := (day-1)/7 + 1
-		weeklyTotals[week] += seconds
+		if _, ok := weeklyTotals[week]; !ok {
+			weeklyTotals[week] = make(map[string]int)
+		}
+		weeklyTotals[week][project] += seconds
+		if _, ok := monthlyTotals[project]; !ok {
+			monthlyTotals[project] = 0
+		}
+		monthlyTotals[project] += seconds
 		monthlyTotal += seconds
 	}
 
@@ -97,13 +108,24 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	time := formatTime(monthlyTotal)
 	writer.Write([]string{month.String(), strconv.Itoa(monthlyTotal), time})
 
+	// Write the monthly totals per project to the CSV file
+	writer.Write([]string{})
+	writer.Write([]string{"Monthly breakdown"})
+	writer.Write([]string{"Project", "Seconds", "Time (HH:MM:SS)"})
+	for project, seconds := range monthlyTotals {
+		time := formatTime(seconds)
+		writer.Write([]string{project, strconv.Itoa(seconds), time})
+	}
+
 	// Write the weekly totals to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Weekly breakdown"})
 	writer.Write([]string{"Week", "Seconds", "Time (HH:MM:SS)"})
-	for week, seconds := range weeklyTotals {
-		time := formatTime(seconds)
-		writer.Write([]string{strconv.Itoa(week), strconv.Itoa(seconds), time})
+	for week, projectTotals := range weeklyTotals {
+		for project, seconds := range projectTotals {
+			time := formatTime(seconds)
+			writer.Write([]string{strconv.Itoa(week), project, strconv.Itoa(seconds), time})
+		}
 	}
 
 	// Write the daily totals to the CSV file
@@ -111,17 +133,19 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	writer.Write([]string{"Daily breakdown"})
 	writer.Write([]string{"Date", "Seconds", "Time (HH:MM:SS)"})
 	for _, date := range dates {
-		seconds := dailyTotals[date]
-		time := formatTime(seconds)
-		writer.Write([]string{date, strconv.Itoa(seconds), time})
+		for project, seconds := range dailyTotals[date] {
+			time := formatTime(seconds)
+			writer.Write([]string{date, project, strconv.Itoa(seconds), time})
+		}
 	}
+	runtime.ClipboardSetText(a.ctx, csvFilePath)
 	return csvFilePath
 }
 
 func (a *App) ExportCSVByYear(organization string, year int) string {
 	// Query the database for all entries in the given year
 	rows, err := a.db.Query(
-		"SELECT date, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
+		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
 		strconv.Itoa(year), organization)
 	if err != nil {
 		panic(err)
@@ -129,14 +153,16 @@ func (a *App) ExportCSVByYear(organization string, year int) string {
 	defer rows.Close()
 
 	// Initialize variables to store the monthly totals
-	monthlyTotals := make(map[int]int)
+	monthlyTotals := make(map[string]map[string]int) // map[month]map[project]seconds
+	yearlyTotals := make(map[string]int)             // map[project]seconds
 	yearlyTotal := 0
 
 	// Iterate over the rows and calculate the monthly and yearly totals
 	for rows.Next() {
 		var date string
+		var project string
 		var seconds int
-		if err := rows.Scan(&date, &seconds); err != nil {
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
 			panic(err)
 		}
 
@@ -145,7 +171,14 @@ func (a *App) ExportCSVByYear(organization string, year int) string {
 			panic(err)
 		}
 		month := int(parsedDate.Month())
-		monthlyTotals[month] += seconds
+		if _, ok := monthlyTotals[monthMap[month]]; !ok {
+			monthlyTotals[monthMap[month]] = make(map[string]int)
+		}
+		monthlyTotals[monthMap[month]][project] += seconds
+		if _, ok := yearlyTotals[project]; !ok {
+			yearlyTotals[project] = 0
+		}
+		yearlyTotals[project] += seconds
 		yearlyTotal += seconds
 	}
 
@@ -182,15 +215,26 @@ func (a *App) ExportCSVByYear(organization string, year int) string {
 	time := formatTime(yearlyTotal)
 	writer.Write([]string{strconv.Itoa(year), strconv.Itoa(yearlyTotal), time})
 
+	// Write the yearly totals per project to the CSV file
+	writer.Write([]string{})
+	writer.Write([]string{"Yearly breakdown"})
+	writer.Write([]string{"Project", "Seconds", "Time (HH:MM:SS)"})
+	for project, seconds := range yearlyTotals {
+		time := formatTime(seconds)
+		writer.Write([]string{project, strconv.Itoa(seconds), time})
+	}
+
 	// Write the monthly totals to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Monthly breakdown"})
 	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
-	for index, seconds := range monthlyTotals {
-		time := formatTime(seconds)
-		monthName := monthMap[index]
-		writer.Write([]string{monthName, strconv.Itoa(seconds), time})
+	for month, projectTotals := range monthlyTotals {
+		for project, seconds := range projectTotals {
+			time := formatTime(seconds)
+			writer.Write([]string{month, project, strconv.Itoa(seconds), time})
+		}
 	}
+	runtime.ClipboardSetText(a.ctx, csvFilePath)
 	return csvFilePath
 }
 

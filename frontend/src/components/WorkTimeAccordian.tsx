@@ -53,13 +53,25 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
 
   const exportYearlyCSV = () => {
     ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
-      toast.success("Yearly CSV export complete! File saved to " + path);
+      toast.success(
+        <div>
+          <strong>Yearly CSV export complete!</strong> <br />
+          <strong>Path copied to clipboard</strong> <br />
+          File saved to {path}
+        </div>
+      );
     });
   };
   
   const exportMonthlyCSV = (month: number) => {
     ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
-      toast.success("Monthly CSV export complete! File saved to " + path);
+      toast.success(
+        <div>
+          <strong>Monthly CSV export complete!</strong> <br />
+          <strong>Path copied to clipboard</strong> <br />
+          File saved to {path}
+        </div>
+      );
     });
   };
 
