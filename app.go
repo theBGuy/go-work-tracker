@@ -20,7 +20,9 @@ type App struct {
 	ctx                context.Context
 	db                 *sql.DB
 	startTime          time.Time
+	lastSave           time.Time
 	isRunning          bool
+	cancel             context.CancelFunc
 	organization       string
 	project            string
 	version            string
@@ -102,6 +104,7 @@ func (a *App) startup(ctx context.Context) {
 
 // shutdown is called at termination
 func (a *App) shutdown(ctx context.Context) {
+	fmt.Println("Shutting down...")
 	if a.isRunning {
 		a.StopTimer(a.organization, a.project)
 	}
@@ -269,14 +272,31 @@ func (a *App) StartTimer(organization string, project string) {
 	a.organization = organization
 	a.project = project
 	a.isRunning = true
+
+	a.ctx, a.cancel = context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-time.After(1 * time.Minute):
+				a.saveTimer(a.organization, a.project)
+			case <-a.ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
-func (a *App) StopTimer(organization string, project string) {
-	if !a.isRunning {
-		return
-	}
+func (a *App) saveTimer(organization string, project string) {
 	endTime := time.Now()
-	secsWorked := int(endTime.Sub(a.startTime).Seconds())
+	secsWorked := 0
+	if !a.lastSave.IsZero() {
+		// If lastSave is set, calculate the seconds worked since the last save
+		secsWorked = int(endTime.Sub(a.lastSave).Seconds())
+	} else {
+		// If lastSave is not set, calculate the seconds worked since the timer started
+		secsWorked = int(endTime.Sub(a.startTime).Seconds())
+	}
 	date := a.startTime.Format("2006-01-02")
 
 	_, err := a.db.Exec("INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?) "+
@@ -284,7 +304,17 @@ func (a *App) StopTimer(organization string, project string) {
 	if err != nil {
 		panic(err)
 	}
+	a.lastSave = time.Now()
+}
+
+func (a *App) StopTimer(organization string, project string) {
+	if !a.isRunning {
+		return
+	}
+	a.saveTimer(organization, project)
+	a.cancel()
 	a.isRunning = false
+	a.lastSave = time.Time{}
 }
 
 // TimeElapsed returns the total seconds worked in the current timer session
