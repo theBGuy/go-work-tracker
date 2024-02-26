@@ -563,7 +563,6 @@ function App() {
       <NewOrganizationDialog
         openNewOrg={openNewOrg}
         organizations={organizations}
-        projects={projects}
         setSelectedOrganization={setSelectedOrganization}
         setSelectedProject={setSelectedProject}
         setOrganizations={setOrganizations}

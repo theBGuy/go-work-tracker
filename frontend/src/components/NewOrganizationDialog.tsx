@@ -5,7 +5,6 @@ import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
   organizations: string[];
-  projects: string[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
   setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
@@ -21,7 +20,6 @@ type Inputs = {
 const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
   openNewOrg,
   organizations,
-  projects,
   setSelectedOrganization,
   setSelectedProject,
   setOrganizations,
@@ -72,12 +70,11 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
           </DialogContentText>
           <TextField
             margin="dense"
-            id="name"
+            id="project"
             label="Project Name"
             type="text"
             fullWidth
-            error={projects.includes(newProj)}
-            helperText={projects.includes(newProj) ? 'Project name already exists' : ''}
+            helperText={errors.project ? 'This field is required' : ''}
             {...register("project", { required: true })}
           />
         </DialogContent>
@@ -85,8 +82,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
           <Button
             type="submit"
             disabled={
-              (!newOrg && !newProj)
-              || projects.includes(newProj)
+              !newOrg
+              || !newProj
               || organizations.includes(newOrg)
             }>
             Confirm
