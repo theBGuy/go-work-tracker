@@ -1,7 +1,7 @@
 // WorkTimeAccordion.tsx
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { AccordionSummary, Typography, Button, Select, MenuItem, AccordionDetails, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { AccordionSummary, Typography, Button, Select, MenuItem, AccordionDetails, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Collapse } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { styled } from '@mui/system';
@@ -24,6 +24,7 @@ interface WorkTimeAccordionProps {
   timerRunning: boolean;
   selectedOrganization: string;
   months: string[];
+  projects: string[];
   formatTime: (time: number) => string;
 }
 
@@ -31,11 +32,12 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   timerRunning,
   selectedOrganization,
   months,
+  projects,
   formatTime,
 }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyWorkTime, setYearlyWorkTime] = useState(0);
-  const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
+  const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const currentYear = new Date().getFullYear();
   const years = Array.from({length: currentYear - 1999}, (_, i) => 2000 + i);
 
@@ -49,7 +51,8 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
       .then(setYearlyWorkTime);
     GetMonthlyWorkTime(selectedYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
-  }, [selectedYear, selectedOrganization, timerRunning]);
+    console.log(monthlyWorkTimes);
+  }, [selectedYear, selectedOrganization, timerRunning, projects]);
 
   const exportYearlyCSV = () => {
     ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
@@ -109,14 +112,45 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {monthlyWorkTimes.map((workTime, index) => (
-                  <TableRow key={index}>
-                    <TableCell component="th" scope="row">{months[index]}</TableCell>
-                    <TableCell align="right">{formatTime(workTime)}</TableCell>
-                    <TableCell align="right">
-                      <Button onClick={() => exportMonthlyCSV(index + 1)}>Export Monthly CSV</Button>
-                    </TableCell>
-                  </TableRow>
+                {Object.entries(monthlyWorkTimes).map(([month, projectWorkTimes], index) => (
+                  <React.Fragment key={index}>
+                    <TableRow>
+                      <TableCell component="th" scope="row">{months[index]}</TableCell>
+                      <TableCell align="right">
+                        {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button onClick={() => exportMonthlyCSV(index + 1)}>Export Monthly CSV</Button>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                        <Collapse in={true} timeout="auto" unmountOnExit>
+                          <Box margin={1}>
+                            <Typography variant="h6" gutterBottom component="div">
+                              Project Breakdown
+                            </Typography>
+                            <Table size="small" aria-label="purchases">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Project</TableCell>
+                                  <TableCell align="right">Work Time</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {Object.entries(projectWorkTimes).map(([project, workTime], index) => (
+                                  <TableRow key={index}>
+                                    <TableCell component="th" scope="row">{project}</TableCell>
+                                    <TableCell align="right">{formatTime(workTime)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>

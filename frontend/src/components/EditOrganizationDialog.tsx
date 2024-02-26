@@ -46,6 +46,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
         const index = prevProjects.indexOf(project);
         if (index > -1) {
           prevProjects[index] = data.project;
+          return [...prevProjects];
         }
         return prevProjects;
       });
@@ -57,6 +58,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
         const index = prevOrgs.indexOf(organization);
         if (index > -1) {
           prevOrgs[index] = data.organization;
+          return [...prevOrgs];
         }
         return prevOrgs;
       });

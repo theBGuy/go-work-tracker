@@ -12,7 +12,7 @@ export function ExportCSVByMonth(arg1:string,arg2:number,arg3:time.Month):Promis
 
 export function ExportCSVByYear(arg1:string,arg2:number):Promise<string>;
 
-export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<Array<number>>;
+export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<{[key: number]: {[key: string]: number}}>;
 
 export function GetMonthlyWorktimeByProject(arg1:number,arg2:time.Month,arg3:string):Promise<{[key: string]: number}>;
 

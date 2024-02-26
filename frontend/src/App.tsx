@@ -84,7 +84,7 @@ function App() {
   // Variables for handling work time totals
   const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<string, number>>({});
   const [weeklyProjectWorkTimes, setWeeklyProjectWorkTimes] = useState<Record<string, number>>({});
-  const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<number[]>([]);
+  const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [monthlyProjectWorkTimes, setMonthlyProjectWorkTimes] = useState<Record<string, number>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const currentDayRef = useRef(currentDay);
@@ -495,7 +495,7 @@ function App() {
               <List>
                 <ListItem>
                   <ListItemText
-                    primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth])}`}
+                    primary={`Organization: ${formatTime(monthlyWorkTimes[currentMonth]?.[selectedProject] ?? 0)}`}
                   />
                 </ListItem>
                 <ListItem>
@@ -535,6 +535,7 @@ function App() {
           timerRunning={timerRunning}
           selectedOrganization={selectedOrganization}
           months={months}
+          projects={projects}
           formatTime={formatTime}
         />
       </div>

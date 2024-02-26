@@ -38,6 +38,7 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
         const index = prevProjects.indexOf(project);
         if (index > -1) {
           prevProjects[index] = data.project;
+          return [...prevProjects];
         }
         return prevProjects;
       });

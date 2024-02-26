@@ -450,23 +450,27 @@ func (a *App) GetWeeklyProjectWorktimes(year int, month time.Month, week int, or
 }
 
 // GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
-func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTimes []int, err error) {
+func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTimes map[int]map[string]int, err error) {
 	rows, err := a.db.Query(
-		"SELECT strftime('%m', date), COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date)",
+		"SELECT strftime('%m', date), project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date), project",
 		strconv.Itoa(year), organization)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	monthlyWorkTimes = make([]int, 12)
+	monthlyWorkTimes = make(map[int]map[string]int)
 	for rows.Next() {
 		var month int
+		var project string
 		var seconds int
-		if err := rows.Scan(&month, &seconds); err != nil {
+		if err := rows.Scan(&month, &project, &seconds); err != nil {
 			return nil, err
 		}
-		monthlyWorkTimes[month-1] = seconds
+		if _, ok := monthlyWorkTimes[month-1]; !ok {
+			monthlyWorkTimes[month-1] = make(map[string]int)
+		}
+		monthlyWorkTimes[month-1][project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {
