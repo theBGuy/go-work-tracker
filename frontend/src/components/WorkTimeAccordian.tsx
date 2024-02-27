@@ -51,7 +51,6 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
       .then(setYearlyWorkTime);
     GetMonthlyWorkTime(selectedYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
-    console.log(monthlyWorkTimes);
   }, [selectedYear, selectedOrganization, timerRunning, projects]);
 
   const exportYearlyCSV = () => {

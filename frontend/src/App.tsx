@@ -254,7 +254,7 @@ function App() {
    */
   useEffect(() => {
     if (!selectedOrganization) return;
-    console.log("Getting work time for organization", selectedOrganization);
+    console.debug("Getting work time for organization", selectedOrganization);
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
     GetProjects(selectedOrganization).then(projs => {
       setProjects(projs);
@@ -272,7 +272,7 @@ function App() {
    */
   useEffect(() => {
     if (!selectedProject) return;
-    console.log("Getting work time for project", selectedProject);
+    console.debug("Getting work time for project", selectedProject);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
       .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
   }, [selectedProject]);

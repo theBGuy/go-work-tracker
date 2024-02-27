@@ -40,7 +40,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (data.project && data.project !== project) {
-      console.log(`renaming project for ${organization} from ${project} to ${data.project}`);
+      console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
         const index = prevProjects.indexOf(project);
