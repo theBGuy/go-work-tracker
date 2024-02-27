@@ -1,7 +1,23 @@
 // WorkTimeAccordion.tsx
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { AccordionSummary, Typography, Button, Select, MenuItem, AccordionDetails, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Collapse } from '@mui/material';
+import {
+  AccordionSummary,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  AccordionDetails,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Box,
+  Collapse,
+} from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { styled } from '@mui/system';
@@ -114,7 +130,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
                 {Object.entries(monthlyWorkTimes).map(([month, projectWorkTimes], index) => (
                   <React.Fragment key={index}>
                     <TableRow>
-                      <TableCell component="th" scope="row">{months[index]}</TableCell>
+                      <TableCell component="th" scope="row">{months[Number(month)]}</TableCell>
                       <TableCell align="right">
                         {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
                       </TableCell>
