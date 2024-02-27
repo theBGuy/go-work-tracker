@@ -45,7 +45,6 @@ import {
   GetWorkTime,
   GetWorkTimeByProject,
   GetWeeklyWorkTime,
-  GetWeeklyProjectWorktimes,
   GetMonthlyWorkTime,
   GetOrganizations,
   SetOrganization,
@@ -447,7 +446,17 @@ function App() {
       {/* The main portion, our timer */}
       <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
         {!isScreenHeightLessThan510px && (
-          <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }} sx={{ marginBottom: 3 }}>
+          <Grid
+            container
+            spacing={{ xs: 2, md: 4 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            sx={{ 
+              marginBottom: 4, 
+              justifyContent: 'space-evenly', 
+              paddingLeft: theme => theme.spacing(6), 
+              paddingRight: theme => theme.spacing(3) 
+            }}
+          >
             <Grid item xs={12} sm={4} md={4}>
               <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
                 Today's Work Total
