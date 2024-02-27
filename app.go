@@ -79,6 +79,9 @@ func NewApp() *App {
 		panic(err)
 	}
 
+	// TODO: Fix this. Hacky method until I refactor the database to use GORM
+	fixOutdatedDb(db)
+
 	return &App{
 		db:                 db,
 		version:            version,
