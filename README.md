@@ -36,9 +36,8 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-![image](https://github.com/theBGuy/go-work-tracker/assets/60308670/17533570-4e87-4e4f-8382-526a9eb99d36)
-![image](https://github.com/theBGuy/go-work-tracker/assets/60308670/3220c063-a080-4495-b5ac-61a435a62459)
-![image](https://github.com/theBGuy/go-work-tracker/assets/60308670/29afcd02-e7f4-49df-a6c8-de31e5369a4f)
+![main-page](https://github.com/theBGuy/go-work-tracker/assets/60308670/6424d52a-9f0e-424e-abee-fb03126fbc12)
+![yearly-table](https://github.com/theBGuy/go-work-tracker/assets/60308670/85e1ff4d-64ee-4eb0-8815-f02c7984a64c)
 
 ## Contributing
 
