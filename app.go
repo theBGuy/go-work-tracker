@@ -22,13 +22,15 @@ type App struct {
 	startTime          time.Time
 	lastSave           time.Time
 	isRunning          bool
-	cancel             context.CancelFunc
 	organization       string
 	project            string
 	version            string
 	environment        string
 	newVersonAvailable bool
 }
+
+var ctx context.Context
+var cancel context.CancelFunc
 
 type WailsConfig struct {
 	Info Info `json:"info"`
@@ -276,14 +278,14 @@ func (a *App) StartTimer(organization string, project string) {
 	a.project = project
 	a.isRunning = true
 
-	a.ctx, a.cancel = context.WithCancel(context.Background())
+	ctx, cancel = context.WithCancel(context.Background())
 
 	go func() {
 		for {
 			select {
 			case <-time.After(1 * time.Minute):
 				a.saveTimer(a.organization, a.project)
-			case <-a.ctx.Done():
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -315,7 +317,7 @@ func (a *App) StopTimer(organization string, project string) {
 		return
 	}
 	a.saveTimer(organization, project)
-	a.cancel()
+	cancel()
 	a.isRunning = false
 	a.lastSave = time.Time{}
 }
