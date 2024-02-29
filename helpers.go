@@ -8,7 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func getSaveDir(environment string) (string, error) {
@@ -122,5 +125,182 @@ func fixOutdatedDb(db *sql.DB) {
 		if err != nil {
 			panic(err)
 		}
+	}
+}
+
+type ExportType string
+type ProjectTotal struct {
+	Name    string
+	Seconds int
+}
+
+const (
+	CSV ExportType = "csv"
+	PDF ExportType = "pdf"
+)
+
+var monthMap = map[int]string{
+	1:  "January",
+	2:  "February",
+	3:  "March",
+	4:  "April",
+	5:  "May",
+	6:  "June",
+	7:  "July",
+	8:  "August",
+	9:  "September",
+	10: "October",
+	11: "November",
+	12: "December",
+}
+
+func formatTime(seconds int) string {
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	seconds %= 60
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (map[string]map[string]int, map[int]map[string]int, []ProjectTotal, int, []string) {
+	rows, err := a.db.Query(
+		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
+		fmt.Sprintf("%04d-%02d", year, month), organization)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var dates []string
+	// Initialize variables to store the daily and weekly totals
+	dailyTotals := make(map[string]map[string]int) // map[date]map[project]seconds
+	weeklyTotals := make(map[int]map[string]int)   // map[week]map[project]seconds
+	monthlyTotals := make(map[string]int)          // map[project]seconds
+	monthlyTotal := 0
+
+	// Iterate over the rows and calculate the daily, weekly, and monthly totals
+	for rows.Next() {
+		var date string
+		var project string
+		var seconds int
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
+			panic(err)
+		}
+
+		if _, ok := dailyTotals[date]; !ok {
+			dates = append(dates, date)
+			dailyTotals[date] = make(map[string]int)
+		}
+		dailyTotals[date][project] += seconds
+		parsedDate, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			panic(err)
+		}
+		day := parsedDate.Day()
+		week := (day-1)/7 + 1
+		if _, ok := weeklyTotals[week]; !ok {
+			weeklyTotals[week] = make(map[string]int)
+		}
+		weeklyTotals[week][project] += seconds
+		if _, ok := monthlyTotals[project]; !ok {
+			monthlyTotals[project] = 0
+		}
+		monthlyTotals[project] += seconds
+		monthlyTotal += seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		panic(err)
+	}
+
+	// Convert the map to a slice of ProjectTotal
+	var projectTotals []ProjectTotal
+	for project, seconds := range monthlyTotals {
+		projectTotals = append(projectTotals, ProjectTotal{Name: project, Seconds: seconds})
+	}
+
+	// Sort the slice by seconds in descending order
+	sort.Slice(projectTotals, func(i, j int) bool {
+		return projectTotals[i].Seconds > projectTotals[j].Seconds
+	})
+	return dailyTotals, weeklyTotals, projectTotals, monthlyTotal, dates
+}
+
+func (a *App) getYearlyTotals(organization string, year int) (map[string]map[string]int, []ProjectTotal, int) {
+	rows, err := a.db.Query(
+		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
+		strconv.Itoa(year), organization)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	// Initialize variables to store the monthly totals
+	monthlyTotals := make(map[string]map[string]int) // map[month]map[project]seconds
+	yearlyTotals := make(map[string]int)             // map[project]seconds
+	yearlyTotal := 0
+
+	// Iterate over the rows and calculate the monthly and yearly totals
+	for rows.Next() {
+		var date string
+		var project string
+		var seconds int
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
+			panic(err)
+		}
+
+		parsedDate, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			panic(err)
+		}
+		month := int(parsedDate.Month())
+		if _, ok := monthlyTotals[monthMap[month]]; !ok {
+			monthlyTotals[monthMap[month]] = make(map[string]int)
+		}
+		monthlyTotals[monthMap[month]][project] += seconds
+		if _, ok := yearlyTotals[project]; !ok {
+			yearlyTotals[project] = 0
+		}
+		yearlyTotals[project] += seconds
+		yearlyTotal += seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		panic(err)
+	}
+
+	// Convert the map to a slice of ProjectTotal
+	var projectTotals []ProjectTotal
+	for project, seconds := range yearlyTotals {
+		projectTotals = append(projectTotals, ProjectTotal{Name: project, Seconds: seconds})
+	}
+
+	// Sort the slice by seconds in descending order
+	sort.Slice(projectTotals, func(i, j int) bool {
+		return projectTotals[i].Seconds > projectTotals[j].Seconds
+	})
+	return monthlyTotals, projectTotals, yearlyTotal
+}
+
+func (a *App) ExportByMonth(exportType ExportType, organization string, year int, month time.Month) (string, error) {
+	log.Println("Exporting by month...", exportType, organization, year, month)
+	if exportType == CSV {
+		return a.exportCSVByMonth(organization, year, month)
+	} else if exportType == PDF {
+		// a.exportPDFByMonth(organization, year, month)
+		return "", fmt.Errorf("PDF export not implemented")
+	} else {
+		return "", fmt.Errorf("invalid export type")
+	}
+}
+
+func (a *App) ExportByYear(exportType ExportType, organization string, year int) (string, error) {
+	log.Println("Exporting by year...", exportType, organization, year)
+	if exportType == CSV {
+		return a.exportCSVByYear(organization, year)
+	} else if exportType == PDF {
+		// a.exportPDFByYear(organization, year)
+		return "", fmt.Errorf("PDF export not implemented")
+	} else {
+		return "", fmt.Errorf("invalid export type")
 	}
 }

@@ -2,160 +2,16 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type ProjectTotal struct {
-	Name    string
-	Seconds int
-}
-
-var monthMap = map[int]string{
-	1:  "January",
-	2:  "February",
-	3:  "March",
-	4:  "April",
-	5:  "May",
-	6:  "June",
-	7:  "July",
-	8:  "August",
-	9:  "September",
-	10: "October",
-	11: "November",
-	12: "December",
-}
-
-func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (map[string]map[string]int, map[int]map[string]int, []ProjectTotal, int, []string) {
-	fmt.Println("getMonthlyTotals", organization, year, month)
-	rows, err := a.db.Query(
-		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
-		fmt.Sprintf("%04d-%02d", year, month), organization)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var dates []string
-	// Initialize variables to store the daily and weekly totals
-	dailyTotals := make(map[string]map[string]int) // map[date]map[project]seconds
-	weeklyTotals := make(map[int]map[string]int)   // map[week]map[project]seconds
-	monthlyTotals := make(map[string]int)          // map[project]seconds
-	monthlyTotal := 0
-
-	// Iterate over the rows and calculate the daily, weekly, and monthly totals
-	for rows.Next() {
-		var date string
-		var project string
-		var seconds int
-		if err := rows.Scan(&date, &project, &seconds); err != nil {
-			panic(err)
-		}
-		log.Println(date, project, seconds)
-
-		if _, ok := dailyTotals[date]; !ok {
-			dates = append(dates, date)
-			dailyTotals[date] = make(map[string]int)
-		}
-		dailyTotals[date][project] += seconds
-		parsedDate, err := time.Parse("2006-01-02", date)
-		if err != nil {
-			panic(err)
-		}
-		day := parsedDate.Day()
-		week := (day-1)/7 + 1
-		if _, ok := weeklyTotals[week]; !ok {
-			weeklyTotals[week] = make(map[string]int)
-		}
-		weeklyTotals[week][project] += seconds
-		if _, ok := monthlyTotals[project]; !ok {
-			monthlyTotals[project] = 0
-		}
-		monthlyTotals[project] += seconds
-		monthlyTotal += seconds
-	}
-
-	if err := rows.Err(); err != nil {
-		panic(err)
-	}
-
-	// Convert the map to a slice of ProjectTotal
-	var projectTotals []ProjectTotal
-	for project, seconds := range monthlyTotals {
-		projectTotals = append(projectTotals, ProjectTotal{Name: project, Seconds: seconds})
-	}
-
-	// Sort the slice by seconds in descending order
-	sort.Slice(projectTotals, func(i, j int) bool {
-		return projectTotals[i].Seconds > projectTotals[j].Seconds
-	})
-	return dailyTotals, weeklyTotals, projectTotals, monthlyTotal, dates
-}
-
-func (a *App) getYearlyTotals(organization string, year int) (map[string]map[string]int, []ProjectTotal, int) {
-	rows, err := a.db.Query(
-		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
-		strconv.Itoa(year), organization)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	// Initialize variables to store the monthly totals
-	monthlyTotals := make(map[string]map[string]int) // map[month]map[project]seconds
-	yearlyTotals := make(map[string]int)             // map[project]seconds
-	yearlyTotal := 0
-
-	// Iterate over the rows and calculate the monthly and yearly totals
-	for rows.Next() {
-		var date string
-		var project string
-		var seconds int
-		if err := rows.Scan(&date, &project, &seconds); err != nil {
-			panic(err)
-		}
-
-		parsedDate, err := time.Parse("2006-01-02", date)
-		if err != nil {
-			panic(err)
-		}
-		month := int(parsedDate.Month())
-		if _, ok := monthlyTotals[monthMap[month]]; !ok {
-			monthlyTotals[monthMap[month]] = make(map[string]int)
-		}
-		monthlyTotals[monthMap[month]][project] += seconds
-		if _, ok := yearlyTotals[project]; !ok {
-			yearlyTotals[project] = 0
-		}
-		yearlyTotals[project] += seconds
-		yearlyTotal += seconds
-	}
-
-	if err := rows.Err(); err != nil {
-		panic(err)
-	}
-
-	// Convert the map to a slice of ProjectTotal
-	var projectTotals []ProjectTotal
-	for project, seconds := range yearlyTotals {
-		projectTotals = append(projectTotals, ProjectTotal{Name: project, Seconds: seconds})
-	}
-
-	// Sort the slice by seconds in descending order
-	sort.Slice(projectTotals, func(i, j int) bool {
-		return projectTotals[i].Seconds > projectTotals[j].Seconds
-	})
-	return monthlyTotals, projectTotals, yearlyTotal
-}
-
-func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) (string, error) {
+func (a *App) exportCSVByMonth(organization string, year int, month time.Month) (string, error) {
 	dailyTotals, weeklyTotals, monthlyTotals, monthlyTotal, dates := a.getMonthlyTotals(organization, year, month)
 
 	// Get the save directory
@@ -225,7 +81,7 @@ func (a *App) ExportCSVByMonth(organization string, year int, month time.Month) 
 	return csvFilePath, nil
 }
 
-func (a *App) ExportCSVByYear(organization string, year int) (string, error) {
+func (a *App) exportCSVByYear(organization string, year int) (string, error) {
 	monthlyTotals, yearlyTotals, yearlyTotal := a.getYearlyTotals(organization, year)
 
 	// Get the save directory
@@ -281,11 +137,4 @@ func (a *App) ExportCSVByYear(organization string, year int) (string, error) {
 	}
 	runtime.ClipboardSetText(a.ctx, csvFilePath)
 	return csvFilePath, nil
-}
-
-func formatTime(seconds int) string {
-	hours := seconds / 3600
-	minutes := (seconds % 3600) / 60
-	seconds %= 60
-	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 }

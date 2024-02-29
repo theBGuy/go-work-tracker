@@ -32,8 +32,8 @@ const Accordion = styled(MuiAccordion)(({ theme }) => ({
 import {
   GetYearlyWorkTime,
   GetMonthlyWorkTime,
-  ExportCSVByYear,
-  ExportCSVByMonth
+  ExportByYear,
+  ExportByMonth
 } from '../../wailsjs/go/main/App';
 
 import { months, formatTime } from '../utils/utils';
@@ -42,6 +42,11 @@ interface WorkTimeAccordionProps {
   timerRunning: boolean;
   selectedOrganization: string;
   projects: string[];
+}
+
+enum ExportType {
+  CSV = "csv",
+  PDF = "pdf",
 }
 
 const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
@@ -67,11 +72,11 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
       .then(setMonthlyWorkTimes);
   }, [selectedYear, selectedOrganization, timerRunning, projects]);
 
-  const exportYearlyCSV = () => {
-    ExportCSVByYear(selectedOrganization, selectedYear).then((path) => {
+  const exportYearly = (type: ExportType) => {
+    ExportByYear(type, selectedOrganization, selectedYear).then((path) => {
       toast.success(
         <div>
-          <strong>Yearly CSV export complete!</strong> <br />
+          <strong>Yearly {type.toUpperCase()}  export complete!</strong> <br />
           <strong>Path copied to clipboard</strong> <br />
           File saved to {path}
         </div>
@@ -79,18 +84,18 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
     }).catch((err) => {
       toast.error(
         <div>
-          <strong>Yearly CSV export failed!</strong> <br />
+          <strong>Yearly {type.toUpperCase()}  export failed!</strong> <br />
           {err}
         </div>
       );
     });
   };
   
-  const exportMonthlyCSV = (month: number) => {
-    ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
+  const exportMonthly = (type: ExportType, month: number) => {
+    ExportByMonth(type, selectedOrganization, selectedYear, month).then((path) => {
       toast.success(
         <div>
-          <strong>Monthly CSV export complete!</strong> <br />
+          <strong>Monthly {type.toUpperCase()} export complete!</strong> <br />
           <strong>Path copied to clipboard</strong> <br />
           File saved to {path}
         </div>
@@ -98,7 +103,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
     }).catch((err) => {
       toast.error(
         <div>
-          <strong>Monthly CSV export failed!</strong> <br />
+          <strong>Monthly {type.toUpperCase()} export failed!</strong> <br />
           {err}
         </div>
       );
@@ -126,7 +131,11 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
         <Typography mt={2} sx={{ flexGrow: 1 }}>
           Total Work Time: {formatTime(yearlyWorkTime)}
         </Typography>
-        <Button onClick={exportYearlyCSV}>Export Yearly CSV</Button>
+        <Button
+          onClick={() => exportYearly(ExportType.CSV)}
+        >
+          Export Yearly CSV
+        </Button>
       </AccordionSummary>
       <AccordionDetails sx={{ margin: (theme) => `${theme.spacing(5)}px !important` }}>
         <TableContainer component={Paper}>
@@ -147,7 +156,11 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
                         {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
                       </TableCell>
                       <TableCell align="right">
-                        <Button onClick={() => exportMonthlyCSV(Number(month))}>Export Monthly CSV</Button>
+                        <Button
+                          onClick={() => exportMonthly(ExportType.CSV, Number(month))}
+                        >
+                          Export Monthly CSV
+                        </Button>
                       </TableCell>
                     </TableRow>
                     <TableRow>
