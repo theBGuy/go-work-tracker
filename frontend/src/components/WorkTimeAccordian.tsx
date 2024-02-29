@@ -76,6 +76,13 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
           File saved to {path}
         </div>
       );
+    }).catch((err) => {
+      toast.error(
+        <div>
+          <strong>Yearly CSV export failed!</strong> <br />
+          {err}
+        </div>
+      );
     });
   };
   
@@ -86,6 +93,13 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
           <strong>Monthly CSV export complete!</strong> <br />
           <strong>Path copied to clipboard</strong> <br />
           File saved to {path}
+        </div>
+      );
+    }).catch((err) => {
+      toast.error(
+        <div>
+          <strong>Monthly CSV export failed!</strong> <br />
+          {err}
         </div>
       );
     });
