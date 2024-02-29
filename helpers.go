@@ -286,8 +286,7 @@ func (a *App) ExportByMonth(exportType ExportType, organization string, year int
 	if exportType == CSV {
 		return a.exportCSVByMonth(organization, year, month)
 	} else if exportType == PDF {
-		// a.exportPDFByMonth(organization, year, month)
-		return "", fmt.Errorf("PDF export not implemented")
+		return a.exportPDFByMonth(organization, year, month)
 	} else {
 		return "", fmt.Errorf("invalid export type")
 	}
@@ -298,8 +297,7 @@ func (a *App) ExportByYear(exportType ExportType, organization string, year int)
 	if exportType == CSV {
 		return a.exportCSVByYear(organization, year)
 	} else if exportType == PDF {
-		// a.exportPDFByYear(organization, year)
-		return "", fmt.Errorf("PDF export not implemented")
+		return a.exportPDFByYear(organization, year)
 	} else {
 		return "", fmt.Errorf("invalid export type")
 	}
