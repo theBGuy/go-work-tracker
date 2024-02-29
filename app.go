@@ -478,10 +478,10 @@ func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTime
 		if err := rows.Scan(&month, &project, &seconds); err != nil {
 			return nil, err
 		}
-		if _, ok := monthlyWorkTimes[month-1]; !ok {
-			monthlyWorkTimes[month-1] = make(map[string]int)
+		if _, ok := monthlyWorkTimes[month]; !ok {
+			monthlyWorkTimes[month] = make(map[string]int)
 		}
-		monthlyWorkTimes[month-1][project] = seconds
+		monthlyWorkTimes[month][project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {
