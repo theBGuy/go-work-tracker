@@ -82,6 +82,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   };
   
   const exportMonthlyCSV = (month: number) => {
+    console.log('Exporting monthly CSV for month:', month);
     ExportCSVByMonth(selectedOrganization, selectedYear, month).then((path) => {
       toast.success(
         <div>
@@ -135,7 +136,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
                         {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
                       </TableCell>
                       <TableCell align="right">
-                        <Button onClick={() => exportMonthlyCSV(index + 1)}>Export Monthly CSV</Button>
+                        <Button onClick={() => exportMonthlyCSV(Number(month) + 1)}>Export Monthly CSV</Button>
                       </TableCell>
                     </TableRow>
                     <TableRow>
