@@ -17,8 +17,10 @@ import {
   TableRow,
   Box,
   Collapse,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import GetAppIcon from '@mui/icons-material/GetApp';
 
 import { styled } from '@mui/system';
 import MuiAccordion from '@mui/material/Accordion';
@@ -48,6 +50,19 @@ enum ExportType {
   CSV = "csv",
   PDF = "pdf",
 }
+
+const DownloadButton: React.FC<{ type: ExportType, onClick: () => void }> = ({ type, onClick }) => (
+  <Tooltip title={`Download as ${type.toUpperCase()}`} placement="top">
+    <Button
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+    >
+      {type.toUpperCase()} <GetAppIcon />
+    </Button>
+  </Tooltip>
+);
 
 const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   timerRunning,
@@ -131,11 +146,8 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
         <Typography mt={2} sx={{ flexGrow: 1 }}>
           Total Work Time: {formatTime(yearlyWorkTime)}
         </Typography>
-        <Button
-          onClick={() => exportYearly(ExportType.CSV)}
-        >
-          Export Yearly CSV
-        </Button>
+        <DownloadButton type={ExportType.PDF} onClick={() => exportYearly(ExportType.PDF)} />
+        <DownloadButton type={ExportType.CSV} onClick={() => exportYearly(ExportType.CSV)} />
       </AccordionSummary>
       <AccordionDetails sx={{ margin: (theme) => `${theme.spacing(5)}px !important` }}>
         <TableContainer component={Paper}>
@@ -156,11 +168,8 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
                         {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
                       </TableCell>
                       <TableCell align="right">
-                        <Button
-                          onClick={() => exportMonthly(ExportType.CSV, Number(month))}
-                        >
-                          Export Monthly CSV
-                        </Button>
+                        <DownloadButton type={ExportType.PDF} onClick={() => exportMonthly(ExportType.PDF, Number(month))} />
+                        <DownloadButton type={ExportType.CSV} onClick={() => exportMonthly(ExportType.CSV, Number(month))} />
                       </TableCell>
                     </TableRow>
                     <TableRow>
