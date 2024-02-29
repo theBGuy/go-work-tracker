@@ -24,7 +24,6 @@ func (a *App) exportCSVByMonth(organization string, year int, month time.Month) 
 	// Create the directories for the organization, year, and month
 	dir := filepath.Join(dbDir, "csv", organization, strconv.Itoa(year), month.String())
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		// panic(err)
 		log.Println(err)
 		return "", err
 	}
