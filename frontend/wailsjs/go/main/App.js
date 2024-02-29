@@ -14,12 +14,12 @@ export function DeleteProject(arg1, arg2) {
   return window['go']['main']['App']['DeleteProject'](arg1, arg2);
 }
 
-export function ExportCSVByMonth(arg1, arg2, arg3) {
-  return window['go']['main']['App']['ExportCSVByMonth'](arg1, arg2, arg3);
+export function ExportByMonth(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['ExportByMonth'](arg1, arg2, arg3, arg4);
 }
 
-export function ExportCSVByYear(arg1, arg2) {
-  return window['go']['main']['App']['ExportCSVByYear'](arg1, arg2);
+export function ExportByYear(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ExportByYear'](arg1, arg2, arg3);
 }
 
 export function GetMonthlyWorkTime(arg1, arg2) {

@@ -56,14 +56,14 @@ import {
   ConfirmAction,
 } from "../wailsjs/go/main/App";
 
-import { months, formatTime, dateString, getCurrentWeekOfMonth } from './utils/utils'
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth } from './utils/utils'
 import EditProjectDialog from './components/EditProjectDialog';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
   const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
+  const currentMonth = getMonth();
   const TabMap = {
     WorkTime: 0,
     YearlyTable: 1
@@ -136,7 +136,7 @@ function App() {
   const stopTimer = async () => {
     await StopTimer(selectedOrganization, selectedProject);
 
-    GetWeeklyWorkTime(currentYear, currentMonth + 1, selectedOrganization)
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
       .then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
@@ -298,7 +298,7 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetWeeklyWorkTime(currentYear, currentMonth + 1, selectedOrganization)
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
       .then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization)
       .then(setMonthlyWorkTimes);
@@ -539,9 +539,7 @@ function App() {
         <WorkTimeAccordion
           timerRunning={timerRunning}
           selectedOrganization={selectedOrganization}
-          months={months}
           projects={projects}
-          formatTime={formatTime}
         />
       </div>
 
