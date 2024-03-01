@@ -146,8 +146,10 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
         <Typography mt={2} sx={{ flexGrow: 1 }}>
           Total Work Time: {formatTime(yearlyWorkTime)}
         </Typography>
-        <DownloadButton type={ExportType.PDF} onClick={() => exportYearly(ExportType.PDF)} />
-        <DownloadButton type={ExportType.CSV} onClick={() => exportYearly(ExportType.CSV)} />
+        <Box sx={{ display: 'flex', flexDirection: 'row', marginRight: 1 }}>
+          <DownloadButton type={ExportType.PDF} onClick={() => exportYearly(ExportType.PDF)} />
+          <DownloadButton type={ExportType.CSV} onClick={() => exportYearly(ExportType.CSV)} />
+        </Box>
       </AccordionSummary>
       <AccordionDetails sx={{ margin: (theme) => `${theme.spacing(5)}px !important` }}>
         <TableContainer component={Paper}>
