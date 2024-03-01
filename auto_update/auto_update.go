@@ -99,11 +99,11 @@ func doUpdate(url string) {
 	restartSelf()
 }
 
-func CheckForUpdates(version string) bool {
+func GetUpdateAvailable(version string) (bool, string) {
 	resp, err := http.Get("https://api.github.com/repos/thebguy/go-work-tracker/releases/latest")
 	if err != nil {
 		fmt.Println("Error: ", err.Error(), " while checking for updates")
-		return false
+		return false, ""
 	}
 	defer resp.Body.Close()
 
@@ -112,7 +112,7 @@ func CheckForUpdates(version string) bool {
 	var release Release
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		fmt.Println("Error: ", err, " while decoding the response body")
-		return false
+		return false, ""
 	}
 
 	fmt.Println("Latest release: " + release.TagName)
@@ -123,18 +123,18 @@ func CheckForUpdates(version string) bool {
 	currentVersion, err := semver.Parse(version)
 	if err != nil {
 		fmt.Println("Error: ", err, " while parsing the current version")
-		return false
+		return false, ""
 	}
 
 	latestVersion, err := semver.Parse(release.TagName[1:])
 	if err != nil {
 		fmt.Println("Error: ", err.Error(), " while parsing the latest version")
-		return false
+		return false, ""
 	}
 
 	if len(release.Assets) == 0 {
 		fmt.Println("No release files exist for " + release.Name)
-		return false
+		return false, ""
 	}
 
 	// Get browser download URL for the asset based on os
@@ -152,14 +152,25 @@ func CheckForUpdates(version string) bool {
 		if asset.Name == asset_name {
 			if latestVersion.GT(currentVersion) {
 				fmt.Println("New version available: ", release.TagName)
-				if !checkWritePermission() {
-					runMeElevated()
-					return true
-				}
-				doUpdate(asset.DownloadUrl)
+				return true, asset.DownloadUrl
 			}
 			break
 		}
 	}
+	return false, ""
+}
+
+func CheckForUpdates(version string) bool {
+	available, url := GetUpdateAvailable(version)
+	if !available {
+		return false
+	}
+
+	if !checkWritePermission() {
+		runMeElevated()
+		return true
+	}
+
+	doUpdate(url)
 	return false
 }

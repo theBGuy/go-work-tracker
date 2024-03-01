@@ -105,6 +105,7 @@ func (a *App) UpdateAvailable() bool {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.MonitorTime()
+	a.MonitorUpdates()
 }
 
 // shutdown is called at termination
@@ -125,6 +126,24 @@ func (a *App) MonitorTime() {
 			}
 		}
 	}()
+}
+
+func (a *App) MonitorUpdates() {
+	if a.environment == "production" {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+
+		go func() {
+			for range ticker.C {
+				if !a.newVersonAvailable {
+					newVersonAvailable := auto_update.CheckForUpdates(a.version)
+					if newVersonAvailable {
+						a.newVersonAvailable = true
+					}
+				}
+			}
+		}()
+	}
 }
 
 func (a *App) NewOrganization(organization string, project string) {
