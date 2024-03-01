@@ -237,7 +237,12 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.Ln(-1)
 
 	// Write monthly totals
-	for month, projectTotals := range YearlyTotals.MonthlyTotals {
+	for mIdx := time.January; mIdx <= time.December; mIdx++ {
+		month := monthMap[int(mIdx)]
+		if _, ok := YearlyTotals.MonthlyTotals[month]; !ok {
+			continue
+		}
+		projectTotals := YearlyTotals.MonthlyTotals[month]
 		pdf.CellFormat(40, 10, month, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
