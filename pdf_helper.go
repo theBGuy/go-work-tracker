@@ -14,7 +14,11 @@ import (
 )
 
 func (a *App) exportPDFByMonth(organization string, year int, month time.Month) (string, error) {
-	dailyTotals, weeklyTotals, monthlyTotals, monthlyTotal, dates := a.getMonthlyTotals(organization, year, month)
+	MonthlyTotals, err := a.getMonthlyTotals(organization, year, month)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
 
 	// Get the save directory
 	dbDir, err := getSaveDir(a.environment)
@@ -60,8 +64,8 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 	// Write monthly total
 	pdf.CellFormat(40, 10, month.String(), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, strconv.Itoa(monthlyTotal), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, formatTime(monthlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.MonthlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, formatTime(MonthlyTotals.MonthlyTotal), "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
 	// Add space between tables
@@ -76,7 +80,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Ln(-1)
 
 	// Write monthly totals per project
-	for _, projectTotal := range monthlyTotals {
+	for _, projectTotal := range MonthlyTotals.ProjectTotals {
 		pdf.CellFormat(40, 10, projectTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(projectTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(projectTotal.Seconds), "1", 0, "", false, 0, "")
@@ -96,8 +100,11 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Ln(-1)
 
 	// Write weekly totals
-	for week, projectTotals := range weeklyTotals {
+	for week, projectTotals := range MonthlyTotals.WeeklyTotals {
 		pdf.CellFormat(40, 10, strconv.Itoa(week), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
@@ -121,10 +128,13 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Ln(-1)
 
 	// Write daily totals
-	for _, date := range dates {
+	for _, date := range MonthlyTotals.Dates {
 		pdf.CellFormat(40, 10, date, "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
-		for project, seconds := range dailyTotals[date] {
+		for project, seconds := range MonthlyTotals.DailyTotals[date] {
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
@@ -145,7 +155,11 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 }
 
 func (a *App) exportPDFByYear(organization string, year int) (string, error) {
-	monthlyTotals, yearlyTotals, yearlyTotal := a.getYearlyTotals(organization, year)
+	YearlyTotals, err := a.getYearlyTotals(organization, year)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
 
 	// Get the save directory
 	dbDir, err := getSaveDir(a.environment)
@@ -189,8 +203,8 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 
 	// Write yearly total
 	pdf.CellFormat(40, 10, strconv.Itoa(year), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, strconv.Itoa(yearlyTotal), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, formatTime(yearlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.YearlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, formatTime(YearlyTotals.YearlyTotal), "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
 	// Add space between tables
@@ -203,7 +217,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
-	for _, yearlyTotal := range yearlyTotals {
+	for _, yearlyTotal := range YearlyTotals.ProjectTotals {
 		pdf.CellFormat(40, 10, yearlyTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
@@ -223,8 +237,11 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.Ln(-1)
 
 	// Write monthly totals
-	for month, projectTotals := range monthlyTotals {
+	for month, projectTotals := range YearlyTotals.MonthlyTotals {
 		pdf.CellFormat(40, 10, month, "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, formatTime(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
