@@ -81,6 +81,10 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 	// Write monthly totals per project
 	for _, projectTotal := range MonthlyTotals.ProjectTotals {
+		if projectTotal.Seconds == 0 {
+			continue
+		}
+
 		pdf.CellFormat(40, 10, projectTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(projectTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(projectTotal.Seconds), "1", 0, "", false, 0, "")
@@ -101,12 +105,27 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 	// Write weekly totals
 	for week, projectTotals := range MonthlyTotals.WeeklyTotals {
+		// check that at least one project has time logged
+		var logWeek bool
+		for _, seconds := range projectTotals {
+			if seconds > 0 {
+				logWeek = true
+				break
+			}
+		}
+		if !logWeek {
+			continue
+		}
+
 		pdf.CellFormat(40, 10, strconv.Itoa(week), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
+			if seconds == 0 {
+				continue
+			}
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
@@ -129,12 +148,27 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 	// Write daily totals
 	for _, date := range MonthlyTotals.Dates {
+		// check that at least one project has time logged
+		var logDate bool
+		for _, seconds := range MonthlyTotals.DailyTotals[date] {
+			if seconds > 0 {
+				logDate = true
+				break
+			}
+		}
+		if !logDate {
+			continue
+		}
+
 		pdf.CellFormat(40, 10, date, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range MonthlyTotals.DailyTotals[date] {
+			if seconds == 0 {
+				continue
+			}
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
@@ -218,6 +252,10 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 	for _, yearlyTotal := range YearlyTotals.ProjectTotals {
+		if yearlyTotal.Seconds == 0 {
+			continue
+		}
+
 		pdf.CellFormat(40, 10, yearlyTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
@@ -243,12 +281,29 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 			continue
 		}
 		projectTotals := YearlyTotals.MonthlyTotals[month]
+
+		// check that at least one project has time logged
+		var logMonth bool
+		for _, seconds := range projectTotals {
+			if seconds > 0 {
+				logMonth = true
+				break
+			}
+		}
+		if !logMonth {
+			continue
+		}
+
 		pdf.CellFormat(40, 10, month, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
+			if seconds == 0 {
+				continue
+			}
+
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
