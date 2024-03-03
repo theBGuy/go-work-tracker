@@ -103,8 +103,27 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
+	var weekRanges = make(map[int]string)
+	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	currDay := firstOfMonth
+
+	for week := 1; week <= 5; week++ {
+		startOfWeekStr := currDay.Format("01-02")
+
+		for currDay.Weekday() != time.Sunday && currDay.Before(lastOfMonth) {
+			currDay = currDay.AddDate(0, 0, 1)
+		}
+		weekRanges[week] = fmt.Sprintf("%s - %s", startOfWeekStr, currDay.Format("01-02"))
+		currDay = currDay.AddDate(0, 0, 1)
+	}
+
 	// Write weekly totals
-	for week, projectTotals := range MonthlyTotals.WeeklyTotals {
+	for week := 1; week <= 5; week++ {
+		projectTotals, ok := MonthlyTotals.WeeklyTotals[week]
+		if !ok {
+			continue
+		}
 		// check that at least one project has time logged
 		var logWeek bool
 		for _, seconds := range projectTotals {
@@ -117,7 +136,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			continue
 		}
 
-		pdf.CellFormat(40, 10, strconv.Itoa(week), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%d (%s)", week, weekRanges[week]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
