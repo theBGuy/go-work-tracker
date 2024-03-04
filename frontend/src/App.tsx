@@ -83,6 +83,7 @@ function App() {
   const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [currentDay, setCurrentDay] = useState(new Date().getDate());
+  const [currentWeek, setCurrentWeek] = useState(1);
   const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
@@ -109,6 +110,7 @@ function App() {
   }, [elapsedTime]);
 
   const sumWeekWorktime = (week: number) => {
+    console.log(weeklyWorkTimes);
     return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
   
@@ -233,6 +235,7 @@ function App() {
    * If no organizations are defined, prompt the user to create one
    */
   useEffect(() => {
+    getCurrentWeekOfMonth().then(setCurrentWeek);
     GetOrganizations().then(orgs => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
@@ -482,12 +485,12 @@ function App() {
               <List>
                 <ListItem>
                   <ListItemText
-                    primary={`Organization: ${formatTime(sumWeekWorktime(getCurrentWeekOfMonth()))}`}
+                    primary={`Organization: ${formatTime(sumWeekWorktime(currentWeek))}`}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(weeklyWorkTimes[getCurrentWeekOfMonth()]?.[selectedProject] ?? 0)}`}
+                    primary={`Project (${selectedProject}): ${formatTime(weeklyWorkTimes[currentWeek]?.[selectedProject] ?? 0)}`}
                   />
                 </ListItem>
               </List>
