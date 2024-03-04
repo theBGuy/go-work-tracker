@@ -190,7 +190,9 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	}
 
 	// Save the PDF
-	pdfFilePath := filepath.Join(dir, "work_hours.pdf")
+	dateStr := fmt.Sprintf("%d-%s", year, month.String())
+	pdfFileName := fmt.Sprintf("work_hours_%s.pdf", dateStr)
+	pdfFilePath := filepath.Join(dir, pdfFileName)
 	err = pdf.OutputFileAndClose(pdfFilePath)
 	if err != nil {
 		log.Println(err)
@@ -329,7 +331,8 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	}
 
 	// Save the PDF
-	pdfFilePath := filepath.Join(dir, "work_hours_yearly.pdf")
+	pdfFileName := fmt.Sprintf("work_hours_%d.pdf", year)
+	pdfFilePath := filepath.Join(dir, pdfFileName)
 	err = pdf.OutputFileAndClose(pdfFilePath)
 	if err != nil {
 		log.Println(err)
