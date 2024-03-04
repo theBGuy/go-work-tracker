@@ -47,5 +47,5 @@ export async function getCurrentWeekOfMonth() {
   const month = getMonth();
   const day = current.getDate();
   const week = await GetWeekOfMonth(year, month, day);
-  return await GetWeekOfMonth(year, month, day);
+  return week
 };

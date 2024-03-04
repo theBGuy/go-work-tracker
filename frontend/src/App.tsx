@@ -110,7 +110,6 @@ function App() {
   }, [elapsedTime]);
 
   const sumWeekWorktime = (week: number) => {
-    console.log(weeklyWorkTimes);
     return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
   
