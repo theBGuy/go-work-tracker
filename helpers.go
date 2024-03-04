@@ -171,6 +171,20 @@ type MonthlyTotals struct {
 	WeekSumTotals map[int]int
 }
 
+func (a *App) GetWeekOfMonth(year int, month time.Month, day int) int {
+	t := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	currDay := firstOfMonth
+	week := 0
+	for currDay.Before(t) {
+		if currDay.Weekday() == time.Sunday {
+			week++
+		}
+		currDay = currDay.AddDate(0, 0, 1)
+	}
+	return week
+}
+
 func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (MonthlyTotals, error) {
 	rows, err := a.db.Query(
 		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
@@ -208,8 +222,7 @@ func (a *App) getMonthlyTotals(organization string, year int, month time.Month) 
 		if err != nil {
 			return MonthlyTotals{}, err
 		}
-		day := parsedDate.Day()
-		week := (day-1)/7 + 1
+		week := a.GetWeekOfMonth(year, month, parsedDate.Day())
 		if _, ok := weeklyTotals[week]; !ok {
 			weeklyTotals[week] = make(map[string]int)
 		}
