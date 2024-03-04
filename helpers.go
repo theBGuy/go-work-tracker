@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -183,6 +184,11 @@ func (a *App) GetWeekOfMonth(year int, month time.Month, day int) int {
 		currDay = currDay.AddDate(0, 0, 1)
 	}
 	return week
+}
+
+func secondsToHours(seconds int) float64 {
+	hours := float64(seconds) / 3600
+	return math.Round(hours*100) / 100
 }
 
 func getWeekRanges(year int, month time.Month) map[int]string {

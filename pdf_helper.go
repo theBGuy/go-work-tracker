@@ -58,13 +58,14 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 	// Write table header for monthly total
 	pdf.CellFormat(40, 10, "Month", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
 	// Write monthly total
+	monthlyHours := secondsToHours(MonthlyTotals.MonthlyTotal)
 	pdf.CellFormat(40, 10, month.String(), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.MonthlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", monthlyHours), "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, formatTime(MonthlyTotals.MonthlyTotal), "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
@@ -75,7 +76,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Cell(40, 10, "Monthly breakdown")
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
@@ -85,8 +86,9 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			continue
 		}
 
+		projectHours := secondsToHours(projectTotal.Seconds)
 		pdf.CellFormat(40, 10, projectTotal.Name, "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, strconv.Itoa(projectTotal.Seconds), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(projectTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 	}
@@ -99,13 +101,11 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Week", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
 	weekRanges := getWeekRanges(year, month)
-	fmt.Println(weekRanges)
-	fmt.Println(MonthlyTotals.WeeklyTotals)
 
 	// Write weekly totals
 	for week := 0; week <= 4; week++ {
@@ -125,18 +125,20 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			continue
 		}
 
+		weekSumHours := secondsToHours(MonthlyTotals.WeekSumTotals[week])
 		pdf.CellFormat(40, 10, fmt.Sprintf("(%s)", weekRanges[week]), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", weekSumHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
 			if seconds == 0 {
 				continue
 			}
+			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
+			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
 		}
@@ -150,7 +152,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Date", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
@@ -168,18 +170,20 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			continue
 		}
 
+		dateHours := secondsToHours(MonthlyTotals.DateSumTotals[date])
 		pdf.CellFormat(40, 10, date, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, strconv.Itoa(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", dateHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range MonthlyTotals.DailyTotals[date] {
 			if seconds == 0 {
 				continue
 			}
+			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
+			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
 		}
@@ -239,13 +243,14 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 
 	// Write table header for monthly total
 	pdf.CellFormat(40, 10, "Year", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
 	// Write yearly total
+	yearlyHours := secondsToHours(YearlyTotals.YearlyTotal)
 	pdf.CellFormat(40, 10, strconv.Itoa(year), "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.YearlyTotal), "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", yearlyHours), "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, formatTime(YearlyTotals.YearlyTotal), "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
@@ -256,7 +261,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.Cell(40, 10, "Yearly breakdown")
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 	for _, yearlyTotal := range YearlyTotals.ProjectTotals {
@@ -264,8 +269,9 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 			continue
 		}
 
+		projectHours := secondsToHours(yearlyTotal.Seconds)
 		pdf.CellFormat(40, 10, yearlyTotal.Name, "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, strconv.Itoa(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 	}
@@ -278,7 +284,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Month", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Seconds", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
 
@@ -302,9 +308,10 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 			continue
 		}
 
+		monthlyHours := secondsToHours(YearlyTotals.MonthSumTotals[month])
 		pdf.CellFormat(40, 10, month, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, strconv.Itoa(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", monthlyHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
 		for project, seconds := range projectTotals {
@@ -312,9 +319,10 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 				continue
 			}
 
+			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, strconv.Itoa(seconds), "1", 0, "", false, 0, "")
+			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
 		}
