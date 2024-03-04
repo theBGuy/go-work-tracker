@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -33,7 +34,9 @@ func (a *App) exportCSVByMonth(organization string, year int, month time.Month) 
 	}
 
 	// Create the CSV file
-	csvFilePath := filepath.Join(dir, "work_hours.csv")
+	dateStr := fmt.Sprintf("%d-%s", year, month.String())
+	csvFileName := fmt.Sprintf("work_hours_%s.csv", dateStr)
+	csvFilePath := filepath.Join(dir, csvFileName)
 	csvFile, err := os.Create(csvFilePath)
 	if err != nil {
 		log.Println(err)
@@ -46,38 +49,47 @@ func (a *App) exportCSVByMonth(organization string, year int, month time.Month) 
 
 	// Write the monthly total to the CSV file
 	writer.Write([]string{"Month total for " + organization})
-	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
-	time := formatTime(MonthlyTotals.MonthlyTotal)
-	writer.Write([]string{month.String(), strconv.Itoa(MonthlyTotals.MonthlyTotal), time})
+	writer.Write([]string{"Month", "Hours", "Time (HH:MM:SS)"})
+	timeStr := formatTime(MonthlyTotals.MonthlyTotal)
+	monthlyHours := secondsToHours(MonthlyTotals.MonthlyTotal)
+	writer.Write([]string{month.String(), fmt.Sprintf("%.2f", monthlyHours), timeStr})
 
 	// Write the monthly totals per project to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Monthly breakdown"})
-	writer.Write([]string{"Project", "Seconds", "Time (HH:MM:SS)"})
+	writer.Write([]string{"Project", "Hours", "Time (HH:MM:SS)"})
 	for _, projectTotal := range MonthlyTotals.ProjectTotals {
-		time := formatTime(projectTotal.Seconds)
-		writer.Write([]string{projectTotal.Name, strconv.Itoa(projectTotal.Seconds), time})
+		timeStr := formatTime(projectTotal.Seconds)
+		projectHours := secondsToHours(projectTotal.Seconds)
+		writer.Write([]string{projectTotal.Name, fmt.Sprintf("%.2f", projectHours), timeStr})
 	}
 
 	// Write the weekly totals to the CSV file
+	weekRanges := getWeekRanges(year, month)
 	writer.Write([]string{})
 	writer.Write([]string{"Weekly breakdown"})
-	writer.Write([]string{"Week", "Seconds", "Time (HH:MM:SS)"})
-	for week, projectTotals := range MonthlyTotals.WeeklyTotals {
+	writer.Write([]string{"Week", "Project", "Hours", "Time (HH:MM:SS)"})
+	for week := 0; week <= 4; week++ {
+		projectTotals, ok := MonthlyTotals.WeeklyTotals[week]
+		if !ok {
+			continue
+		}
 		for project, seconds := range projectTotals {
-			time := formatTime(seconds)
-			writer.Write([]string{strconv.Itoa(week), project, strconv.Itoa(seconds), time})
+			timeStr := formatTime(seconds)
+			projectHours := secondsToHours(seconds)
+			writer.Write([]string{fmt.Sprintf("(%s)", weekRanges[week]), project, fmt.Sprintf("%.2f", projectHours), timeStr})
 		}
 	}
 
 	// Write the daily totals to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Daily breakdown"})
-	writer.Write([]string{"Date", "Seconds", "Time (HH:MM:SS)"})
+	writer.Write([]string{"Date", "Project", "Hours", "Time (HH:MM:SS)"})
 	for _, date := range MonthlyTotals.Dates {
 		for project, seconds := range MonthlyTotals.DailyTotals[date] {
-			time := formatTime(seconds)
-			writer.Write([]string{date, project, strconv.Itoa(seconds), time})
+			timeStr := formatTime(seconds)
+			projectHours := secondsToHours(seconds)
+			writer.Write([]string{date, project, fmt.Sprintf("%.2f", projectHours), timeStr})
 		}
 	}
 	runtime.ClipboardSetText(a.ctx, csvFilePath)
@@ -106,7 +118,8 @@ func (a *App) exportCSVByYear(organization string, year int) (string, error) {
 	}
 
 	// Create the CSV file
-	csvFilePath := filepath.Join(dir, "work_hours_yearly.csv")
+	csvFileName := fmt.Sprintf("work_hours_%d.csv", year)
+	csvFilePath := filepath.Join(dir, csvFileName)
 	csvFile, err := os.Create(csvFilePath)
 	if err != nil {
 		log.Println(err)
@@ -119,27 +132,47 @@ func (a *App) exportCSVByYear(organization string, year int) (string, error) {
 
 	// Write the yearly total to the CSV file
 	writer.Write([]string{"Yearly total for " + organization})
-	writer.Write([]string{"Year", "Seconds", "Time (HH:MM:SS)"})
-	time := formatTime(YearlyTotals.YearlyTotal)
-	writer.Write([]string{strconv.Itoa(year), strconv.Itoa(YearlyTotals.YearlyTotal), time})
+	writer.Write([]string{"Year", "Hours", "Time (HH:MM:SS)"})
+	timeStr := formatTime(YearlyTotals.YearlyTotal)
+	yearlyHours := secondsToHours(YearlyTotals.YearlyTotal)
+	writer.Write([]string{strconv.Itoa(year), fmt.Sprintf("%.2f", yearlyHours), timeStr})
 
 	// Write the yearly totals per project to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Yearly breakdown"})
-	writer.Write([]string{"Project", "Seconds", "Time (HH:MM:SS)"})
+	writer.Write([]string{"Project", "Hours", "Time (HH:MM:SS)"})
 	for _, yearlyTotal := range YearlyTotals.ProjectTotals {
-		time := formatTime(yearlyTotal.Seconds)
-		writer.Write([]string{yearlyTotal.Name, strconv.Itoa(yearlyTotal.Seconds), time})
+		timeStr := formatTime(yearlyTotal.Seconds)
+		projectHours := secondsToHours(yearlyTotal.Seconds)
+		writer.Write([]string{yearlyTotal.Name, fmt.Sprintf("%.2f", projectHours), timeStr})
 	}
 
 	// Write the monthly totals to the CSV file
 	writer.Write([]string{})
 	writer.Write([]string{"Monthly breakdown"})
-	writer.Write([]string{"Month", "Seconds", "Time (HH:MM:SS)"})
-	for month, projectTotals := range YearlyTotals.MonthlyTotals {
+	writer.Write([]string{"Month", "Project", "Hours", "Time (HH:MM:SS)"})
+	for mIdx := time.January; mIdx <= time.December; mIdx++ {
+		month := monthMap[int(mIdx)]
+		if _, ok := YearlyTotals.MonthlyTotals[month]; !ok {
+			continue
+		}
+		projectTotals := YearlyTotals.MonthlyTotals[month]
+
+		// check that at least one project has time logged
+		var logMonth bool
+		for _, seconds := range projectTotals {
+			if seconds > 0 {
+				logMonth = true
+				break
+			}
+		}
+		if !logMonth {
+			continue
+		}
 		for project, seconds := range projectTotals {
-			time := formatTime(seconds)
-			writer.Write([]string{month, project, strconv.Itoa(seconds), time})
+			timeStr := formatTime(seconds)
+			projectHours := secondsToHours(seconds)
+			writer.Write([]string{month, project, fmt.Sprintf("%.2f", projectHours), timeStr})
 		}
 	}
 	runtime.ClipboardSetText(a.ctx, csvFilePath)
