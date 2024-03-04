@@ -185,6 +185,23 @@ func (a *App) GetWeekOfMonth(year int, month time.Month, day int) int {
 	return week
 }
 
+func getWeekRanges(year int, month time.Month) map[int]string {
+	weekRanges := make(map[int]string)
+	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	currDay := firstOfMonth
+	for week := 0; week <= 4; week++ {
+		startOfWeekStr := currDay.Format("01-02")
+		for currDay.Weekday() != time.Sunday && currDay.Before(lastOfMonth) {
+			currDay = currDay.AddDate(0, 0, 1)
+		}
+
+		weekRanges[week] = fmt.Sprintf("%s - %s", startOfWeekStr, currDay.Format("01-02"))
+		currDay = currDay.AddDate(0, 0, 1)
+	}
+	return weekRanges
+}
+
 func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (MonthlyTotals, error) {
 	rows, err := a.db.Query(
 		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
