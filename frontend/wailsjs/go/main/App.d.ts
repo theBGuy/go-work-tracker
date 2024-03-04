@@ -23,6 +23,8 @@ export function GetProjects(arg1:string):Promise<Array<string>>;
 
 export function GetVersion():Promise<string>;
 
+export function GetWeekOfMonth(arg1:number,arg2:time.Month,arg3:number):Promise<number>;
+
 export function GetWeeklyProjectWorktimes(arg1:number,arg2:time.Month,arg3:number,arg4:string):Promise<{[key: string]: number}>;
 
 export function GetWeeklyWorkTime(arg1:number,arg2:time.Month,arg3:string):Promise<{[key: number]: {[key: string]: number}}>;

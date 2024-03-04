@@ -1,3 +1,5 @@
+import { GetWeekOfMonth } from '../../wailsjs/go/main/App';
+
 export const months: Record<number, string> = {
   1: "January",
   2: "February",
@@ -39,14 +41,11 @@ export const dateString = () => {
   return dateString;
 };
 
-export function getCurrentWeekOfMonth() {
+export async function getCurrentWeekOfMonth() {
   const current = new Date();
-  const firstDayOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
-  let firstDayOfWeek = firstDayOfMonth.getDay();
-  
-  // Adjust the start of the week to Monday
-  firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  
-  const currentDayOfMonth = current.getDate();
-  return Math.ceil((currentDayOfMonth + firstDayOfWeek) / 7) - 1;
+  const year = current.getFullYear();
+  const month = getMonth();
+  const day = current.getDate();
+  const week = await GetWeekOfMonth(year, month, day);
+  return week
 };
