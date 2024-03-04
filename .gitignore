@@ -3,3 +3,4 @@ node_modules
 frontend/dist
 csv/
 *.sqlite
+go-work-tracker-res.syso

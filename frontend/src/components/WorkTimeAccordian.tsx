@@ -17,8 +17,11 @@ import {
   TableRow,
   Box,
   Collapse,
+  Tooltip,
+  FormControl,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import GetAppIcon from '@mui/icons-material/GetApp';
 
 import { styled } from '@mui/system';
 import MuiAccordion from '@mui/material/Accordion';
@@ -36,7 +39,7 @@ import {
   ExportByMonth
 } from '../../wailsjs/go/main/App';
 
-import { months, formatTime } from '../utils/utils';
+import { months, formatTime, getMonth } from '../utils/utils';
 
 interface WorkTimeAccordionProps {
   timerRunning: boolean;
@@ -49,12 +52,26 @@ enum ExportType {
   PDF = "pdf",
 }
 
+const DownloadButton: React.FC<{ type: ExportType, onClick: () => void }> = ({ type, onClick }) => (
+  <Tooltip title={`Download as ${type.toUpperCase()}`} placement="top">
+    <Button
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+    >
+      {type.toUpperCase()} <GetAppIcon />
+    </Button>
+  </Tooltip>
+);
+
 const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   timerRunning,
   selectedOrganization,
   projects,
 }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(getMonth());
   const [yearlyWorkTime, setYearlyWorkTime] = useState(0);
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const currentYear = new Date().getFullYear();
@@ -111,86 +128,102 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
   };
 
   return (
-    <Accordion sx={{ margin: 5, minWidth: 600 }}>
+    <Accordion sx={{ margin: 5, minWidth: 600, alignItems: 'left' }}>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         aria-controls="panel1a-content"
         id="panel1a-header"
       >
-        <Select
-          value={selectedYear}
-          onChange={(event) => setSelectedYear(event.target.value as number)}
-          onClick={(event) => event.stopPropagation()}
-        >
-          {years.map((year) => (
-            <MenuItem key={year} value={year}>
-              {year}
-            </MenuItem>
-          ))}
-        </Select>
-        <Typography mt={2} sx={{ flexGrow: 1 }}>
+        <FormControl sx={{ minWidth: 90 }} size="small">
+          <Select
+            value={selectedYear}
+            onChange={(event) => setSelectedYear(event.target.value as number)}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {years.map((year) => (
+              <MenuItem key={year} value={year}>
+                {year}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Typography mt={1} sx={{ flexGrow: 1 }}>
           Total Work Time: {formatTime(yearlyWorkTime)}
         </Typography>
-        <Button
-          onClick={() => exportYearly(ExportType.CSV)}
-        >
-          Export Yearly CSV
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'row', marginRight: 1 }}>
+          <DownloadButton type={ExportType.PDF} onClick={() => exportYearly(ExportType.PDF)} />
+          <DownloadButton type={ExportType.CSV} onClick={() => exportYearly(ExportType.CSV)} />
+        </Box>
       </AccordionSummary>
       <AccordionDetails sx={{ margin: (theme) => `${theme.spacing(5)}px !important` }}>
         <TableContainer component={Paper}>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>Month</TableCell>
+                  <TableCell>
+                    <FormControl sx={{ minWidth: 120 }} size="small">
+                      <Select
+                        labelId="month-select-label"
+                        id="month-select"
+                        value={selectedMonth}
+                        onChange={(event) => setSelectedMonth(event.target.value as number)}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {Object.entries(months).map(([monthNumber, monthName]) => (
+                          <MenuItem key={Number(monthNumber)} value={Number(monthNumber)}>
+                            {monthName}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
                   <TableCell align="right">Work Time</TableCell>
                   <TableCell align="right">Export</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {Object.entries(monthlyWorkTimes).map(([month, projectWorkTimes], index) => (
-                  <React.Fragment key={index}>
-                    <TableRow>
-                      <TableCell component="th" scope="row">{months[Number(month)]}</TableCell>
-                      <TableCell align="right">
-                        {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          onClick={() => exportMonthly(ExportType.CSV, Number(month))}
-                        >
-                          Export Monthly CSV
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                        <Collapse in={true} timeout="auto" unmountOnExit>
-                          <Box margin={1}>
-                            <Typography variant="h6" gutterBottom component="div">
-                              Project Breakdown
-                            </Typography>
-                            <Table size="small" aria-label="purchases">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Project</TableCell>
-                                  <TableCell align="right">Work Time</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {Object.entries(projectWorkTimes).map(([project, workTime], index) => (
-                                  <TableRow key={index}>
-                                    <TableCell component="th" scope="row">{project}</TableCell>
-                                    <TableCell align="right">{formatTime(workTime)}</TableCell>
+                {Object.entries(monthlyWorkTimes)
+                  .filter(([month]) => Number(month) === selectedMonth)
+                  .map(([month, projectWorkTimes], index) => (
+                    <React.Fragment key={index}>
+                      <TableRow>
+                        <TableCell component="th" scope="row">MONTH TOTAL</TableCell>
+                        <TableCell align="right">
+                          {formatTime(Object.values(projectWorkTimes).reduce((a, b) => a + b, 0))}
+                        </TableCell>
+                        <TableCell align="right">
+                          <DownloadButton type={ExportType.PDF} onClick={() => exportMonthly(ExportType.PDF, Number(month))} />
+                          <DownloadButton type={ExportType.CSV} onClick={() => exportMonthly(ExportType.CSV, Number(month))} />
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                          <Collapse in={true} timeout="auto" unmountOnExit>
+                            <Box margin={1}>
+                              <Typography variant="h6" gutterBottom component="div">
+                                Project Breakdown
+                              </Typography>
+                              <Table size="small" aria-label="purchases">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Project</TableCell>
+                                    <TableCell align="right">Work Time</TableCell>
                                   </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
+                                </TableHead>
+                                <TableBody>
+                                  {Object.entries(projectWorkTimes).map(([project, workTime], index) => (
+                                    <TableRow key={index}>
+                                      <TableCell component="th" scope="row">{project}</TableCell>
+                                      <TableCell align="right">{formatTime(workTime)}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
                 ))}
               </TableBody>
             </Table>
