@@ -37,8 +37,6 @@ export function GetYearlyWorkTime(arg1:number,arg2:string):Promise<number>;
 
 export function GetYearlyWorkTimeByProject(arg1:number,arg2:string):Promise<{[key: string]: number}>;
 
-export function MonitorTime():Promise<void>;
-
 export function NewOrganization(arg1:string,arg2:string):Promise<void>;
 
 export function NewProject(arg1:string,arg2:string):Promise<void>;
