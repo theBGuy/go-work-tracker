@@ -3,6 +3,7 @@ package auto_update
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -83,7 +84,7 @@ func restartSelf() error {
 	return err
 }
 
-func doUpdate(url string) {
+func DoUpdate(url string) {
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -151,7 +152,7 @@ func GetUpdateAvailable(version string) (bool, string) {
 	for _, asset := range release.Assets {
 		if asset.Name == asset_name {
 			if latestVersion.GT(currentVersion) {
-				fmt.Println("New version available: ", release.TagName)
+				log.Println("New version available: ", release.TagName)
 				return true, asset.DownloadUrl
 			}
 			break
@@ -160,7 +161,7 @@ func GetUpdateAvailable(version string) (bool, string) {
 	return false, ""
 }
 
-func CheckForUpdates(version string) bool {
+func Run(version string) bool {
 	available, url := GetUpdateAvailable(version)
 	if !available {
 		return false
@@ -171,6 +172,6 @@ func CheckForUpdates(version string) bool {
 		return true
 	}
 
-	doUpdate(url)
+	DoUpdate(url)
 	return false
 }
