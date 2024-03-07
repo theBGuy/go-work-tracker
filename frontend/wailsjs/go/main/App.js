@@ -70,10 +70,6 @@ export function GetYearlyWorkTimeByProject(arg1, arg2) {
   return window['go']['main']['App']['GetYearlyWorkTimeByProject'](arg1, arg2);
 }
 
-export function MonitorTime() {
-  return window['go']['main']['App']['MonitorTime']();
-}
-
 export function NewOrganization(arg1, arg2) {
   return window['go']['main']['App']['NewOrganization'](arg1, arg2);
 }

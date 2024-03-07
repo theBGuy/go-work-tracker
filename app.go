@@ -62,7 +62,7 @@ func NewApp() *App {
 	// Check for updates
 	var newVersonAvailable bool
 	if environment == "production" {
-		newVersonAvailable = auto_update.CheckForUpdates(version)
+		newVersonAvailable = auto_update.Run(version)
 	}
 
 	db, err := sql.Open("sqlite3", filepath.Join(dbDir, "worktracker.sqlite"))
@@ -104,7 +104,8 @@ func (a *App) UpdateAvailable() bool {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.MonitorTime()
+	a.monitorTime()
+	a.monitorUpdates()
 }
 
 // shutdown is called at termination
@@ -115,13 +116,37 @@ func (a *App) shutdown(ctx context.Context) {
 	}
 }
 
-func (a *App) MonitorTime() {
+func (a *App) monitorTime() {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
 			if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
 				a.StopTimer(a.organization, a.project)
 				a.StartTimer(a.organization, a.project)
+			}
+		}
+	}()
+}
+
+func (a *App) monitorUpdates() {
+	if a.environment != "production" {
+		return
+	}
+	ticker := time.NewTicker(1 * time.Hour)
+
+	runtime.EventsOn(a.ctx, "do-update", func(optionalData ...interface{}) {
+		a.shutdown(a.ctx)
+		auto_update.Run(a.version)
+	})
+
+	go func() {
+		for range ticker.C {
+			if !a.newVersonAvailable {
+				newVersonAvailable, _ := auto_update.GetUpdateAvailable(a.version)
+				if newVersonAvailable {
+					a.newVersonAvailable = true
+					runtime.EventsEmit(a.ctx, "update-available")
+				}
 			}
 		}
 	}()
