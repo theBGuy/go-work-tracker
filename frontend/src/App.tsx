@@ -276,7 +276,7 @@ function App() {
     if (!selectedProject) return;
     console.debug("Getting work time for project", selectedProject);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
-      .then(workTimeInSeconds => setCurrProjectWorkTime(workTimeInSeconds));
+      .then(setCurrProjectWorkTime);
   }, [selectedProject]);
 
   /**
@@ -288,7 +288,9 @@ function App() {
       if (currentDayRef.current !== new Date().getDate()) {
         setCurrentDay(new Date().getDate());
         GetWorkTime(dateString(), selectedOrganization)
-          .then(workTimeInSeconds => setWorkTime(workTimeInSeconds));
+          .then(setWorkTime);
+        GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
+          .then(setCurrProjectWorkTime);
       }
     }, 1000 * 5);
     return () => clearInterval(interval);
