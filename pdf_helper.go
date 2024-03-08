@@ -72,10 +72,23 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	// Add space between tables
 	pdf.Ln(-1)
 
+	// find the project with the longest name to set the width of the project column
+	var longestProjectName string
+	for _, projectTotal := range MonthlyTotals.ProjectTotals {
+		if len(projectTotal.Name) > len(longestProjectName) {
+			longestProjectName = projectTotal.Name
+		}
+	}
+
+	width := 40.0
+	if pdf.GetStringWidth(longestProjectName) > 40 {
+		width = pdf.GetStringWidth(longestProjectName) + 5
+	}
+
 	// Write table header for monthly per project breakdown
 	pdf.Cell(40, 10, "Monthly breakdown")
 	pdf.Ln(-1)
-	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
+	pdf.CellFormat(width, 10, "Project", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
@@ -87,7 +100,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 		}
 
 		projectHours := secondsToHours(projectTotal.Seconds)
-		pdf.CellFormat(40, 10, projectTotal.Name, "1", 0, "", false, 0, "")
+		pdf.CellFormat(width, 10, projectTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(projectTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
@@ -100,7 +113,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Cell(40, 10, "Weekly breakdown")
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Week", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
+	pdf.CellFormat(width, 10, "Project", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
@@ -127,7 +140,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 		weekSumHours := secondsToHours(MonthlyTotals.WeekSumTotals[week])
 		pdf.CellFormat(40, 10, fmt.Sprintf("(%s)", weekRanges[week]), "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(width, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", weekSumHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.WeekSumTotals[week]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
@@ -137,7 +150,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			}
 			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
+			pdf.CellFormat(width, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
@@ -151,7 +164,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	pdf.Cell(40, 10, "Daily breakdown")
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Date", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
+	pdf.CellFormat(width, 10, "Project", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
@@ -172,7 +185,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 
 		dateHours := secondsToHours(MonthlyTotals.DateSumTotals[date])
 		pdf.CellFormat(40, 10, date, "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(width, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", dateHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(MonthlyTotals.DateSumTotals[date]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
@@ -182,7 +195,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 			}
 			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
+			pdf.CellFormat(width, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
@@ -259,10 +272,23 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	// Add space between tables
 	pdf.Ln(-1)
 
+	// find the project with the longest name to set the width of the project column
+	var longestProjectName string
+	for _, projectTotal := range YearlyTotals.ProjectTotals {
+		if len(projectTotal.Name) > len(longestProjectName) {
+			longestProjectName = projectTotal.Name
+		}
+	}
+
+	width := 40.0
+	if pdf.GetStringWidth(longestProjectName) > 40 {
+		width = pdf.GetStringWidth(longestProjectName) + 5
+	}
+
 	// Write table for yearly per project breakdown
 	pdf.Cell(40, 10, "Yearly breakdown")
 	pdf.Ln(-1)
-	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
+	pdf.CellFormat(width, 10, "Project", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
@@ -272,7 +298,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 		}
 
 		projectHours := secondsToHours(yearlyTotal.Seconds)
-		pdf.CellFormat(40, 10, yearlyTotal.Name, "1", 0, "", false, 0, "")
+		pdf.CellFormat(width, 10, yearlyTotal.Name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(yearlyTotal.Seconds), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
@@ -285,7 +311,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 	pdf.Cell(40, 10, "Monthly breakdown")
 	pdf.Ln(-1)
 	pdf.CellFormat(40, 10, "Month", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Project", "1", 0, "", false, 0, "")
+	pdf.CellFormat(width, 10, "Project", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Hours", "1", 0, "", false, 0, "")
 	pdf.CellFormat(40, 10, "Time (HH:MM:SS)", "1", 0, "", false, 0, "")
 	pdf.Ln(-1)
@@ -312,7 +338,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 
 		monthlyHours := secondsToHours(YearlyTotals.MonthSumTotals[month])
 		pdf.CellFormat(40, 10, month, "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, "TOTAL", "1", 0, "", false, 0, "")
+		pdf.CellFormat(width, 10, "TOTAL", "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", monthlyHours), "1", 0, "", false, 0, "")
 		pdf.CellFormat(40, 10, formatTime(YearlyTotals.MonthSumTotals[month]), "1", 0, "", false, 0, "")
 		pdf.Ln(-1)
@@ -323,7 +349,7 @@ func (a *App) exportPDFByYear(organization string, year int) (string, error) {
 
 			projectHours := secondsToHours(seconds)
 			pdf.CellFormat(40, 10, "", "1", 0, "", false, 0, "")
-			pdf.CellFormat(40, 10, project, "1", 0, "", false, 0, "")
+			pdf.CellFormat(width, 10, project, "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", projectHours), "1", 0, "", false, 0, "")
 			pdf.CellFormat(40, 10, formatTime(seconds), "1", 0, "", false, 0, "")
 			pdf.Ln(-1)
