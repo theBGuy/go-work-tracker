@@ -3,22 +3,24 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/theBGuy/go-work-tracker/auto_update"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // App struct
 type App struct {
 	ctx                context.Context
-	db                 *sql.DB
+	db                 *gorm.DB
 	startTime          time.Time
 	lastSave           time.Time
 	isRunning          bool
@@ -39,6 +41,15 @@ type WailsConfig struct {
 type Info struct {
 	ProductVersion string `json:"productVersion"`
 	Environment    string `json:"environment"`
+}
+
+type WorkHours struct {
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+	Date         string    `gorm:"primary_key"`
+	Organization string    `gorm:"primary_key"`
+	Project      string    `gorm:"primary_key;default:'default'"`
+	Seconds      int
 }
 
 // NewApp creates a new App application struct
@@ -65,23 +76,16 @@ func NewApp() *App {
 		newVersonAvailable = auto_update.Run(version)
 	}
 
-	db, err := sql.Open("sqlite3", filepath.Join(dbDir, "worktracker.sqlite"))
+	db, err := gorm.Open(sqlite.Open(filepath.Join(dbDir, "worktracker.sqlite")), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS work_hours (
-        date TEXT NOT NULL,
-        organization TEXT NOT NULL,
-        project TEXT NOT NULL,
-        seconds INTEGER NOT NULL,
-        PRIMARY KEY (date, organization, project)
-    )`)
+	err = db.AutoMigrate(&WorkHours{})
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: Fix this. Hacky method until I refactor the database to use GORM
 	fixOutdatedDb(db)
 
 	return &App{
@@ -157,9 +161,12 @@ func (a *App) NewOrganization(organization string, project string) {
 		return
 	}
 	currentDate := time.Now().Format("2006-01-02")
-	_, err := a.db.Exec(
-		"INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?)",
-		currentDate, organization, project, 0)
+	err := a.db.Create(&WorkHours{
+		Date:         currentDate,
+		Organization: organization,
+		Project:      project,
+		Seconds:      0,
+	}).Error
 	if err != nil {
 		panic(err)
 	}
@@ -170,16 +177,12 @@ func (a *App) SetOrganization(organization string, project string) {
 		a.StopTimer(a.organization, a.project)
 	}
 	// check if the new organization exists
-	row := a.db.QueryRow("SELECT organization FROM work_hours WHERE organization = ?", organization)
-	var org string
-	err := row.Scan(&org)
-	if err != nil {
-		if err == sql.ErrNoRows {
+	if err := a.db.Where("organization = ?", organization).First(&WorkHours{}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// No entry for the given organization
 			a.NewOrganization(organization, project)
 		}
 	}
-	fmt.Println("Organization set to:", organization, ":: Project set to:", project)
 
 	a.organization = organization
 	a.project = project
@@ -189,7 +192,9 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	if newName == "" {
 		return
 	}
-	_, err := a.db.Exec("UPDATE work_hours SET organization = ? WHERE organization = ?", newName, oldName)
+	err := a.db.Model(&WorkHours{}).
+		Where("organization = ?", oldName).
+		Update("organization", newName).Error
 	if err != nil {
 		panic(err)
 	}
@@ -201,9 +206,12 @@ func (a *App) NewProject(organization string, project string) {
 		return
 	}
 	currentDate := time.Now().Format("2006-01-02")
-	_, err := a.db.Exec(
-		"INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?)",
-		currentDate, organization, project, 0)
+	err := a.db.Create(&WorkHours{
+		Date:         currentDate,
+		Organization: organization,
+		Project:      project,
+		Seconds:      0,
+	}).Error
 	if err != nil {
 		panic(err)
 	}
@@ -221,9 +229,9 @@ func (a *App) RenameProject(organization string, oldName string, newName string)
 	if newName == "" || organization == "" {
 		return
 	}
-	_, err := a.db.Exec(
-		"UPDATE work_hours SET project = ? WHERE organization = ? AND project = ?",
-		newName, organization, oldName)
+	err := a.db.Model(&WorkHours{}).
+		Where("organization = ? AND project = ?", organization, oldName).
+		Update("project", newName).Error
 	if err != nil {
 		panic(err)
 	}
@@ -233,8 +241,9 @@ func (a *App) DeleteProject(organization string, project string) {
 	if project == "" || organization == "" {
 		return
 	}
-	_, err := a.db.Exec("DELETE FROM work_hours WHERE organization = ? AND project = ?",
-		organization, project)
+	err := a.db.
+		Where("organization = ? AND project = ?", organization, project).
+		Delete(&WorkHours{}).Error
 	if err != nil {
 		panic(err)
 	}
@@ -243,22 +252,12 @@ func (a *App) DeleteProject(organization string, project string) {
 // GetProjects returns the list of projects for the specified organization
 func (a *App) GetProjects(organization string) (projects []string, err error) {
 	projects = []string{}
-	rows, err := a.db.Query("SELECT DISTINCT project FROM work_hours WHERE organization = ?", organization)
+	err = a.db.Model(&WorkHours{}).
+		Where("organization = ?", organization).
+		Distinct().
+		Pluck("project", &projects).Error
 	if err != nil {
-		return projects, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var project string
-		if err := rows.Scan(&project); err != nil {
-			return projects, err
-		}
-		projects = append(projects, project)
-	}
-
-	if err := rows.Err(); err != nil {
-		return projects, err
+		return nil, err
 	}
 
 	return projects, nil
@@ -268,7 +267,7 @@ func (a *App) DeleteOrganization(organization string) {
 	if organization == "" {
 		return
 	}
-	_, err := a.db.Exec("DELETE FROM work_hours WHERE organization = ?", organization)
+	err := a.db.Where("organization = ?", organization).Delete(&WorkHours{}).Error
 	if err != nil {
 		panic(err)
 	}
@@ -276,22 +275,9 @@ func (a *App) DeleteOrganization(organization string) {
 
 func (a *App) GetOrganizations() (organizations []string, err error) {
 	organizations = []string{}
-	rows, err := a.db.Query("SELECT DISTINCT organization FROM work_hours")
+	err = a.db.Model(&WorkHours{}).Distinct().Pluck("organization", &organizations).Error
 	if err != nil {
-		return organizations, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var organization string
-		if err := rows.Scan(&organization); err != nil {
-			return organizations, err
-		}
-		organizations = append(organizations, organization)
-	}
-
-	if err := rows.Err(); err != nil {
-		return organizations, err
+		return nil, err
 	}
 
 	return organizations, nil
@@ -329,8 +315,18 @@ func (a *App) saveTimer(organization string, project string) {
 	}
 	date := a.startTime.Format("2006-01-02")
 
-	_, err := a.db.Exec("INSERT INTO work_hours(date, organization, project, seconds) VALUES(?, ?, ?, ?) "+
-		"ON CONFLICT(date, organization, project) DO UPDATE SET seconds=seconds+?", date, organization, project, secsWorked, secsWorked)
+	workHours := WorkHours{
+		Date:         date,
+		Organization: organization,
+		Project:      project,
+		Seconds:      secsWorked,
+	}
+	err := a.db.FirstOrCreate(&workHours, WorkHours{Date: date, Organization: organization, Project: project}).Error
+	if err != nil {
+		panic(err)
+	}
+
+	err = a.db.Model(&workHours).Update("seconds", gorm.Expr("seconds + ?", secsWorked)).Error
 	if err != nil {
 		panic(err)
 	}
@@ -380,19 +376,18 @@ func (a *App) GetWorkTime(date string, organization string) (seconds int, err er
 		// fmt.Println("Date or organization is empty", date, organization)
 		return 0, nil
 	}
-	row := a.db.QueryRow("SELECT seconds FROM work_hours WHERE date = ? AND organization = ?", date, organization)
 
-	err = row.Scan(&seconds)
-	if err != nil {
-		if err == sql.ErrNoRows {
+	// return seconds, nil
+	var workHours WorkHours
+	if err = a.db.Where("date = ? AND organization = ?", date, organization).First(&workHours).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			fmt.Println("No entry for the given date: ", date, organization)
 			// No entry for the given date
 			return 0, nil
 		}
 		return 0, err
 	}
-
-	return seconds, nil
+	return workHours.Seconds, nil
 }
 
 // GetWorkTimeByProject returns the total seconds worked for the specified project on specific date
@@ -403,9 +398,10 @@ func (a *App) GetWorkTimeByProject(organization string, project string, date str
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
 	}
-	row := a.db.QueryRow(
-		"SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE date = ? AND project = ? AND organization = ?",
-		date, project, organization)
+	row := a.db.Model(&WorkHours{}).
+		Where("date = ? AND project = ? AND organization = ?", date, project, organization).
+		Select("COALESCE(SUM(seconds), 0)").
+		Row()
 
 	err = row.Scan(&seconds)
 	if err != nil {
@@ -422,12 +418,11 @@ func (a *App) GetWorkTimeByProject(organization string, project string, date str
 // GetWeeklyWorkTime returns the total seconds worked for each week of the specified month
 func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string) (weeklyWorkTimes map[int]map[string]int, err error) {
 	weeklyWorkTimes = make(map[int]map[string]int)
-	rows, err := a.db.Query(
-		`SELECT strftime('%W', date) - strftime('%W', date('now','start of month')) as week, project, COALESCE(SUM(seconds), 0) 
-        FROM work_hours 
-        WHERE strftime('%Y-%m', date) = ? AND organization = ? 
-        GROUP BY week, project`,
-		fmt.Sprintf("%04d-%02d", year, month), organization)
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("strftime('%W', date) - strftime('%W', date('now','start of month')) as week, project, COALESCE(SUM(seconds), 0)").
+		Where("strftime('%Y-%m', date) = ? AND organization = ?", fmt.Sprintf("%04d-%02d", year, month), organization).
+		Group("week, project").
+		Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -456,40 +451,45 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organization string)
 // GetWeeklkyProjectWorktimes returns the total seconds worked for each project for the specified week
 //
 // Deprecated: Use GetWeeklyWorkTime instead - is there any reason to keep this function?
-func (a *App) GetWeeklyProjectWorktimes(year int, month time.Month, week int, organization string) (weeklyWorkTimes map[string]int, err error) {
-	weeklyWorkTimes = make(map[string]int)
-	rows, err := a.db.Query(
-		`SELECT project, COALESCE(SUM(seconds), 0) 
-				FROM work_hours 
-				WHERE strftime('%Y-%m', date) = ? AND organization = ? AND strftime('%W', date) - strftime('%W', date('now','start of month')) = ? 
-				GROUP BY project`,
-		fmt.Sprintf("%04d-%02d", year, month), organization, week)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// func (a *App) GetWeeklyProjectWorktimes(year int, month time.Month, week int, organization string) (weeklyWorkTimes map[string]int, err error) {
+// 	weeklyWorkTimes = make(map[string]int)
+// 	rows, err := a.db.Query(
+// 		`SELECT project, COALESCE(SUM(seconds), 0)
+// 				FROM work_hours
+// 				WHERE strftime('%Y-%m', date) = ? AND organization = ? AND strftime('%W', date) - strftime('%W', date('now','start of month')) = ?
+// 				GROUP BY project`,
+// 		fmt.Sprintf("%04d-%02d", year, month), organization, week)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	for rows.Next() {
-		var project string
-		var seconds int
-		if err := rows.Scan(&project, &seconds); err != nil {
-			return nil, err
-		}
-		weeklyWorkTimes[project] = seconds
-	}
+// 	for rows.Next() {
+// 		var project string
+// 		var seconds int
+// 		if err := rows.Scan(&project, &seconds); err != nil {
+// 			return nil, err
+// 		}
+// 		weeklyWorkTimes[project] = seconds
+// 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
+// 	if err := rows.Err(); err != nil {
+// 		return nil, err
+// 	}
 
-	return weeklyWorkTimes, nil
-}
+// 	return weeklyWorkTimes, nil
+// }
 
 // GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
 func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTimes map[int]map[string]int, err error) {
-	rows, err := a.db.Query(
-		"SELECT strftime('%m', date), project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date), project",
-		strconv.Itoa(year), organization)
+	// rows, err := a.db.Query(
+	// 	"SELECT strftime('%m', date), project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY strftime('%m', date), project",
+	// 	strconv.Itoa(year), organization)
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("strftime('%m', date) as month, project, COALESCE(SUM(seconds), 0) as seconds").
+		Where("strftime('%Y', date) = ? AND organization = ?", fmt.Sprintf("%04d", year), organization).
+		Group("month, project").
+		Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -519,36 +519,38 @@ func (a *App) GetMonthlyWorkTime(year int, organization string) (monthlyWorkTime
 // GetMonthlyWorktimeByProject returns the total seconds worked for each project for the specified month
 //
 // Deprecated: Use GetMonthlyWorkTime instead - is there any reason to keep this function?
-func (a *App) GetMonthlyWorktimeByProject(year int, month time.Month, organization string) (monthlyWorkTimes map[string]int, err error) {
-	monthlyWorkTimes = make(map[string]int)
-	rows, err := a.db.Query(
-		"SELECT project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? GROUP BY project",
-		fmt.Sprintf("%04d-%02d", year, month), organization)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// func (a *App) GetMonthlyWorktimeByProject(year int, month time.Month, organization string) (monthlyWorkTimes map[string]int, err error) {
+// 	monthlyWorkTimes = make(map[string]int)
+// 	rows, err := a.db.Query(
+// 		"SELECT project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? GROUP BY project",
+// 		fmt.Sprintf("%04d-%02d", year, month), organization)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	for rows.Next() {
-		var project string
-		var seconds int
-		if err := rows.Scan(&project, &seconds); err != nil {
-			return nil, err
-		}
-		monthlyWorkTimes[project] = seconds
-	}
+// 	for rows.Next() {
+// 		var project string
+// 		var seconds int
+// 		if err := rows.Scan(&project, &seconds); err != nil {
+// 			return nil, err
+// 		}
+// 		monthlyWorkTimes[project] = seconds
+// 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
+// 	if err := rows.Err(); err != nil {
+// 		return nil, err
+// 	}
 
-	return monthlyWorkTimes, nil
-}
+// 	return monthlyWorkTimes, nil
+// }
 
 // GetYearlyWorkTime returns the total seconds worked for the specified year
 func (a *App) GetYearlyWorkTime(year int, organization string) (yearlyWorkTime int, err error) {
-	row := a.db.QueryRow("SELECT COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ?",
-		strconv.Itoa(year), organization)
+	row := a.db.Model(&WorkHours{}).
+		Select("COALESCE(SUM(seconds), 0)").
+		Where("strftime('%Y', date) = ? AND organization = ?", fmt.Sprintf("%04d", year), organization).
+		Row()
 
 	err = row.Scan(&yearlyWorkTime)
 	if err != nil {
@@ -565,9 +567,11 @@ func (a *App) GetYearlyWorkTime(year int, organization string) (yearlyWorkTime i
 // GetYearlyWorkTimeByProject returns the total seconds worked for each project for the specified year
 func (a *App) GetYearlyWorkTimeByProject(year int, organization string) (yearlyWorkTimes map[string]int, err error) {
 	yearlyWorkTimes = make(map[string]int)
-	rows, err := a.db.Query(
-		"SELECT project, COALESCE(SUM(seconds), 0) FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? GROUP BY project",
-		strconv.Itoa(year), organization)
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("project, COALESCE(SUM(seconds), 0) as seconds").
+		Where("strftime('%Y', date) = ? AND organization = ?", fmt.Sprintf("%04d", year), organization).
+		Group("project").
+		Rows()
 	if err != nil {
 		return nil, err
 	}

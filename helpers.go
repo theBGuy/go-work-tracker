@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,9 +9,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func getSaveDir(environment string) (string, error) {
@@ -60,11 +60,21 @@ func readEnvConfig(WailsConfigFile []byte) (string, error) {
 	return wailsConfig.Info.Environment, nil
 }
 
+func containsAll(str string, keys []string) bool {
+	for _, key := range keys {
+		if !strings.Contains(str, key) {
+			return false
+		}
+	}
+	return true
+}
+
 // fixOutdatedDb checks if the database is outdated and updates it if necessary
 // This is necessary because the primary key setup for the work_hours table was changed in version 0.2.0
-func fixOutdatedDb(db *sql.DB) {
+// and the database is now managed by GORM in version 0.5.0
+func fixOutdatedDb(db *gorm.DB) {
 	// Query the sqlite_master table to get the SQL used to create the work_hours table
-	row := db.QueryRow("SELECT sql FROM sqlite_master WHERE type='table' AND name='work_hours'")
+	row := db.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='work_hours'").Row()
 	var createSQL string
 	err := row.Scan(&createSQL)
 	if err != nil {
@@ -72,57 +82,45 @@ func fixOutdatedDb(db *sql.DB) {
 	}
 
 	// Check if the primary key setup matches the expected setup
-	expected := "PRIMARY KEY(date, organization, project)"
-	if !strings.Contains(createSQL, expected) {
-		log.Println("Database is outdated, updating...")
-		_, err = db.Exec(`ALTER TABLE work_hours ADD COLUMN project TEXT`)
-		if err != nil {
-			fmt.Println(err.Error())
-			if strings.Contains(err.Error(), "duplicate column name") {
-				// Column already exists, so ignore the error
-			} else {
-				panic(err)
-			}
-		}
+	createSQL = strings.ReplaceAll(createSQL, " ", "")
+	expected := "PRIMARYKEY(`date`,`organization`,`project`)"
+	gormKeys := []string{"created_at", "updated_at"}
 
-		_, err = db.Exec(`UPDATE work_hours SET project = 'default' WHERE project IS NULL`)
-		if err != nil {
-			panic(err)
-		}
-		// Drop new_work_hours table if it exists - leftover from previous migration or crash
-		_, err = db.Exec(`DROP TABLE IF EXISTS new_work_hours`)
-		if err != nil {
-			panic(err)
+	if !strings.Contains(createSQL, expected) || !containsAll(createSQL, gormKeys) {
+		log.Println("Database is outdated, updating...")
+
+		// Define the new WorkHours model
+		type NewWorkHours struct {
+			CreatedAt    time.Time `gorm:"autoCreateTime"`
+			UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+			Date         string    `gorm:"primary_key"`
+			Organization string    `gorm:"primary_key"`
+			Project      string    `gorm:"primary_key;default:'default'"`
+			Seconds      int
 		}
 
 		// Create new table
-		_, err := db.Exec(`CREATE TABLE new_work_hours (
-			date TEXT NOT NULL,
-			organization TEXT NOT NULL,
-			project TEXT NOT NULL DEFAULT 'default',
-			seconds INTEGER NOT NULL,
-			PRIMARY KEY(date, organization, project)
-		)`)
+		err := db.AutoMigrate(&NewWorkHours{})
 		if err != nil {
 			panic(err)
 		}
 
 		// Copy data from old table to new table
-		_, err = db.Exec(`INSERT INTO new_work_hours(date, organization, project, seconds)
-			SELECT date, organization, IFNULL(project, 'default'), seconds
-			FROM work_hours`)
+		err = db.Exec(`INSERT INTO new_work_hours(date, created_at, updated_at, organization, project, seconds)
+			SELECT date, COALESCE(created_at, date), COALESCE(updated_at, date), organization, IFNULL(project, 'default'), seconds
+			FROM work_hours`).Error
 		if err != nil {
 			panic(err)
 		}
 
 		// Delete old table
-		_, err = db.Exec(`DROP TABLE work_hours`)
+		err = db.Migrator().DropTable("work_hours")
 		if err != nil {
 			panic(err)
 		}
 
 		// Rename new table to old table name
-		_, err = db.Exec(`ALTER TABLE new_work_hours RENAME TO work_hours`)
+		err = db.Migrator().RenameTable("new_work_hours", "work_hours")
 		if err != nil {
 			panic(err)
 		}
@@ -209,9 +207,14 @@ func getWeekRanges(year int, month time.Month) map[int]string {
 }
 
 func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (MonthlyTotals, error) {
-	rows, err := a.db.Query(
-		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
-		fmt.Sprintf("%04d-%02d", year, month), organization)
+	// rows, err := a.db.Query(
+	// 	"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
+	// 	fmt.Sprintf("%04d-%02d", year, month), organization)
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("date, project, seconds").
+		Where("strftime('%Y-%m', date) = ? AND organization = ?", fmt.Sprintf("%04d-%02d", year, month), organization).
+		Order("date").
+		Rows()
 	if err != nil {
 		return MonthlyTotals{}, err
 	}
@@ -291,9 +294,14 @@ type YearlyTotals struct {
 }
 
 func (a *App) getYearlyTotals(organization string, year int) (YearlyTotals, error) {
-	rows, err := a.db.Query(
-		"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
-		strconv.Itoa(year), organization)
+	// rows, err := a.db.Query(
+	// 	"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
+	// 	strconv.Itoa(year), organization)
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("date, project, seconds").
+		Where("strftime('%Y', date) = ? AND organization = ?", fmt.Sprintf("%04d", year), organization).
+		Order("date").
+		Rows()
 	if err != nil {
 		return YearlyTotals{}, err
 	}
