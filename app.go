@@ -319,7 +319,7 @@ func (a *App) saveTimer(organization string, project string) {
 		Date:         date,
 		Organization: organization,
 		Project:      project,
-		Seconds:      secsWorked,
+		Seconds:      0,
 	}
 	err := a.db.FirstOrCreate(&workHours, WorkHours{Date: date, Organization: organization, Project: project}).Error
 	if err != nil {
