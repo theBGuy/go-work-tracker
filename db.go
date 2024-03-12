@@ -20,16 +20,18 @@ type WorkHours struct {
 	Seconds      int
 }
 
+func handleDBError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func NewDb(dbDir string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(filepath.Join(dbDir, "worktracker.sqlite")), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 
 	err = db.AutoMigrate(&WorkHours{})
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 
 	fixOutdatedDb(db)
 	return db
@@ -46,9 +48,7 @@ func (a *App) NewOrganization(organization string, project string) {
 		Project:      project,
 		Seconds:      0,
 	}).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 func (a *App) SetOrganization(organization string, project string) {
@@ -74,9 +74,7 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	err := a.db.Model(&WorkHours{}).
 		Where("organization = ?", oldName).
 		Update("organization", newName).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 // Create a new project for the specified organization
@@ -91,9 +89,7 @@ func (a *App) NewProject(organization string, project string) {
 		Project:      project,
 		Seconds:      0,
 	}).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 func (a *App) SetProject(project string) {
@@ -111,9 +107,7 @@ func (a *App) RenameProject(organization string, oldName string, newName string)
 	err := a.db.Model(&WorkHours{}).
 		Where("organization = ? AND project = ?", organization, oldName).
 		Update("project", newName).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 func (a *App) DeleteProject(organization string, project string) {
@@ -123,9 +117,7 @@ func (a *App) DeleteProject(organization string, project string) {
 	err := a.db.
 		Where("organization = ? AND project = ?", organization, project).
 		Delete(&WorkHours{}).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 // GetProjects returns the list of projects for the specified organization
@@ -147,9 +139,7 @@ func (a *App) DeleteOrganization(organization string) {
 		return
 	}
 	err := a.db.Where("organization = ?", organization).Delete(&WorkHours{}).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 }
 
 func (a *App) GetOrganizations() (organizations []string, err error) {
@@ -181,14 +171,11 @@ func (a *App) saveTimer(organization string, project string) {
 		Seconds:      0,
 	}
 	err := a.db.FirstOrCreate(&workHours, WorkHours{Date: date, Organization: organization, Project: project}).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
 
 	err = a.db.Model(&workHours).Update("seconds", gorm.Expr("seconds + ?", secsWorked)).Error
-	if err != nil {
-		panic(err)
-	}
+	handleDBError(err)
+
 	a.lastSave = time.Now()
 }
 
