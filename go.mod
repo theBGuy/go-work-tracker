@@ -9,7 +9,11 @@ require (
 	github.com/wailsapp/wails/v2 v2.8.0
 )
 
-require aead.dev/minisign v0.2.1 // indirect
+require (
+	aead.dev/minisign v0.2.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+)
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect
@@ -42,6 +46,8 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0
 	golang.org/x/text v0.14.0 // indirect
+	gorm.io/driver/sqlite v1.5.5
+	gorm.io/gorm v1.25.7
 )
 
 // replace github.com/wailsapp/wails/v2 v2.7.1 => C:\Users\Evan\go\pkg\mod
