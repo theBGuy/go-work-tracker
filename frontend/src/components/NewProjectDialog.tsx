@@ -9,6 +9,7 @@ import {
   TextField
 } from '@mui/material';
 import { NewProject, SetProject } from '../../wailsjs/go/main/App';
+import { getMonth } from "../utils/utils";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
@@ -42,8 +43,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     setProjects(projs => [...projs, project]);
     setSelectedProject(project);
     setMonthlyWorkTimes(prev => {
-      const currMonth = new Date().getMonth();
-      prev[currMonth][project] = 0;
+      prev[getMonth()][project] = 0;
       return { ...prev };
     });
     setOpenNewProj(false);
