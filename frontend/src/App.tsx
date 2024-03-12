@@ -408,31 +408,35 @@ function App() {
           >
             {projects.map((project) => (
               <MenuItem key={project} value={project} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                {project}
-                <Tooltip title="Edit project">
-                  <IconButton
-                    edge="end"
-                    aria-label="edit"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleOpenRenameProj();
-                    }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete project">
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleDeleteProject(project);
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
+                <div>
+                  {project}
+                </div>
+                <div>
+                  <Tooltip title="Edit project">
+                    <IconButton
+                      edge="end"
+                      aria-label="edit"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleOpenRenameProj();
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete project">
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteProject(project);
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </div>
               </MenuItem>
             ))}
           </Select>
