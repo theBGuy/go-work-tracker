@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -32,7 +31,7 @@ func getSaveDir(environment string) (string, error) {
 	saveDir := filepath.Join(dataDir, "Go-Work-Tracker")
 
 	if environment == "development" {
-		fmt.Println("Running in development mode")
+		Logger.Println("Running in development mode")
 		saveDir = filepath.Join(saveDir, "dev")
 	}
 
@@ -72,6 +71,7 @@ func containsAll(str string, keys []string) bool {
 // fixOutdatedDb checks if the database is outdated and updates it if necessary
 // This is necessary because the primary key setup for the work_hours table was changed in version 0.2.0
 // and the database is now managed by GORM in version 0.5.0
+// normalized database in 0.6.0 so handle transition from old single table to new normalized tables
 func fixOutdatedDb(db *gorm.DB) {
 	// Query the sqlite_master table to get the SQL used to create the work_hours table
 	row := db.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='work_hours'").Row()
@@ -83,45 +83,96 @@ func fixOutdatedDb(db *gorm.DB) {
 
 	// Check if the primary key setup matches the expected setup
 	createSQL = strings.ReplaceAll(createSQL, " ", "")
-	expected := "PRIMARYKEY(`date`,`organization`,`project`)"
-	gormKeys := []string{"created_at", "updated_at"}
+	gormKeys := []string{"created_at", "updated_at", "project_id"}
 
-	if !strings.Contains(createSQL, expected) || !containsAll(createSQL, gormKeys) {
-		log.Println("Database is outdated, updating...")
+	if !containsAll(createSQL, gormKeys) {
+		Logger.Println("Database is outdated, updating...")
 
-		// Define the new WorkHours model
 		type NewWorkHours struct {
-			CreatedAt    time.Time `gorm:"autoCreateTime"`
-			UpdatedAt    time.Time `gorm:"autoUpdateTime"`
-			Date         string    `gorm:"primary_key"`
-			Organization string    `gorm:"primary_key"`
-			Project      string    `gorm:"primary_key;default:'default'"`
-			Seconds      int
+			gorm.Model
+			Date      string
+			Seconds   int
+			ProjectID uint
 		}
 
 		// Create new table
-		err := db.AutoMigrate(&NewWorkHours{})
+		err := db.AutoMigrate(&NewWorkHours{}, &Project{}, &Organization{})
 		if err != nil {
 			panic(err)
 		}
 
-		// Copy data from old table to new table
-		err = db.Exec(`INSERT INTO new_work_hours(date, created_at, updated_at, organization, project, seconds)
-			SELECT date, COALESCE(created_at, date), COALESCE(updated_at, date), organization, IFNULL(project, 'default'), seconds
-			FROM work_hours`).Error
+		tx := db.Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				// If there is a panic, rollback the transaction
+				tx.Rollback()
+			}
+		}()
+		if tx.Error != nil {
+			panic(tx.Error)
+		}
+
+		// Check if the 'deleted_at' column exists in the 'work_hours' table
+		if !db.Migrator().HasColumn(&WorkHours{}, "deleted_at") {
+			err := db.Migrator().AddColumn(&WorkHours{}, "deleted_at")
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		// Copy data from old table to new tables
+		rows, err := tx.Raw("SELECT DISTINCT date, organization, project, seconds FROM work_hours").Rows()
 		if err != nil {
 			panic(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var date, organizationName, projectName string
+			var seconds int
+			if err := rows.Scan(&date, &organizationName, &projectName, &seconds); err != nil {
+				panic(err)
+			}
+
+			if projectName == "" {
+				projectName = "default"
+			}
+
+			Logger.Printf("date: %s, organization: %s, project: %s, seconds: %d\n", date, organizationName, projectName, seconds)
+
+			// Find or create the organization
+			var organization Organization
+			tx.Where(Organization{Name: organizationName}).FirstOrCreate(&organization)
+
+			// Find or create the project
+			var project Project
+			tx.Where(Project{Name: projectName, OrganizationID: organization.ID}).FirstOrCreate(&project)
+
+			// Create the work hours entry
+			workHours := NewWorkHours{
+				Date:      date,
+				ProjectID: project.ID,
+				Seconds:   seconds,
+			}
+			if err := tx.Create(&workHours).Error; err != nil {
+				panic(err)
+			}
 		}
 
 		// Delete old table
-		err = db.Migrator().DropTable("work_hours")
+		err = tx.Migrator().DropTable("work_hours")
 		if err != nil {
 			panic(err)
 		}
 
 		// Rename new table to old table name
-		err = db.Migrator().RenameTable("new_work_hours", "work_hours")
+		err = tx.Migrator().RenameTable("new_work_hours", "work_hours")
 		if err != nil {
+			panic(err)
+		}
+
+		// Commit the transaction
+		if err := tx.Commit().Error; err != nil {
 			panic(err)
 		}
 	}
@@ -174,7 +225,7 @@ func (a *App) GetWeekOfMonth(year int, month time.Month, day int) int {
 	t := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	currDay := firstOfMonth
-	week := 0
+	week := 1
 	for currDay.Before(t) {
 		if currDay.Weekday() == time.Sunday {
 			week++
@@ -194,7 +245,7 @@ func getWeekRanges(year int, month time.Month) map[int]string {
 	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 	currDay := firstOfMonth
-	for week := 0; week <= 4; week++ {
+	for week := 1; week <= 5; week++ {
 		startOfWeekStr := currDay.Format("01-02")
 		for currDay.Weekday() != time.Sunday && currDay.Before(lastOfMonth) {
 			currDay = currDay.AddDate(0, 0, 1)
@@ -206,13 +257,19 @@ func getWeekRanges(year int, month time.Month) map[int]string {
 	return weekRanges
 }
 
-func (a *App) getMonthlyTotals(organization string, year int, month time.Month) (MonthlyTotals, error) {
-	// rows, err := a.db.Query(
-	// 	"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y-%m', date) = ? AND organization = ? ORDER BY date",
-	// 	fmt.Sprintf("%04d-%02d", year, month), organization)
-	rows, err := a.db.Model(&WorkHours{}).
-		Select("date, project, seconds").
-		Where("strftime('%Y-%m', date) = ? AND organization = ?", fmt.Sprintf("%04d-%02d", year, month), organization).
+func (a *App) getMonthlyTotals(organizationName string, year int, month time.Month) (MonthlyTotals, error) {
+	// Find the organization
+	var organization Organization
+	if err := a.db.Where(&Organization{Name: organizationName}).First(&organization).Error; err != nil {
+		Logger.Println(err)
+		return MonthlyTotals{}, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("date, projects.name, seconds").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
 		Order("date").
 		Rows()
 	if err != nil {
@@ -293,13 +350,19 @@ type YearlyTotals struct {
 	YearlyTotal    int
 }
 
-func (a *App) getYearlyTotals(organization string, year int) (YearlyTotals, error) {
-	// rows, err := a.db.Query(
-	// 	"SELECT date, project, seconds FROM work_hours WHERE strftime('%Y', date) = ? AND organization = ? ORDER BY date",
-	// 	strconv.Itoa(year), organization)
-	rows, err := a.db.Model(&WorkHours{}).
-		Select("date, project, seconds").
-		Where("strftime('%Y', date) = ? AND organization = ?", fmt.Sprintf("%04d", year), organization).
+func (a *App) getYearlyTotals(organizationName string, year int) (YearlyTotals, error) {
+	// Find the organization
+	var organization Organization
+	if err := a.db.Where(&Organization{Name: organizationName}).First(&organization).Error; err != nil {
+		Logger.Println(err)
+		return YearlyTotals{}, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("date, projects.name, seconds").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d", year), organization.ID).
 		Order("date").
 		Rows()
 	if err != nil {
@@ -362,7 +425,7 @@ func (a *App) getYearlyTotals(organization string, year int) (YearlyTotals, erro
 }
 
 func (a *App) ExportByMonth(exportType ExportType, organization string, year int, month time.Month) (string, error) {
-	log.Println("Exporting by month...", exportType, organization, year, month)
+	Logger.Println("Exporting by month...", exportType, organization, year, month)
 	if exportType == CSV {
 		return a.exportCSVByMonth(organization, year, month)
 	} else if exportType == PDF {
@@ -373,7 +436,7 @@ func (a *App) ExportByMonth(exportType ExportType, organization string, year int
 }
 
 func (a *App) ExportByYear(exportType ExportType, organization string, year int) (string, error) {
-	log.Println("Exporting by year...", exportType, organization, year)
+	Logger.Println("Exporting by year...", exportType, organization, year)
 	if exportType == CSV {
 		return a.exportCSVByYear(organization, year)
 	} else if exportType == PDF {

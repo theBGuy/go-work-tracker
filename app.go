@@ -189,3 +189,11 @@ func (a *App) ConfirmAction(title string, message string) bool {
 	}
 	return selection == "Yes"
 }
+
+func (a *App) SetProject(project string) {
+	if a.isRunning {
+		a.StopTimer(a.organization, a.project)
+	}
+	fmt.Println("Project set to:", project, "for Organization:", a.organization)
+	a.project = project
+}
