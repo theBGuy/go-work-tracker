@@ -121,7 +121,7 @@ func (a *App) exportPDFByMonth(organization string, year int, month time.Month) 
 	weekRanges := getWeekRanges(year, month)
 
 	// Write weekly totals
-	for week := 0; week <= 4; week++ {
+	for week := 1; week <= 5; week++ {
 		projectTotals, ok := MonthlyTotals.WeeklyTotals[week]
 		if !ok {
 			continue

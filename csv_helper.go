@@ -69,7 +69,7 @@ func (a *App) exportCSVByMonth(organization string, year int, month time.Month) 
 	writer.Write([]string{})
 	writer.Write([]string{"Weekly breakdown"})
 	writer.Write([]string{"Week", "Project", "Hours", "Time (HH:MM:SS)"})
-	for week := 0; week <= 4; week++ {
+	for week := 1; week <= 5; week++ {
 		projectTotals, ok := MonthlyTotals.WeeklyTotals[week]
 		if !ok {
 			continue
