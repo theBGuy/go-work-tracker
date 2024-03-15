@@ -102,6 +102,14 @@ export function TimeElapsed() {
   return window['go']['main']['App']['TimeElapsed']();
 }
 
+export function ToggleFavoriteOrganization(arg1) {
+  return window['go']['main']['App']['ToggleFavoriteOrganization'](arg1);
+}
+
+export function ToggleFavoriteProject(arg1, arg2) {
+  return window['go']['main']['App']['ToggleFavoriteProject'](arg1, arg2);
+}
+
 export function UpdateAvailable() {
   return window['go']['main']['App']['UpdateAvailable']();
 }

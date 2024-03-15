@@ -38,6 +38,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
   StartTimer,
   StopTimer,
@@ -54,9 +56,10 @@ import {
   DeleteProject,
   ShowWindow,
   ConfirmAction,
+  ToggleFavoriteProject,
 } from "../wailsjs/go/main/App";
 
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth } from './utils/utils'
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Project } from './utils/utils'
 import EditProjectDialog from './components/EditProjectDialog';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
@@ -89,7 +92,7 @@ function App() {
   // Variables for handling organizations
   const [organizations, setOrganizations] = useState<string[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState('');
-  const [projects, setProjects] = useState<string[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
   
   // Dialogs
@@ -150,10 +153,10 @@ function App() {
     if (timerRunning) {
       await stopTimer();
     }
-    const projs = await GetProjects(newOrganization);
-    SetOrganization(newOrganization, projs[0]).then(() => {
+    const projs: Project[] = await GetProjects(newOrganization);
+    SetOrganization(newOrganization, projs[0].Name).then(() => {
       setSelectedOrganization(newOrganization);
-      setSelectedProject(projs[0]);
+      setSelectedProject(projs[0].Name);
       setProjects(projs);
     });
   };
@@ -183,6 +186,16 @@ function App() {
     setOpenEditProj(true);
   };
 
+  const toggleFavoriteProject = (project: string) => {
+    ToggleFavoriteProject(selectedOrganization, project).then(() => {
+      const proj = projects.find(p => p.Name === project);
+      if (proj) {
+        proj.Favorite = !proj.Favorite;
+        setProjects([...projects]);
+      }
+    });
+  };
+
   const handleDeleteOrganization = async () => {
     ConfirmAction(`Delete ${selectedOrganization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
       if (confirmed === false) {
@@ -199,7 +212,7 @@ function App() {
         setSelectedOrganization(newSelectedOrganization);
         GetProjects(newSelectedOrganization).then(projs => {
           setProjects(projs);
-          const newSelectedProject = projs[0];
+          const newSelectedProject = projs[0].Name;
           setSelectedProject(newSelectedProject);
           SetOrganization(newSelectedOrganization, newSelectedProject);
         });
@@ -218,8 +231,8 @@ function App() {
         return;
       }
       DeleteProject(selectedOrganization, project).then(() => {
-        setProjects(projs => projs.filter(proj => proj !== project));
-        const newSelectedProject = projects[0];
+        setProjects(projs => projs.filter(proj => proj.Name !== project));
+        const newSelectedProject = projects[0].Name;
         setSelectedProject(newSelectedProject);
         SetProject(newSelectedProject).then(() => {
           GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
@@ -243,8 +256,8 @@ function App() {
         setSelectedOrganization(orgs[0]);
         GetProjects(orgs[0]).then(projs => {
           setProjects(projs);
-          setSelectedProject(projs[0]);
-          SetOrganization(orgs[0], projs[0]);
+          setSelectedProject(projs[0].Name);
+          SetOrganization(orgs[0], projs[0].Name);
         });
       }
     });
@@ -261,11 +274,11 @@ function App() {
     GetProjects(selectedOrganization).then(projs => {
       setProjects(projs);
       // Handle case where the old project name matches the new project name for different organizations
-      if (projs[0] === selectedProject) {
-        GetWorkTimeByProject(selectedOrganization, projs[0], dateString())
+      if (projs[0].Name === selectedProject) {
+        GetWorkTimeByProject(selectedOrganization, projs[0].Name, dateString())
           .then(setCurrProjectWorkTime);
       }
-      setSelectedProject(projs[0]);
+      setSelectedProject(projs[0].Name);
     });
   }, [selectedOrganization]);
 
@@ -406,10 +419,20 @@ function App() {
             }}
             renderValue={(selected) => <div>{selected}</div>}
           >
-            {projects.map((project) => (
-              <MenuItem key={project} value={project} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            {projects.sort((a, b) => Number(b.Favorite) - Number(a.Favorite)).map((project, idx) => (
+              <MenuItem key={idx} value={project.Name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div>
-                  {project}
+                  <IconButton
+                    edge="start"
+                    aria-label="favorite"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleFavoriteProject(project.Name);
+                    }}
+                  >
+                    {project.Favorite ? <StarIcon /> : <StarBorderIcon />}
+                  </IconButton>
+                  {project.Name}
                 </div>
                 <div>
                   <Tooltip title="Edit project">
@@ -430,7 +453,7 @@ function App() {
                       aria-label="delete"
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleDeleteProject(project);
+                        handleDeleteProject(project.Name);
                       }}
                     >
                       <DeleteIcon />
@@ -547,7 +570,7 @@ function App() {
         <WorkTimeAccordion
           timerRunning={timerRunning}
           selectedOrganization={selectedOrganization}
-          projects={projects}
+          projects={projects.map(proj => proj.Name)}
         />
       </div>
 

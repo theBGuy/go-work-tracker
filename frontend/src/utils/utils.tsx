@@ -49,3 +49,8 @@ export async function getCurrentWeekOfMonth() {
   const week = await GetWeekOfMonth(year, month, day);
   return week
 };
+
+export type Project = {
+  Name: string;
+  Favorite: boolean;
+};

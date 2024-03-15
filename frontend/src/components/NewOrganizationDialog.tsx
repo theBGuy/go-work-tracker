@@ -1,6 +1,7 @@
 import { useForm, SubmitHandler } from "react-hook-form"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
 import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
+import { Project } from "../utils/utils";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
@@ -8,7 +9,7 @@ interface NewOrganizationDialogProps {
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
   setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<string[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   setOpenNewOrg: (value: boolean) => void;
 }
 
@@ -34,7 +35,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
     await NewOrganization(organization, project);
     await SetOrganization(organization, project);
     setOrganizations(orgs => [...orgs, organization]);
-    setProjects(projs => [...projs, project]);
+    setProjects(projs => [...projs, { Name: project, Favorite: false }]);
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);

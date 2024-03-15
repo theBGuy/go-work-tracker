@@ -9,14 +9,14 @@ import {
   TextField
 } from '@mui/material';
 import { NewProject, SetProject } from '../../wailsjs/go/main/App';
-import { getMonth } from "../utils/utils";
+import { getMonth, Project } from "../utils/utils";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
   organization: string;
-  projects: string[];
+  projects: Project[];
   setSelectedProject: (proj: string) => void;
-  setProjects: React.Dispatch<React.SetStateAction<string[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   setMonthlyWorkTimes: React.Dispatch<React.SetStateAction<Record<number, Record<string, number>>>>;
   setOpenNewProj: (value: boolean) => void;
 }
@@ -40,7 +40,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     const { project } = data;
     await NewProject(organization, project);
     await SetProject(project);
-    setProjects(projs => [...projs, project]);
+    setProjects(projs => [...projs, { Name: project, Favorite: false }]);
     setSelectedProject(project);
     setMonthlyWorkTimes(prev => {
       prev[getMonth()][project] = 0;
@@ -68,15 +68,15 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
             label="Project Name"
             type="text"
             fullWidth
-            error={projects.includes(newProj)}
-            helperText={projects.includes(newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.Name === newProj)}
+            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
             {...register("project", { required: true })}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
-            disabled={!newProj || projects.includes(newProj)}
+            disabled={!newProj || projects.some((el) => el.Name === newProj)}
           >
             Confirm
           </Button>

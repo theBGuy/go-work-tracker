@@ -5,16 +5,18 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 
 import { RenameOrganization, RenameProject } from '../../wailsjs/go/main/App';
 
+import { Project } from "../utils/utils";
+
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
   organization: string;
   organizations: string[];
   project: string;
-  projects: string[];
+  projects: Project[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
   setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<string[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   setOpenEditOrg: (value: boolean) => void;
 }
 
@@ -43,9 +45,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.indexOf(project);
+        const index = prevProjects.findIndex((el) => el.Name === project);
         if (index > -1) {
-          prevProjects[index] = data.project;
+          prevProjects[index].Name = data.project;
           return [...prevProjects];
         }
         return prevProjects;
@@ -94,8 +96,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Project Name"
             type="text"
             fullWidth
-            error={projects.includes(newProj)}
-            helperText={projects.includes(newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.Name === newProj)}
+            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
             {...register("project")}
           />
         </DialogContent>
@@ -104,7 +106,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             type="submit"
             disabled={
               (!newOrg && !newProj)
-              || projects.includes(newProj)
+              || projects.some((el) => el.Name === newProj)
               || organizations.includes(newOrg)
             }>
             Save
