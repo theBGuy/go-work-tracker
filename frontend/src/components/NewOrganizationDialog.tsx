@@ -1,15 +1,15 @@
 import { useForm, SubmitHandler } from "react-hook-form"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
 import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
-import { Project } from "../utils/utils";
+import { Model } from "../utils/utils";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
-  organizations: string[];
+  organizations: Model[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
-  setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setOrganizations: React.Dispatch<React.SetStateAction<Model[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenNewOrg: (value: boolean) => void;
 }
 
@@ -34,8 +34,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
     const { organization, project } = data;
     await NewOrganization(organization, project);
     await SetOrganization(organization, project);
-    setOrganizations(orgs => [...orgs, organization]);
-    setProjects(projs => [...projs, { Name: project, Favorite: false }]);
+    setOrganizations(orgs => [...orgs, { Name: organization, Favorite: false, UpdatedAt: new Date().toISOString() }]);
+    setProjects(projs => [...projs, { Name: project, Favorite: false, UpdatedAt: new Date().toISOString() }]);
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);
@@ -61,8 +61,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
             label="Organization Name"
             type="text"
             fullWidth
-            error={organizations.includes(newOrg)}
-            helperText={organizations.includes(newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.Name === newOrg)}
+            helperText={organizations.some((el) => el.Name === newOrg) ? 'Project name already exists' : ''}
             {...register("organization", { required: true })}
           />
           <br />
@@ -85,7 +85,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
             disabled={
               !newOrg
               || !newProj
-              || organizations.includes(newOrg)
+              || organizations.some((el) => el.Name === newOrg)
             }>
             Confirm
           </Button>

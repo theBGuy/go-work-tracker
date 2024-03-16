@@ -15,7 +15,7 @@ export function ExportByYear(arg1:main.ExportType,arg2:string,arg3:number):Promi
 
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<{[key: number]: {[key: string]: number}}>;
 
-export function GetOrganizations():Promise<Array<string>>;
+export function GetOrganizations():Promise<Array<main.Organization>>;
 
 export function GetProjects(arg1:string):Promise<Array<main.Project>>;
 

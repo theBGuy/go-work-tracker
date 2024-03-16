@@ -323,7 +323,6 @@ func (a *App) GetProjects(organizationName string) (projects []Project, err erro
 	}
 
 	// Get the projects within the organization
-	// var projectModels []Project
 	err = a.db.
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
 		Where(&Project{OrganizationID: organization.ID}).
@@ -331,12 +330,6 @@ func (a *App) GetProjects(organizationName string) (projects []Project, err erro
 	if err != nil {
 		return nil, err
 	}
-
-	// Extract the project names
-	// projects = make([]string, len(projectModels))
-	// for i, project := range projectModels {
-	// 	projects[i] = project.Name
-	// }
 
 	return projects, nil
 }
@@ -377,16 +370,9 @@ func (a *App) DeleteOrganization(organizationName string) {
 	}
 }
 
-func (a *App) GetOrganizations() (organizations []string, err error) {
-	var organizationModels []Organization
-	if err := a.db.Find(&organizationModels).Where("organizations.deleted_at IS NULL").Error; err != nil {
+func (a *App) GetOrganizations() (organizations []Organization, err error) {
+	if err := a.db.Find(&organizations).Where("organizations.deleted_at IS NULL").Error; err != nil {
 		return nil, err
-	}
-
-	// Extract the organization names
-	organizations = make([]string, len(organizationModels))
-	for i, organization := range organizationModels {
-		organizations[i] = organization.Name
 	}
 
 	return organizations, nil

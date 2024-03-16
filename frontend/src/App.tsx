@@ -56,10 +56,11 @@ import {
   DeleteProject,
   ShowWindow,
   ConfirmAction,
+  ToggleFavoriteOrganization,
   ToggleFavoriteProject,
 } from "../wailsjs/go/main/App";
 
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Project } from './utils/utils'
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from './utils/utils'
 import EditProjectDialog from './components/EditProjectDialog';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
@@ -90,9 +91,9 @@ function App() {
   const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
-  const [organizations, setOrganizations] = useState<string[]>([]);
+  const [organizations, setOrganizations] = useState<Model[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState('');
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Model[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
   
   // Dialogs
@@ -153,10 +154,13 @@ function App() {
     if (timerRunning) {
       await stopTimer();
     }
-    const projs: Project[] = await GetProjects(newOrganization);
-    SetOrganization(newOrganization, projs[0].Name).then(() => {
+    const projs: Model[] = await GetProjects(newOrganization);
+    projs.sort(handleSort);
+    const project = projs[0].Name;
+
+    SetOrganization(newOrganization, project).then(() => {
       setSelectedOrganization(newOrganization);
-      setSelectedProject(projs[0].Name);
+      setSelectedProject(project);
       setProjects(projs);
     });
   };
@@ -186,6 +190,16 @@ function App() {
     setOpenEditProj(true);
   };
 
+  const toggleFavoriteOrg = (organization: string) => {
+    ToggleFavoriteOrganization(organization).then(() => {
+      const org = organizations.find(org => org.Name === organization);
+      if (org) {
+        org.Favorite = !org.Favorite;
+        setOrganizations([...organizations]);
+      }
+    });
+  };
+  
   const toggleFavoriteProject = (project: string) => {
     ToggleFavoriteProject(selectedOrganization, project).then(() => {
       const proj = projects.find(p => p.Name === project);
@@ -207,12 +221,13 @@ function App() {
         return;
       }
       DeleteOrganization(selectedOrganization).then(() => {
-        setOrganizations(orgs => orgs.filter(org => org !== selectedOrganization));
-        const newSelectedOrganization = organizations[0];
+        setOrganizations(orgs => orgs.filter(org => org.Name !== selectedOrganization));
+        const newSelectedOrganization = organizations.sort(handleSort)[0].Name;
         setSelectedOrganization(newSelectedOrganization);
+
         GetProjects(newSelectedOrganization).then(projs => {
           setProjects(projs);
-          const newSelectedProject = projs[0].Name;
+          const newSelectedProject = projs.sort(handleSort)[0].Name;
           setSelectedProject(newSelectedProject);
           SetOrganization(newSelectedOrganization, newSelectedProject);
         });
@@ -232,8 +247,9 @@ function App() {
       }
       DeleteProject(selectedOrganization, project).then(() => {
         setProjects(projs => projs.filter(proj => proj.Name !== project));
-        const newSelectedProject = projects[0].Name;
+        const newSelectedProject = projects.sort(handleSort)[0].Name;
         setSelectedProject(newSelectedProject);
+
         SetProject(newSelectedProject).then(() => {
           GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
             .then(setCurrProjectWorkTime);
@@ -242,22 +258,37 @@ function App() {
     });
   };
 
+  const handleSort = (a: Model, b: Model) => {
+    if (a.Favorite === b.Favorite) {
+    // If both projects have the same Favorite status, sort by UpdatedAt
+      return new Date(b.UpdatedAt).getTime() - new Date(a.UpdatedAt).getTime();
+    } else {
+      // Otherwise, sort by Favorite
+      return Number(b.Favorite) - Number(a.Favorite);
+    }
+  };
+
   /**
    * Get organizations defined in database when the app loads
    * If no organizations are defined, prompt the user to create one
    */
   useEffect(() => {
     getCurrentWeekOfMonth().then(setCurrentWeek);
-    GetOrganizations().then(orgs => {
+    GetOrganizations().then((orgs: Model[]) => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
       } else {
         setOrganizations(orgs);
-        setSelectedOrganization(orgs[0]);
-        GetProjects(orgs[0]).then(projs => {
+        orgs.sort(handleSort);
+        const organization = orgs[0].Name;
+        setSelectedOrganization(organization);
+
+        GetProjects(organization).then((projs: Model[]) => {
           setProjects(projs);
-          setSelectedProject(projs[0].Name);
-          SetOrganization(orgs[0], projs[0].Name);
+          projs.sort(handleSort);
+          const project = projs[0].Name;
+          setSelectedProject(project);
+          SetOrganization(organization, project);
         });
       }
     });
@@ -271,14 +302,16 @@ function App() {
     if (!selectedOrganization) return;
     console.debug("Getting work time for organization", selectedOrganization);
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
-    GetProjects(selectedOrganization).then(projs => {
+    GetProjects(selectedOrganization).then((projs: Model[]) => {
       setProjects(projs);
+      projs.sort(handleSort);
+      const project = projs[0].Name;
       // Handle case where the old project name matches the new project name for different organizations
-      if (projs[0].Name === selectedProject) {
-        GetWorkTimeByProject(selectedOrganization, projs[0].Name, dateString())
+      if (project === selectedProject) {
+        GetWorkTimeByProject(selectedOrganization, project, dateString())
           .then(setCurrProjectWorkTime);
       }
-      setSelectedProject(projs[0].Name);
+      setSelectedProject(project);
     });
   }, [selectedOrganization]);
 
@@ -401,10 +434,21 @@ function App() {
           <Select
             value={selectedOrganization}
             onChange={(event) => setOrganization(event.target.value as string)}
+            renderValue={(selected) => <div>{selected}</div>}
           >
-            {organizations.map((org) => (
-              <MenuItem key={org} value={org}>
-                {org}
+            {organizations.sort(handleSort).map((org, idx) => (
+              <MenuItem key={idx} value={org.Name}>
+                <IconButton
+                  edge="start"
+                  aria-label="favorite"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleFavoriteOrg(org.Name);
+                  }}
+                >
+                  {org.Favorite ? <StarIcon /> : <StarBorderIcon />}
+                </IconButton>
+                {org.Name}
               </MenuItem>
             ))}
           </Select>
@@ -419,7 +463,7 @@ function App() {
             }}
             renderValue={(selected) => <div>{selected}</div>}
           >
-            {projects.sort((a, b) => Number(b.Favorite) - Number(a.Favorite)).map((project, idx) => (
+            {projects.sort(handleSort).map((project, idx) => (
               <MenuItem key={idx} value={project.Name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div>
                   <IconButton

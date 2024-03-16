@@ -5,15 +5,15 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 
 import { RenameProject } from '../../wailsjs/go/main/App';
 
-import { Project } from "../utils/utils";
+import { Model } from "../utils/utils";
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
   organization: string;
   project: string;
-  projects: Project[];
+  projects: Model[];
   setSelectedProject: (proj: string) => void;
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditProj: (value: boolean) => void;
 }
 

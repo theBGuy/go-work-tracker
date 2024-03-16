@@ -50,7 +50,8 @@ export async function getCurrentWeekOfMonth() {
   return week
 };
 
-export type Project = {
+export type Model = {
   Name: string;
   Favorite: boolean;
+  UpdatedAt: string;
 };

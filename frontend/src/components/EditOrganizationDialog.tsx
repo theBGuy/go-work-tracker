@@ -5,18 +5,18 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 
 import { RenameOrganization, RenameProject } from '../../wailsjs/go/main/App';
 
-import { Project } from "../utils/utils";
+import { Model } from "../utils/utils";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
   organization: string;
-  organizations: string[];
+  organizations: Model[];
   project: string;
-  projects: Project[];
+  projects: Model[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
-  setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setOrganizations: React.Dispatch<React.SetStateAction<Model[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditOrg: (value: boolean) => void;
 }
 
@@ -57,9 +57,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
     if (data.organization && data.organization !== organization) {
       await RenameOrganization(organization, data.organization);
       setOrganizations(prevOrgs => {
-        const index = prevOrgs.indexOf(organization);
+        const index = prevOrgs.findIndex((el) => el.Name === organization);
         if (index > -1) {
-          prevOrgs[index] = data.organization;
+          prevOrgs[index].Name = data.organization;
           return [...prevOrgs];
         }
         return prevOrgs;
@@ -85,8 +85,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Organization Name"
             type="text"
             fullWidth
-            error={organizations.includes(newOrg)}
-            helperText={organizations.includes(newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.Name === newOrg)}
+            helperText={organizations.some((el) => el.Name === newOrg) ? 'Project name already exists' : ''}
             {...register("organization")}
           />
           <br />
@@ -107,7 +107,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             disabled={
               (!newOrg && !newProj)
               || projects.some((el) => el.Name === newProj)
-              || organizations.includes(newOrg)
+              || organizations.some((el) => el.Name === newOrg)
             }>
             Save
           </Button>
