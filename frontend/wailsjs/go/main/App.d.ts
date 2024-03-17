@@ -15,9 +15,9 @@ export function ExportByYear(arg1:main.ExportType,arg2:string,arg3:number):Promi
 
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<{[key: number]: {[key: string]: number}}>;
 
-export function GetOrganizations():Promise<Array<string>>;
+export function GetOrganizations():Promise<Array<main.Organization>>;
 
-export function GetProjects(arg1:string):Promise<Array<string>>;
+export function GetProjects(arg1:string):Promise<Array<main.Project>>;
 
 export function GetVersion():Promise<string>;
 
@@ -52,5 +52,9 @@ export function StartTimer(arg1:string,arg2:string):Promise<void>;
 export function StopTimer(arg1:string,arg2:string):Promise<void>;
 
 export function TimeElapsed():Promise<number>;
+
+export function ToggleFavoriteOrganization(arg1:string):Promise<void>;
+
+export function ToggleFavoriteProject(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateAvailable():Promise<boolean>;

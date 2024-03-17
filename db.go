@@ -16,6 +16,7 @@ import (
 type Organization struct {
 	gorm.Model
 	Name     string
+	Favorite bool
 	Projects []Project
 }
 
@@ -23,6 +24,7 @@ type Project struct {
 	gorm.Model
 	Name           string
 	OrganizationID uint
+	Favorite       bool
 	WorkHours      []WorkHours
 }
 
@@ -180,6 +182,18 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	}
 }
 
+func (a *App) ToggleFavoriteOrganization(organizationName string) {
+	organization, err := a.getOrganization(organizationName)
+	if err != nil {
+		handleDBError(err)
+	}
+
+	organization.Favorite = !organization.Favorite
+	if err := a.db.Save(&organization).Error; err != nil {
+		handleDBError(err)
+	}
+}
+
 // Create a new project for the specified organization
 func (a *App) NewProject(organizationName string, projectName string) {
 	if projectName == "" || organizationName == "" {
@@ -277,8 +291,31 @@ func (a *App) DeleteProject(organizationName string, projectName string) {
 	}
 }
 
+func (a *App) ToggleFavoriteProject(organizationName string, projectName string) {
+	if projectName == "" || organizationName == "" {
+		return
+	}
+
+	// Find the organization
+	organization, err := a.getOrganization(organizationName)
+	if err != nil {
+		handleDBError(err)
+	}
+
+	// Find the project within the organization
+	project, err := a.getProject(organization.ID, projectName)
+	if err != nil {
+		handleDBError(err)
+	}
+
+	project.Favorite = !project.Favorite
+	if err := a.db.Save(&project).Error; err != nil {
+		handleDBError(err)
+	}
+}
+
 // GetProjects returns the list of projects for the specified organization
-func (a *App) GetProjects(organizationName string) (projects []string, err error) {
+func (a *App) GetProjects(organizationName string) (projects []Project, err error) {
 	// Find the organization
 	organization, err := a.getOrganization(organizationName)
 	if err != nil {
@@ -286,19 +323,12 @@ func (a *App) GetProjects(organizationName string) (projects []string, err error
 	}
 
 	// Get the projects within the organization
-	var projectModels []Project
 	err = a.db.
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
 		Where(&Project{OrganizationID: organization.ID}).
-		Find(&projectModels).Error
+		Find(&projects).Error
 	if err != nil {
 		return nil, err
-	}
-
-	// Extract the project names
-	projects = make([]string, len(projectModels))
-	for i, project := range projectModels {
-		projects[i] = project.Name
 	}
 
 	return projects, nil
@@ -340,16 +370,9 @@ func (a *App) DeleteOrganization(organizationName string) {
 	}
 }
 
-func (a *App) GetOrganizations() (organizations []string, err error) {
-	var organizationModels []Organization
-	if err := a.db.Find(&organizationModels).Where("organizations.deleted_at IS NULL").Error; err != nil {
+func (a *App) GetOrganizations() (organizations []Organization, err error) {
+	if err := a.db.Find(&organizations).Where("organizations.deleted_at IS NULL").Error; err != nil {
 		return nil, err
-	}
-
-	// Extract the organization names
-	organizations = make([]string, len(organizationModels))
-	for i, organization := range organizationModels {
-		organizations[i] = organization.Name
 	}
 
 	return organizations, nil

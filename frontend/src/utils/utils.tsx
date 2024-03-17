@@ -49,3 +49,9 @@ export async function getCurrentWeekOfMonth() {
   const week = await GetWeekOfMonth(year, month, day);
   return week
 };
+
+export type Model = {
+  Name: string;
+  Favorite: boolean;
+  UpdatedAt: string;
+};

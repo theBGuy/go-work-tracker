@@ -5,16 +5,18 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 
 import { RenameOrganization, RenameProject } from '../../wailsjs/go/main/App';
 
+import { Model } from "../utils/utils";
+
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
   organization: string;
-  organizations: string[];
+  organizations: Model[];
   project: string;
-  projects: string[];
+  projects: Model[];
   setSelectedOrganization: (org: string) => void;
   setSelectedProject: (proj: string) => void;
-  setOrganizations: React.Dispatch<React.SetStateAction<string[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<string[]>>;
+  setOrganizations: React.Dispatch<React.SetStateAction<Model[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditOrg: (value: boolean) => void;
 }
 
@@ -43,9 +45,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.indexOf(project);
+        const index = prevProjects.findIndex((el) => el.Name === project);
         if (index > -1) {
-          prevProjects[index] = data.project;
+          prevProjects[index].Name = data.project;
           return [...prevProjects];
         }
         return prevProjects;
@@ -55,9 +57,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
     if (data.organization && data.organization !== organization) {
       await RenameOrganization(organization, data.organization);
       setOrganizations(prevOrgs => {
-        const index = prevOrgs.indexOf(organization);
+        const index = prevOrgs.findIndex((el) => el.Name === organization);
         if (index > -1) {
-          prevOrgs[index] = data.organization;
+          prevOrgs[index].Name = data.organization;
           return [...prevOrgs];
         }
         return prevOrgs;
@@ -83,8 +85,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Organization Name"
             type="text"
             fullWidth
-            error={organizations.includes(newOrg)}
-            helperText={organizations.includes(newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.Name === newOrg)}
+            helperText={organizations.some((el) => el.Name === newOrg) ? 'Project name already exists' : ''}
             {...register("organization")}
           />
           <br />
@@ -94,8 +96,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Project Name"
             type="text"
             fullWidth
-            error={projects.includes(newProj)}
-            helperText={projects.includes(newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.Name === newProj)}
+            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
             {...register("project")}
           />
         </DialogContent>
@@ -104,8 +106,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             type="submit"
             disabled={
               (!newOrg && !newProj)
-              || projects.includes(newProj)
-              || organizations.includes(newOrg)
+              || projects.some((el) => el.Name === newProj)
+              || organizations.some((el) => el.Name === newOrg)
             }>
             Save
           </Button>

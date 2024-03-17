@@ -5,13 +5,15 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 
 import { RenameProject } from '../../wailsjs/go/main/App';
 
+import { Model } from "../utils/utils";
+
 interface EditProjectDialogProps {
   openEditProj: boolean;
   organization: string;
   project: string;
-  projects: string[];
+  projects: Model[];
   setSelectedProject: (proj: string) => void;
-  setProjects: React.Dispatch<React.SetStateAction<string[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditProj: (value: boolean) => void;
 }
 
@@ -35,9 +37,9 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.indexOf(project);
+        const index = prevProjects.findIndex((el) => el.Name === project)
         if (index > -1) {
-          prevProjects[index] = data.project;
+          prevProjects[index].Name = data.project;
           return [...prevProjects];
         }
         return prevProjects;
@@ -62,15 +64,15 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
             label="New Project Name"
             type="text"
             fullWidth
-            error={projects.includes(newProj)}
-            helperText={projects.includes(newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.Name === newProj)}
+            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
             {...register("project")}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
-            disabled={!newProj || projects.includes(newProj)}
+            disabled={!newProj || projects.some((el) => el.Name === newProj)}
           >
             Save
           </Button>
