@@ -73,6 +73,9 @@ func containsAll(str string, keys []string) bool {
 // and the database is now managed by GORM in version 0.5.0
 // normalized database in 0.6.0 so handle transition from old single table to new normalized tables
 func fixOutdatedDb(db *gorm.DB) {
+	if os.Getenv("BUILDING") == "true" {
+		return
+	}
 	// Query the sqlite_master table to get the SQL used to create the work_hours table
 	row := db.Raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='work_hours'").Row()
 	var createSQL string
