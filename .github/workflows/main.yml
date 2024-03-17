@@ -47,6 +47,7 @@ jobs:
         env:
           APP_ENV: production
           APP_VERSION: ${{ env.version }}
+          BUILDING: "true"
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
