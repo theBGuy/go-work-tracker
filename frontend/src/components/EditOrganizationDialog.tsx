@@ -45,9 +45,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.findIndex((el) => el.Name === project);
+        const index = prevProjects.findIndex((el) => el.name === project);
         if (index > -1) {
-          prevProjects[index].Name = data.project;
+          prevProjects[index].name = data.project;
           return [...prevProjects];
         }
         return prevProjects;
@@ -57,9 +57,9 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
     if (data.organization && data.organization !== organization) {
       await RenameOrganization(organization, data.organization);
       setOrganizations(prevOrgs => {
-        const index = prevOrgs.findIndex((el) => el.Name === organization);
+        const index = prevOrgs.findIndex((el) => el.name === organization);
         if (index > -1) {
-          prevOrgs[index].Name = data.organization;
+          prevOrgs[index].name = data.organization;
           return [...prevOrgs];
         }
         return prevOrgs;
@@ -85,8 +85,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Organization Name"
             type="text"
             fullWidth
-            error={organizations.some((el) => el.Name === newOrg)}
-            helperText={organizations.some((el) => el.Name === newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.name === newOrg)}
+            helperText={organizations.some((el) => el.name === newOrg) ? 'Project name already exists' : ''}
             {...register("organization")}
           />
           <br />
@@ -96,8 +96,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Project Name"
             type="text"
             fullWidth
-            error={projects.some((el) => el.Name === newProj)}
-            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.name === newProj)}
+            helperText={projects.some((el) => el.name === newProj) ? 'Project name already exists' : ''}
             {...register("project")}
           />
         </DialogContent>
@@ -106,8 +106,8 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             type="submit"
             disabled={
               (!newOrg && !newProj)
-              || projects.some((el) => el.Name === newProj)
-              || organizations.some((el) => el.Name === newOrg)
+              || projects.some((el) => el.name === newProj)
+              || organizations.some((el) => el.name === newOrg)
             }>
             Save
           </Button>

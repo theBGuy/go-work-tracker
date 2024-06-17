@@ -40,7 +40,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     const { project } = data;
     await NewProject(organization, project);
     await SetProject(project);
-    setProjects(projs => [...projs, { Name: project, Favorite: false, UpdatedAt: new Date().toISOString() }]);
+    setProjects(projs => [...projs, { name: project, favorite: false, updated_at: new Date().toISOString() }]);
     setSelectedProject(project);
     setMonthlyWorkTimes(prev => {
       prev[getMonth()][project] = 0;
@@ -68,15 +68,15 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
             label="Project Name"
             type="text"
             fullWidth
-            error={projects.some((el) => el.Name === newProj)}
-            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.name === newProj)}
+            helperText={projects.some((el) => el.name === newProj) ? 'Project name already exists' : ''}
             {...register("project", { required: true })}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
-            disabled={!newProj || projects.some((el) => el.Name === newProj)}
+            disabled={!newProj || projects.some((el) => el.name === newProj)}
           >
             Confirm
           </Button>

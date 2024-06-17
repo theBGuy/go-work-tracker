@@ -51,7 +51,7 @@ export async function getCurrentWeekOfMonth() {
 };
 
 export type Model = {
-  Name: string;
-  Favorite: boolean;
-  UpdatedAt: string;
+  name: string;
+  favorite: boolean;
+  updated_at: string;
 };
