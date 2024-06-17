@@ -34,8 +34,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
     const { organization, project } = data;
     await NewOrganization(organization, project);
     await SetOrganization(organization, project);
-    setOrganizations(orgs => [...orgs, { Name: organization, Favorite: false, UpdatedAt: new Date().toISOString() }]);
-    setProjects(projs => [...projs, { Name: project, Favorite: false, UpdatedAt: new Date().toISOString() }]);
+    setOrganizations(orgs => [...orgs, { name: organization, favorite: false, updated_at: new Date().toISOString() }]);
+    setProjects(projs => [...projs, { name: project, favorite: false, updated_at: new Date().toISOString() }]);
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);
@@ -61,8 +61,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
             label="Organization Name"
             type="text"
             fullWidth
-            error={organizations.some((el) => el.Name === newOrg)}
-            helperText={organizations.some((el) => el.Name === newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.name === newOrg)}
+            helperText={organizations.some((el) => el.name === newOrg) ? 'Project name already exists' : ''}
             {...register("organization", { required: true })}
           />
           <br />
@@ -85,7 +85,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
             disabled={
               !newOrg
               || !newProj
-              || organizations.some((el) => el.Name === newOrg)
+              || organizations.some((el) => el.name === newOrg)
             }>
             Confirm
           </Button>

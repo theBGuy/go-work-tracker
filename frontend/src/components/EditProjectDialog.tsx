@@ -37,9 +37,9 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
       setProjects(prevProjects => {
-        const index = prevProjects.findIndex((el) => el.Name === project)
+        const index = prevProjects.findIndex((el) => el.name === project)
         if (index > -1) {
-          prevProjects[index].Name = data.project;
+          prevProjects[index].name = data.project;
           return [...prevProjects];
         }
         return prevProjects;
@@ -64,15 +64,15 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
             label="New Project Name"
             type="text"
             fullWidth
-            error={projects.some((el) => el.Name === newProj)}
-            helperText={projects.some((el) => el.Name === newProj) ? 'Project name already exists' : ''}
+            error={projects.some((el) => el.name === newProj)}
+            helperText={projects.some((el) => el.name === newProj) ? 'Project name already exists' : ''}
             {...register("project")}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
-            disabled={!newProj || projects.some((el) => el.Name === newProj)}
+            disabled={!newProj || projects.some((el) => el.name === newProj)}
           >
             Save
           </Button>

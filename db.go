@@ -14,25 +14,34 @@ import (
 )
 
 type Organization struct {
-	gorm.Model
-	Name     string
-	Favorite bool
-	Projects []Project
+	ID        uint           `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	Name      string         `json:"name"`
+	Favorite  bool           `json:"favorite"`
+	Projects  []Project      `json:"projects"`
 }
 
 type Project struct {
-	gorm.Model
-	Name           string
-	OrganizationID uint
-	Favorite       bool
-	WorkHours      []WorkHours
+	ID             uint           `gorm:"primarykey" json:"id"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	Name           string         `json:"name"`
+	OrganizationID uint           `json:"organization_id"`
+	Favorite       bool           `json:"favorite"`
+	WorkHours      []WorkHours    `json:"work_hours"`
 }
 
 type WorkHours struct {
-	gorm.Model
-	Date      string
-	Seconds   int
-	ProjectID uint
+	ID        uint           `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	Date      string         `json:"date"`
+	Seconds   int            `json:"seconds"`
+	ProjectID uint           `json:"project_id"`
 }
 
 var (

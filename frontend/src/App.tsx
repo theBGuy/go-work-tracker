@@ -156,7 +156,7 @@ function App() {
     }
     const projs: Model[] = await GetProjects(newOrganization);
     projs.sort(handleSort);
-    const project = projs[0].Name;
+    const project = projs[0].name;
 
     SetOrganization(newOrganization, project).then(() => {
       setSelectedOrganization(newOrganization);
@@ -192,9 +192,9 @@ function App() {
 
   const toggleFavoriteOrg = (organization: string) => {
     ToggleFavoriteOrganization(organization).then(() => {
-      const org = organizations.find(org => org.Name === organization);
+      const org = organizations.find(org => org.name === organization);
       if (org) {
-        org.Favorite = !org.Favorite;
+        org.favorite = !org.favorite;
         setOrganizations([...organizations]);
       }
     });
@@ -202,9 +202,9 @@ function App() {
   
   const toggleFavoriteProject = (project: string) => {
     ToggleFavoriteProject(selectedOrganization, project).then(() => {
-      const proj = projects.find(p => p.Name === project);
+      const proj = projects.find(p => p.name === project);
       if (proj) {
-        proj.Favorite = !proj.Favorite;
+        proj.favorite = !proj.favorite;
         setProjects([...projects]);
       }
     });
@@ -221,13 +221,13 @@ function App() {
         return;
       }
       DeleteOrganization(selectedOrganization).then(() => {
-        setOrganizations(orgs => orgs.filter(org => org.Name !== selectedOrganization));
-        const newSelectedOrganization = organizations.sort(handleSort)[0].Name;
+        setOrganizations(orgs => orgs.filter(org => org.name !== selectedOrganization));
+        const newSelectedOrganization = organizations.sort(handleSort)[0].name;
         setSelectedOrganization(newSelectedOrganization);
 
         GetProjects(newSelectedOrganization).then(projs => {
           setProjects(projs);
-          const newSelectedProject = projs.sort(handleSort)[0].Name;
+          const newSelectedProject = projs.sort(handleSort)[0].name;
           setSelectedProject(newSelectedProject);
           SetOrganization(newSelectedOrganization, newSelectedProject);
         });
@@ -246,8 +246,8 @@ function App() {
         return;
       }
       DeleteProject(selectedOrganization, project).then(() => {
-        setProjects(projs => projs.filter(proj => proj.Name !== project));
-        const newSelectedProject = projects.sort(handleSort)[0].Name;
+        setProjects(projs => projs.filter(proj => proj.name !== project));
+        const newSelectedProject = projects.sort(handleSort)[0].name;
         setSelectedProject(newSelectedProject);
 
         SetProject(newSelectedProject).then(() => {
@@ -259,12 +259,12 @@ function App() {
   };
 
   const handleSort = (a: Model, b: Model) => {
-    if (a.Favorite === b.Favorite) {
+    if (a.favorite === b.favorite) {
     // If both projects have the same Favorite status, sort by UpdatedAt
-      return new Date(b.UpdatedAt).getTime() - new Date(a.UpdatedAt).getTime();
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     } else {
       // Otherwise, sort by Favorite
-      return Number(b.Favorite) - Number(a.Favorite);
+      return Number(b.favorite) - Number(a.favorite);
     }
   };
 
@@ -280,13 +280,13 @@ function App() {
       } else {
         setOrganizations(orgs);
         orgs.sort(handleSort);
-        const organization = orgs[0].Name;
+        const organization = orgs[0].name;
         setSelectedOrganization(organization);
 
         GetProjects(organization).then((projs: Model[]) => {
           setProjects(projs);
           projs.sort(handleSort);
-          const project = projs[0].Name;
+          const project = projs[0].name;
           setSelectedProject(project);
           SetOrganization(organization, project);
         });
@@ -305,7 +305,7 @@ function App() {
     GetProjects(selectedOrganization).then((projs: Model[]) => {
       setProjects(projs);
       projs.sort(handleSort);
-      const project = projs[0].Name;
+      const project = projs[0].name;
       // Handle case where the old project name matches the new project name for different organizations
       if (project === selectedProject) {
         GetWorkTimeByProject(selectedOrganization, project, dateString())
@@ -437,18 +437,18 @@ function App() {
             renderValue={(selected) => <div>{selected}</div>}
           >
             {organizations.sort(handleSort).map((org, idx) => (
-              <MenuItem key={idx} value={org.Name}>
+              <MenuItem key={idx} value={org.name}>
                 <IconButton
                   edge="start"
                   aria-label="favorite"
                   onClick={(event) => {
                     event.stopPropagation();
-                    toggleFavoriteOrg(org.Name);
+                    toggleFavoriteOrg(org.name);
                   }}
                 >
-                  {org.Favorite ? <StarIcon /> : <StarBorderIcon />}
+                  {org.favorite ? <StarIcon /> : <StarBorderIcon />}
                 </IconButton>
-                {org.Name}
+                {org.name}
               </MenuItem>
             ))}
           </Select>
@@ -464,19 +464,19 @@ function App() {
             renderValue={(selected) => <div>{selected}</div>}
           >
             {projects.sort(handleSort).map((project, idx) => (
-              <MenuItem key={idx} value={project.Name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <MenuItem key={idx} value={project.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div>
                   <IconButton
                     edge="start"
                     aria-label="favorite"
                     onClick={(event) => {
                       event.stopPropagation();
-                      toggleFavoriteProject(project.Name);
+                      toggleFavoriteProject(project.name);
                     }}
                   >
-                    {project.Favorite ? <StarIcon /> : <StarBorderIcon />}
+                    {project.favorite ? <StarIcon /> : <StarBorderIcon />}
                   </IconButton>
-                  {project.Name}
+                  {project.name}
                 </div>
                 <div>
                   <Tooltip title="Edit project">
@@ -497,7 +497,7 @@ function App() {
                       aria-label="delete"
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleDeleteProject(project.Name);
+                        handleDeleteProject(project.name);
                       }}
                     >
                       <DeleteIcon />
@@ -614,7 +614,7 @@ function App() {
         <WorkTimeAccordion
           timerRunning={timerRunning}
           selectedOrganization={selectedOrganization}
-          projects={projects.map(proj => proj.Name)}
+          projects={projects.map(proj => proj.name)}
         />
       </div>
 
