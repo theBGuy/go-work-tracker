@@ -1,59 +1,33 @@
 import React from 'react';
 import { useForm, SubmitHandler } from "react-hook-form"
+import { useGlobal } from '../providers/global';
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 
-import { RenameOrganization, RenameProject } from '../../wailsjs/go/main/App';
+import { RenameOrganization } from '../../wailsjs/go/main/App';
 
-import { Model } from "../utils/utils";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
   organization: string;
-  organizations: Model[];
-  project: string;
-  projects: Model[];
   setSelectedOrganization: (org: string) => void;
-  setSelectedProject: (proj: string) => void;
-  setOrganizations: React.Dispatch<React.SetStateAction<Model[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditOrg: (value: boolean) => void;
 }
 
 type Inputs = {
   organization: string;
-  project: string;
 };
 
 const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   openEditOrg,
   organization,
-  organizations,
-  project,
-  projects,
   setSelectedOrganization,
-  setSelectedProject,
-  setOrganizations,
-  setProjects,
   setOpenEditOrg,
 }) => {
+  const { organizations, setOrganizations} = useGlobal();
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
-  const newOrg = watch("organization");
-  const newProj = watch("project");
+  const inputs = watch();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    if (data.project && data.project !== project) {
-      console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
-      await RenameProject(organization, project, data.project);
-      setProjects(prevProjects => {
-        const index = prevProjects.findIndex((el) => el.name === project);
-        if (index > -1) {
-          prevProjects[index].name = data.project;
-          return [...prevProjects];
-        }
-        return prevProjects;
-      });
-      setSelectedProject(data.project);
-    }
     if (data.organization && data.organization !== organization) {
       await RenameOrganization(organization, data.organization);
       setOrganizations(prevOrgs => {
@@ -75,7 +49,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
       open={openEditOrg}
       onClose={() => setOpenEditOrg(false)}
     >
-      <DialogTitle>Edit Organization</DialogTitle>
+      <DialogTitle>Edit Organization ({organization})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <TextField
@@ -85,29 +59,17 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             label="New Organization Name"
             type="text"
             fullWidth
-            error={organizations.some((el) => el.name === newOrg)}
-            helperText={organizations.some((el) => el.name === newOrg) ? 'Project name already exists' : ''}
+            error={organizations.some((el) => el.name === inputs.organization)}
+            helperText={organizations.some((el) => el.name === inputs.organization) ? 'Organization name already exists' : ''}
             {...register("organization")}
-          />
-          <br />
-          <TextField
-            margin="dense"
-            id="project"
-            label="New Project Name"
-            type="text"
-            fullWidth
-            error={projects.some((el) => el.name === newProj)}
-            helperText={projects.some((el) => el.name === newProj) ? 'Project name already exists' : ''}
-            {...register("project")}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
             disabled={
-              (!newOrg && !newProj)
-              || projects.some((el) => el.name === newProj)
-              || organizations.some((el) => el.name === newOrg)
+              !inputs.organization
+              || organizations.some((el) => el.name === inputs.organization)
             }>
             Save
           </Button>

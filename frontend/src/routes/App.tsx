@@ -60,12 +60,19 @@ import {
   ToggleFavoriteProject,
 } from "../../wailsjs/go/main/App";
 
+import { useGlobal } from '../providers/global';
 import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from '../utils/utils'
 import EditProjectDialog from '../components/EditProjectDialog';
 import NavBar from '../components/NavBar';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
+  const {
+    projects,
+    setProjects,
+    organizations,
+    setOrganizations
+  } = useGlobal();
   const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
@@ -92,9 +99,9 @@ function App() {
   const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
-  const [organizations, setOrganizations] = useState<Model[]>([]);
+  // const [organizations, setOrganizations] = useState<Model[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState('');
-  const [projects, setProjects] = useState<Model[]>([]);
+  // const [projects, setProjects] = useState<Model[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
   
   // Dialogs
@@ -105,6 +112,10 @@ function App() {
   const [openEditOrg, setOpenEditOrg] = useState(false);
   const [openEditProj, setOpenEditProj] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Editables
+  const [editOrg, setEditOrg] = useState('');
+  const [editProj, setEditProj] = useState('');
 
   useEffect(() => {
     currentDayRef.current = currentDay;
@@ -155,7 +166,7 @@ function App() {
     if (timerRunning) {
       await stopTimer();
     }
-    const projs: Model[] = await GetProjects(newOrganization);
+    const projs = await GetProjects(newOrganization);
     projs.sort(handleSort);
     const project = projs[0].name;
 
@@ -181,13 +192,15 @@ function App() {
     setOpenNewProj(true);
   };
 
-  const handleOpenRenameOrg = () => {
+  const handleOpenEditOrg = (organization: string) => {
     setAnchorEl(null);
+    setEditOrg(organization);
     setOpenEditOrg(true);
   };
 
-  const handleOpenRenameProj = () => {
+  const handleOpenEditProj = (project: string) => {
     setAnchorEl(null);
+    setEditProj(project);
     setOpenEditProj(true);
   };
 
@@ -211,8 +224,8 @@ function App() {
     });
   };
 
-  const handleDeleteOrganization = async () => {
-    ConfirmAction(`Delete ${selectedOrganization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
+  const handleDeleteOrganization = (organization: string) => {
+    ConfirmAction(`Delete ${organization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
       if (confirmed === false) {
         return;
       }
@@ -221,17 +234,20 @@ function App() {
         toast.error("You cannot delete the last organization");
         return;
       }
-      DeleteOrganization(selectedOrganization).then(() => {
-        setOrganizations(orgs => orgs.filter(org => org.name !== selectedOrganization));
-        const newSelectedOrganization = organizations.sort(handleSort)[0].name;
-        setSelectedOrganization(newSelectedOrganization);
+      DeleteOrganization(organization).then(() => {
+        setOrganizations(orgs => orgs.filter(org => org.name !== organization));
 
-        GetProjects(newSelectedOrganization).then(projs => {
-          setProjects(projs);
-          const newSelectedProject = projs.sort(handleSort)[0].name;
-          setSelectedProject(newSelectedProject);
-          SetOrganization(newSelectedOrganization, newSelectedProject);
-        });
+        if (organization === selectedOrganization) {
+          const newSelectedOrganization = organizations.sort(handleSort)[0].name;
+          setSelectedOrganization(newSelectedOrganization);
+
+          GetProjects(newSelectedOrganization).then(projs => {
+            setProjects(projs);
+            const newSelectedProject = projs.sort(handleSort)[0].name;
+            setSelectedProject(newSelectedProject);
+            SetOrganization(newSelectedOrganization, newSelectedProject);
+          });
+        }
       });
     });
   };
@@ -248,13 +264,16 @@ function App() {
       }
       DeleteProject(selectedOrganization, project).then(() => {
         setProjects(projs => projs.filter(proj => proj.name !== project));
-        const newSelectedProject = projects.sort(handleSort)[0].name;
-        setSelectedProject(newSelectedProject);
+        
+        if (project === selectedProject) {
+          const newSelectedProject = projects.sort(handleSort)[0].name;
+          setSelectedProject(newSelectedProject);
 
-        SetProject(newSelectedProject).then(() => {
-          GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
-            .then(setCurrProjectWorkTime);
-        });
+          SetProject(newSelectedProject).then(() => {
+            GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
+              .then(setCurrProjectWorkTime);
+          });
+        }
       });
     });
   };
@@ -275,7 +294,7 @@ function App() {
    */
   useEffect(() => {
     getCurrentWeekOfMonth().then(setCurrentWeek);
-    GetOrganizations().then((orgs: Model[]) => {
+    GetOrganizations().then((orgs) => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
       } else {
@@ -284,7 +303,7 @@ function App() {
         const organization = orgs[0].name;
         setSelectedOrganization(organization);
 
-        GetProjects(organization).then((projs: Model[]) => {
+        GetProjects(organization).then((projs) => {
           setProjects(projs);
           projs.sort(handleSort);
           const project = projs[0].name;
@@ -303,7 +322,7 @@ function App() {
     if (!selectedOrganization) return;
     console.debug("Getting work time for organization", selectedOrganization);
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
-    GetProjects(selectedOrganization).then((projs: Model[]) => {
+    GetProjects(selectedOrganization).then((projs) => {
       setProjects(projs);
       projs.sort(handleSort);
       const project = projs[0].name;
@@ -422,8 +441,16 @@ function App() {
             </MenuItem>
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
             <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
-            <MenuItem onClick={handleOpenRenameOrg}>Edit Current Organization</MenuItem>
-            <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
+            <MenuItem
+              onClick={() => handleOpenEditOrg(selectedOrganization)}
+            >
+              Edit Current Organization
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleDeleteOrganization(selectedOrganization)}
+            >
+              Delete Current Organization
+            </MenuItem>
           </Menu>
           
           <NavBar />
@@ -449,19 +476,47 @@ function App() {
               renderValue={(selected) => <div>{selected}</div>}
             >
               {organizations.sort(handleSort).map((org, idx) => (
-                <MenuItem key={idx} value={org.name}>
-                  <IconButton
-                    edge="start"
-                    aria-label="favorite"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleFavoriteOrg(org.name);
-                    }}
-                  >
-                    {org.favorite ? <StarIcon /> : <StarBorderIcon />}
-                  </IconButton>
-                  {org.name}
-                </MenuItem>
+                <MenuItem key={idx} value={org.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                    <IconButton
+                      edge="start"
+                      aria-label="favorite"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleFavoriteOrg(org.name);
+                      }}
+                    >
+                      {org.favorite ? <StarIcon /> : <StarBorderIcon />}
+                    </IconButton>
+                    {org.name}
+                  </div>
+                <div>
+                  <Tooltip title="Edit organization">
+                    <IconButton
+                      edge="end"
+                      aria-label="edit"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleOpenEditOrg(org.name);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete organization">
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteOrganization(org.name);
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              </MenuItem>
               ))}
             </Select>
           </Box>
@@ -503,7 +558,7 @@ function App() {
                         aria-label="edit"
                         onClick={(event) => {
                           event.stopPropagation();
-                          handleOpenRenameProj();
+                          handleOpenEditProj(project.name);
                         }}
                       >
                         <EditIcon />
@@ -659,11 +714,8 @@ function App() {
       {/* Handle creating a new organization */}
       <NewOrganizationDialog
         openNewOrg={openNewOrg}
-        organizations={organizations}
         setSelectedOrganization={setSelectedOrganization}
         setSelectedProject={setSelectedProject}
-        setOrganizations={setOrganizations}
-        setProjects={setProjects}
         setOpenNewOrg={setOpenNewOrg}
       />
 
@@ -671,9 +723,7 @@ function App() {
       <NewProjectDialog
         openNewProj={openNewProj}
         organization={selectedOrganization}
-        projects={projects}
         setSelectedProject={setSelectedProject}
-        setProjects={setProjects}
         setMonthlyWorkTimes={setMonthlyWorkTimes}
         setOpenNewProj={setOpenNewProj}
       />
@@ -681,14 +731,8 @@ function App() {
       {/* Handle editing current organization */}
       <EditOrganizationDialog
         openEditOrg={openEditOrg}
-        organization={selectedOrganization}
-        organizations={organizations}
-        project={selectedProject}
-        projects={projects}
+        organization={editOrg}
         setSelectedOrganization={setSelectedOrganization}
-        setSelectedProject={setSelectedProject}
-        setOrganizations={setOrganizations}
-        setProjects={setProjects}
         setOpenEditOrg={setOpenEditOrg}
       />
 
@@ -696,10 +740,8 @@ function App() {
       <EditProjectDialog
         openEditProj={openEditProj}
         organization={selectedOrganization}
-        project={selectedProject}
-        projects={projects}
+        project={editProj}
         setSelectedProject={setSelectedProject}
-        setProjects={setProjects}
         setOpenEditProj={setOpenEditProj}
       />
 

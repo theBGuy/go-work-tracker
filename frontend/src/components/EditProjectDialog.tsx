@@ -1,19 +1,14 @@
 import React from 'react';
 import { useForm, SubmitHandler } from "react-hook-form"
-
+import { useGlobal } from '../providers/global';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
-
 import { RenameProject } from '../../wailsjs/go/main/App';
-
-import { Model } from "../utils/utils";
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
   organization: string;
   project: string;
-  projects: Model[];
   setSelectedProject: (proj: string) => void;
-  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenEditProj: (value: boolean) => void;
 }
 
@@ -25,11 +20,10 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
   openEditProj,
   organization,
   project,
-  projects,
   setSelectedProject,
-  setProjects,
   setOpenEditProj,
 }) => {
+  const { projects, setProjects } = useGlobal();
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
@@ -55,7 +49,7 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
       open={openEditProj}
       onClose={() => setOpenEditProj(false)}
     >
-      <DialogTitle>Edit Project</DialogTitle>
+      <DialogTitle>Edit Project ({project})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <TextField
