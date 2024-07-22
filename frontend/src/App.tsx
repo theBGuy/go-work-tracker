@@ -12,7 +12,7 @@ import NewProjectDialog from './components/NewProjectDialog';
 import EditOrganizationDialog from './components/EditOrganizationDialog';
 import AppFooter from './components/AppFooter';
 
-import { Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Tooltip, useMediaQuery } from '@mui/material';
 import {
   Tab,
   Tabs,
@@ -425,88 +425,105 @@ function App() {
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
           </Menu>
           
+          
+          {/* what a terrible solution to space this */}
+          <div style={{ flexGrow: 1 }}></div>
           {/* Our App Title */}
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          {/* <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Work Hours Tracker
-          </Typography>
+          </Typography> */}
 
           {/* Dropdown to select organization */}
-          <Select
-            value={selectedOrganization}
-            onChange={(event) => setOrganization(event.target.value as string)}
-            renderValue={(selected) => <div>{selected}</div>}
-          >
-            {organizations.sort(handleSort).map((org, idx) => (
-              <MenuItem key={idx} value={org.name}>
-                <IconButton
-                  edge="start"
-                  aria-label="favorite"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleFavoriteOrg(org.name);
-                  }}
-                >
-                  {org.favorite ? <StarIcon /> : <StarBorderIcon />}
-                </IconButton>
-                {org.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          {/* Dropdown to select project */}
-          <Select
-            value={selectedProject}
-            onChange={(event) => {
-              SetProject(event.target.value as string).then(() => {
-                setSelectedProject(event.target.value as string);
-              });
-            }}
-            renderValue={(selected) => <div>{selected}</div>}
-          >
-            {projects.sort(handleSort).map((project, idx) => (
-              <MenuItem key={idx} value={project.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
+          <Box sx={{ marginRight: 5 }}>
+            <Typography variant="h6" component="h2" sx={{ display: 'inline-block', marginRight: 2 }}>
+              Organization:
+            </Typography>
+            <Select
+              label="Organization"
+              labelId="organization-select-label"
+              variant="standard"
+              value={selectedOrganization}
+              onChange={(event) => setOrganization(event.target.value as string)}
+              renderValue={(selected) => <div>{selected}</div>}
+            >
+              {organizations.sort(handleSort).map((org, idx) => (
+                <MenuItem key={idx} value={org.name}>
                   <IconButton
                     edge="start"
                     aria-label="favorite"
                     onClick={(event) => {
                       event.stopPropagation();
-                      toggleFavoriteProject(project.name);
+                      toggleFavoriteOrg(org.name);
                     }}
                   >
-                    {project.favorite ? <StarIcon /> : <StarBorderIcon />}
+                    {org.favorite ? <StarIcon /> : <StarBorderIcon />}
                   </IconButton>
-                  {project.name}
-                </div>
-                <div>
-                  <Tooltip title="Edit project">
+                  {org.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+
+          {/* Dropdown to select project */}
+          <Box>
+            <Typography variant="h6" component="h2" sx={{ display: 'inline-block', marginRight: 2 }}>
+              Project:
+            </Typography>
+            <Select
+              variant="standard"
+              value={selectedProject}
+              onChange={(event) => {
+                SetProject(event.target.value as string).then(() => {
+                  setSelectedProject(event.target.value as string);
+                });
+              }}
+              renderValue={(selected) => <div>{selected}</div>}
+            >
+              {projects.sort(handleSort).map((project, idx) => (
+                <MenuItem key={idx} value={project.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div>
                     <IconButton
-                      edge="end"
-                      aria-label="edit"
+                      edge="start"
+                      aria-label="favorite"
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleOpenRenameProj();
+                        toggleFavoriteProject(project.name);
                       }}
                     >
-                      <EditIcon />
+                      {project.favorite ? <StarIcon /> : <StarBorderIcon />}
                     </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete project">
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDeleteProject(project.name);
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              </MenuItem>
-            ))}
-          </Select>
+                    {project.name}
+                  </div>
+                  <div>
+                    <Tooltip title="Edit project">
+                      <IconButton
+                        edge="end"
+                        aria-label="edit"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenRenameProj();
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete project">
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteProject(project.name);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
         </Toolbar>
       </AppBar>
 
