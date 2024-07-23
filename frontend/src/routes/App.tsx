@@ -4,13 +4,13 @@ import './App.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import WorkTimeAccordion from './components/WorkTimeAccordian';
-import ActiveConfirmationDialog from './components/ActiveConfirmationDialog';
-import SettingsDialog from './components/SettingsDialog';
-import NewOrganizationDialog from './components/NewOrganizationDialog';
-import NewProjectDialog from './components/NewProjectDialog';
-import EditOrganizationDialog from './components/EditOrganizationDialog';
-import AppFooter from './components/AppFooter';
+import WorkTimeAccordion from '../components/WorkTimeAccordian';
+import ActiveConfirmationDialog from '../components/ActiveConfirmationDialog';
+import SettingsDialog from '../components/SettingsDialog';
+import NewOrganizationDialog from '../components/NewOrganizationDialog';
+import NewProjectDialog from '../components/NewProjectDialog';
+import EditOrganizationDialog from '../components/EditOrganizationDialog';
+import AppFooter from '../components/AppFooter';
 
 import { Box, Tooltip, useMediaQuery } from '@mui/material';
 import {
@@ -58,10 +58,11 @@ import {
   ConfirmAction,
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
-} from "../wailsjs/go/main/App";
+} from "../../wailsjs/go/main/App";
 
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from './utils/utils'
-import EditProjectDialog from './components/EditProjectDialog';
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from '../utils/utils'
+import EditProjectDialog from '../components/EditProjectDialog';
+import NavBar from '../components/NavBar';
 
 // TODO: This has become large and messy. Need to break it up into smaller components
 function App() {
@@ -425,6 +426,7 @@ function App() {
             <MenuItem onClick={handleDeleteOrganization}>Delete Current Organization</MenuItem>
           </Menu>
           
+          <NavBar />
           
           {/* what a terrible solution to space this */}
           <div style={{ flexGrow: 1 }}></div>

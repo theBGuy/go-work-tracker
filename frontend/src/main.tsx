@@ -1,14 +1,26 @@
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './style.css'
-import App from './App'
+import React from "react";
+import { createRoot } from "react-dom/client";
+import "./style.css";
+import App from "./routes/App";
+import Charts from "./routes/Charts";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 
-const container = document.getElementById('root')
+const router = createHashRouter([
+  {
+    path: "/",
+    element: <App />
+  },
+  {
+    path: "/charts",
+    element: <Charts />
+  }
+]);
 
-const root = createRoot(container!)
+const container = document.getElementById("root");
+const root = createRoot(container!);
 
 root.render(
-    <React.StrictMode>
-        <App/>
-    </React.StrictMode>
-)
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);
