@@ -9,7 +9,6 @@ import SettingsDialog from '../components/SettingsDialog';
 import NewOrganizationDialog from '../components/NewOrganizationDialog';
 import NewProjectDialog from '../components/NewProjectDialog';
 import EditOrganizationDialog from '../components/EditOrganizationDialog';
-import AppFooter from '../components/AppFooter';
 
 import { Box, Tooltip, useMediaQuery } from '@mui/material';
 import {
@@ -742,8 +741,6 @@ function App() {
         setSelectedProject={setSelectedProject}
         setOpenEditProj={setOpenEditProj}
       />
-
-      <AppFooter />
     </div>
   )
 }

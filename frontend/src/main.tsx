@@ -5,6 +5,7 @@ import App from "./routes/App";
 import Charts from "./routes/Charts";
 import Tables from "./routes/Tables";
 import { createHashRouter, RouterProvider } from "react-router-dom";
+import AppFooter from "./components/AppFooter";
 
 const router = createHashRouter([
   {
@@ -27,5 +28,6 @@ const root = createRoot(container!);
 root.render(
   <React.StrictMode>
     <RouterProvider router={router} />
+    <AppFooter />
   </React.StrictMode>
 );
