@@ -4,16 +4,20 @@ import { main } from "../../wailsjs/go/models";
 
 interface Store {
   organizations: main.Organization[];
+  getOrganizations: () => main.Organization[];
   addOrganization: (organization: main.Organization) => void;
   removeOrganization: (organization: main.Organization) => void;
   setOrganizations: (organizations: main.Organization[]) => void;
   selectedOrganization: string;
+  getSelectedOrganization: () => string
   setSelectedOrganization: (organization: string) => void;
   projects: main.Project[];
+  getProjects: () => main.Project[];
   addProject: (project: main.Project) => void;
   removeProject: (project: main.Project) => void;
   setProjects: (projects: main.Project[]) => void;
   selectedProject: string;
+  getSelectedProject: () => string;
   setSelectedProject: (project: string) => void;
 }
 
@@ -21,6 +25,7 @@ export const useStore = create(
   persist<Store>(
     (set, get) => ({
       organizations: [],
+      getOrganizations: () => JSON.parse(JSON.stringify(get().organizations)),
       addOrganization: (organization: main.Organization) => {
         set((state) => ({ organizations: [...state.organizations, organization] }))
       },
@@ -31,10 +36,12 @@ export const useStore = create(
         set({ organizations })
       },
       selectedOrganization: "",
+      getSelectedOrganization: () => get().selectedOrganization,
       setSelectedOrganization: (organization: string) => {
         set({ selectedOrganization: organization })
       },
       projects: [],
+      getProjects: () => JSON.parse(JSON.stringify(get().projects)),
       addProject: (project: main.Project) => {
         set((state) => ({ projects: [...state.projects, project] }))
       },
@@ -45,6 +52,7 @@ export const useStore = create(
         set({ projects })
       },
       selectedProject: "",
+      getSelectedProject: () => get().selectedProject,
       setSelectedProject: (project: string) => {
         set({ selectedProject: project })
       },
