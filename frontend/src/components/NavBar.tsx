@@ -20,9 +20,9 @@ const NavBar = () => {
           Home
         </Typography>
       </NavLink>
-      <NavLink to="/table" style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}>
+      <NavLink to="/tables" style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}>
         <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
-          Table
+          Tables
         </Typography>
       </NavLink>
       <NavLink to="/charts" style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}>
