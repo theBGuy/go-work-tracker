@@ -454,6 +454,90 @@ func (a *App) GetWorkTime(date string, organizationName string) (seconds int, er
 	return totalSeconds, nil
 }
 
+// GetDailyWorkTime returns the total seconds worked for each day for the specified organization
+// func (a *App) GetDailyWorkTime(organizationName string) (dailyWorkTime map[string]int, err error) {
+// 	dailyWorkTime = make(map[string]int)
+// 	// Find the organization
+// 	organization, err := a.getOrganization(organizationName)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	rows, err := a.db.Table("work_hours").
+// 		Select("date, COALESCE(SUM(seconds), 0)").
+// 		Joins("JOIN projects ON projects.id = work_hours.project_id").
+// 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+// 		Where("projects.organization_id = ?", organization.ID).
+// 		Group("date").
+// 		Rows()
+// 	if err != nil {
+// 		Logger.Println(err)
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	for rows.Next() {
+// 		var date string
+// 		var seconds int
+// 		if err := rows.Scan(&date, &seconds); err != nil {
+// 			Logger.Println(err)
+// 			return nil, err
+// 		}
+// 		dailyWorkTime[date] = seconds
+// 	}
+
+// 	if err := rows.Err(); err != nil {
+// 		Logger.Println(err)
+// 		return nil, err
+// 	}
+
+// 	return dailyWorkTime, nil
+// }
+
+// GetDailyWorkTimeByMonth returns the total seconds worked for each day for each project of the specified organization for a specific month
+func (a *App) GetDailyWorkTimeByMonth(year int, month time.Month, organizationName string) (dailyWorkTime map[string]map[string]int, err error) {
+	dailyWorkTime = make(map[string]map[string]int)
+	// Find the organization
+	organization, err := a.getOrganization(organizationName)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("date, projects.name, COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Group("date, projects.name").
+		Rows()
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var date string
+		var project string
+		var seconds int
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
+			Logger.Println(err)
+			return nil, err
+		}
+		if _, ok := dailyWorkTime[date]; !ok {
+			dailyWorkTime[date] = make(map[string]int)
+		}
+		dailyWorkTime[date][project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+
+	return dailyWorkTime, nil
+}
+
 // GetWorkTimeByProject returns the total seconds worked for the specified project on specific date
 func (a *App) GetWorkTimeByProject(organizationName string, projectName string, date string) (seconds int, err error) {
 	if projectName == "" || organizationName == "" {

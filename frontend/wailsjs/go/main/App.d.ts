@@ -13,6 +13,8 @@ export function ExportByMonth(arg1:main.ExportType,arg2:string,arg3:number,arg4:
 
 export function ExportByYear(arg1:main.ExportType,arg2:string,arg3:number):Promise<string>;
 
+export function GetDailyWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:string):Promise<{[key: string]: {[key: string]: number}}>;
+
 export function GetMonthlyWorkTime(arg1:number,arg2:string):Promise<{[key: number]: {[key: string]: number}}>;
 
 export function GetOrganizations():Promise<Array<main.Organization>>;

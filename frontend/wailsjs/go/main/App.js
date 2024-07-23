@@ -22,6 +22,10 @@ export function ExportByYear(arg1, arg2, arg3) {
   return window['go']['main']['App']['ExportByYear'](arg1, arg2, arg3);
 }
 
+export function GetDailyWorkTimeByMonth(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetDailyWorkTimeByMonth'](arg1, arg2, arg3);
+}
+
 export function GetMonthlyWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetMonthlyWorkTime'](arg1, arg2);
 }
