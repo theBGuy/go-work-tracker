@@ -1,5 +1,4 @@
 import {useEffect, useState, useRef} from 'react';
-import './App.css';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -59,20 +58,17 @@ import {
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
 } from "../../wailsjs/go/main/App";
-
-import { useGlobal } from '../providers/global';
 import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from '../utils/utils'
 import EditProjectDialog from '../components/EditProjectDialog';
 import NavBar from '../components/NavBar';
+import { useStore } from '../stores/main';
 
-// TODO: This has become large and messy. Need to break it up into smaller components
+// TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
-  const {
-    projects,
-    setProjects,
-    organizations,
-    setOrganizations
-  } = useGlobal();
+  const projects = useStore((state) => state.projects);
+  const setProjects = useStore((state) => state.setProjects);
+  const organizations = useStore((state) => state.organizations);
+  const setOrganizations = useStore((state) => state.setOrganizations);
   const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
@@ -99,10 +95,10 @@ function App() {
   const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
-  // const [organizations, setOrganizations] = useState<Model[]>([]);
-  const [selectedOrganization, setSelectedOrganization] = useState('');
-  // const [projects, setProjects] = useState<Model[]>([]);
-  const [selectedProject, setSelectedProject] = useState('');
+  const selectedOrganization = useStore((state) => state.selectedOrganization);
+  const setSelectedOrganization = useStore((state) => state.setSelectedOrganization);
+  const selectedProject = useStore((state) => state.selectedProject);
+  const setSelectedProject = useStore((state) => state.setSelectedProject);
   
   // Dialogs
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -235,7 +231,8 @@ function App() {
         return;
       }
       DeleteOrganization(organization).then(() => {
-        setOrganizations(orgs => orgs.filter(org => org.name !== organization));
+        const newOrgs = organizations.filter(org => org.name !== organization);
+        setOrganizations(newOrgs);
 
         if (organization === selectedOrganization) {
           const newSelectedOrganization = organizations.sort(handleSort)[0].name;
@@ -263,7 +260,8 @@ function App() {
         return;
       }
       DeleteProject(selectedOrganization, project).then(() => {
-        setProjects(projs => projs.filter(proj => proj.name !== project));
+        const newProjs = projects.filter(proj => proj.name !== project);
+        setProjects(newProjs);
         
         if (project === selectedProject) {
           const newSelectedProject = projects.sort(handleSort)[0].name;

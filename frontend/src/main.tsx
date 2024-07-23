@@ -3,18 +3,22 @@ import { createRoot } from "react-dom/client";
 import "./style.css";
 import App from "./routes/App";
 import Charts from "./routes/Charts";
-import GlobalProvider from './providers/global'
+import Tables from "./routes/Tables";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 
 const router = createHashRouter([
   {
     path: "/",
-    element: <App />
+    element: <App />,
   },
   {
     path: "/charts",
-    element: <Charts />
-  }
+    element: <Charts />,
+  },
+  {
+    path: "/tables",
+    element: <Tables />,
+  },
 ]);
 
 const container = document.getElementById("root");
@@ -22,8 +26,6 @@ const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
-    <GlobalProvider>
-      <RouterProvider router={router} />
-    </GlobalProvider>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );

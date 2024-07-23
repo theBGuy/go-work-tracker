@@ -1,8 +1,8 @@
 import React from 'react';
 import { useForm, SubmitHandler } from "react-hook-form"
-import { useGlobal } from '../providers/global';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { RenameProject } from '../../wailsjs/go/main/App';
+import { useStore } from '../stores/main';
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
@@ -23,21 +23,18 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
   setSelectedProject,
   setOpenEditProj,
 }) => {
-  const { projects, setProjects } = useGlobal();
+  const [projects, setProjects] = useStore((state) => [state.projects, state.setProjects]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (data.project && data.project !== project) {
       console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
       await RenameProject(organization, project, data.project);
-      setProjects(prevProjects => {
-        const index = prevProjects.findIndex((el) => el.name === project)
-        if (index > -1) {
-          prevProjects[index].name = data.project;
-          return [...prevProjects];
-        }
-        return prevProjects;
-      });
+      const index = projects.findIndex((el) => el.name === project);
+      if (index > -1) {
+        projects[index].name = data.project;
+        setProjects([...projects]);
+      }
       setSelectedProject(data.project);
     }
     reset();

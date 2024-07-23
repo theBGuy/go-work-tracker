@@ -10,7 +10,8 @@ import {
 } from '@mui/material';
 import { NewProject, SetProject } from '../../wailsjs/go/main/App';
 import { getMonth, Model } from "../utils/utils";
-import { useGlobal } from "../providers/global";
+import { main } from "../../wailsjs/go/models";
+import { useStore } from "../stores/main";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
@@ -31,15 +32,14 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   setMonthlyWorkTimes,
   setOpenNewProj,
 }) => {
-  const { projects, setProjects } = useGlobal();
+  const [projects, addProject] = useStore((state) => [state.projects, state.addProject]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     const { project } = data;
     await NewProject(organization, project);
     await SetProject(project);
-    // @ts-ignore
-    setProjects(projs => [...projs, { name: project, favorite: false, updated_at: new Date().toISOString() }]);
+    addProject(new main.Project({ name: project, favorite: false, updated_at: new Date().toISOString() }));
     setSelectedProject(project);
     setMonthlyWorkTimes(prev => {
       prev[getMonth()][project] = 0;

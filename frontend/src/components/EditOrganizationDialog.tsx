@@ -1,11 +1,10 @@
-import React from 'react';
-import { useForm, SubmitHandler } from "react-hook-form"
-import { useGlobal } from '../providers/global';
+import React from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
 
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 
-import { RenameOrganization } from '../../wailsjs/go/main/App';
-
+import { RenameOrganization } from "../../wailsjs/go/main/App";
+import { useStore } from "../stores/main";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
@@ -24,20 +23,23 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   setSelectedOrganization,
   setOpenEditOrg,
 }) => {
-  const { organizations, setOrganizations} = useGlobal();
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
+  const [organizations, setOrganizations] = useStore((state) => [state.organizations, state.setOrganizations]);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<Inputs>();
   const inputs = watch();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (data.organization && data.organization !== organization) {
       await RenameOrganization(organization, data.organization);
-      setOrganizations(prevOrgs => {
-        const index = prevOrgs.findIndex((el) => el.name === organization);
-        if (index > -1) {
-          prevOrgs[index].name = data.organization;
-          return [...prevOrgs];
-        }
-        return prevOrgs;
-      });
+      const index = organizations.findIndex((el) => el.name === organization);
+      if (index > -1) {
+        organizations[index].name = data.organization;
+        setOrganizations([...organizations]);
+      }
       setSelectedOrganization(data.organization);
     }
     reset();
@@ -45,10 +47,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   };
 
   return (
-    <Dialog
-      open={openEditOrg}
-      onClose={() => setOpenEditOrg(false)}
-    >
+    <Dialog open={openEditOrg} onClose={() => setOpenEditOrg(false)}>
       <DialogTitle>Edit Organization ({organization})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
@@ -60,20 +59,20 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
             type="text"
             fullWidth
             error={organizations.some((el) => el.name === inputs.organization)}
-            helperText={organizations.some((el) => el.name === inputs.organization) ? 'Organization name already exists' : ''}
+            helperText={
+              organizations.some((el) => el.name === inputs.organization) ? "Organization name already exists" : ""
+            }
             {...register("organization")}
           />
         </DialogContent>
         <DialogActions>
           <Button
             type="submit"
-            disabled={
-              !inputs.organization
-              || organizations.some((el) => el.name === inputs.organization)
-            }>
+            disabled={!inputs.organization || organizations.some((el) => el.name === inputs.organization)}
+          >
             Save
           </Button>
-          <Button color='error' onClick={() => setOpenEditOrg(false)}>
+          <Button color="error" onClick={() => setOpenEditOrg(false)}>
             Close
           </Button>
         </DialogActions>

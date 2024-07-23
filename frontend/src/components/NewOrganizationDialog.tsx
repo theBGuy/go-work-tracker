@@ -1,7 +1,8 @@
 import { useForm, SubmitHandler } from "react-hook-form"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
 import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
-import { useGlobal } from "../providers/global";
+import { useStore } from "../stores/main";
+import { main } from "../../wailsjs/go/models";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
@@ -21,7 +22,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
   setSelectedProject,
   setOpenNewOrg,
 }) => {
-  const { organizations, setOrganizations, projects, setProjects } = useGlobal();
+  const [organizations, addOrganization, addProject] = useStore((state) => [state.organizations, state.addOrganization, state.addProject]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newOrg = watch("organization");
   const newProj = watch("project");
@@ -29,10 +30,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
     const { organization, project } = data;
     await NewOrganization(organization, project);
     await SetOrganization(organization, project);
-    // @ts-ignore
-    setOrganizations(orgs => [...orgs, { name: organization, favorite: false, updated_at: new Date().toISOString() }]);
-    // @ts-ignore
-    setProjects(projs => [...projs, { name: project, favorite: false, updated_at: new Date().toISOString() }]);
+    addOrganization(new main.Organization({ name: organization, favorite: false, updated_at: new Date().toISOString() }));
+    addProject(new main.Project({ name: project, favorite: false, updated_at: new Date().toISOString() }));
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);
