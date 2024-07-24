@@ -19,6 +19,8 @@ interface Store {
   selectedProject: string;
   getSelectedProject: () => string;
   setSelectedProject: (project: string) => void;
+  alertTime: number;
+  setAlertTime: (time: number) => void;
 }
 
 export const useStore = create(
@@ -56,6 +58,10 @@ export const useStore = create(
       setSelectedProject: (project: string) => {
         set({ selectedProject: project })
       },
+      alertTime: 30,
+      setAlertTime: (time: number) => {
+        set({ alertTime: time })
+      }
     }),
     {
       name: "store",
