@@ -133,6 +133,10 @@ func (a *App) monitorUpdates() {
 	}()
 }
 
+func (a *App) TimerRunning() bool {
+	return a.isRunning
+}
+
 func (a *App) StartTimer(organization string, project string) {
 	a.startTime = time.Now()
 	a.organization = organization

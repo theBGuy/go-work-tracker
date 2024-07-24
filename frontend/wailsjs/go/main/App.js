@@ -106,6 +106,10 @@ export function TimeElapsed() {
   return window['go']['main']['App']['TimeElapsed']();
 }
 
+export function TimerRunning() {
+  return window['go']['main']['App']['TimerRunning']();
+}
+
 export function ToggleFavoriteOrganization(arg1) {
   return window['go']['main']['App']['ToggleFavoriteOrganization'](arg1);
 }
