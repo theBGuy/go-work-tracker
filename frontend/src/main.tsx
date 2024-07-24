@@ -6,6 +6,8 @@ import Charts from "./routes/Charts";
 import Tables from "./routes/Tables";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import AppFooter from "./components/AppFooter";
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const router = createHashRouter([
   {
@@ -27,6 +29,8 @@ const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
+    {/* Notifcation container */}
+    <ToastContainer />
     <RouterProvider router={router} />
     <AppFooter />
   </React.StrictMode>

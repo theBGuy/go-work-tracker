@@ -1,23 +1,16 @@
-import {useEffect, useState, useRef} from 'react';
+import { useEffect, useState, useRef } from "react";
 
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import SettingsDialog from "../components/SettingsDialog";
+import NewOrganizationDialog from "../components/NewOrganizationDialog";
+import NewProjectDialog from "../components/NewProjectDialog";
+import EditOrganizationDialog from "../components/EditOrganizationDialog";
 
-import WorkTimeAccordion from '../components/WorkTimeAccordian';
-import ActiveConfirmationDialog from '../components/ActiveConfirmationDialog';
-import SettingsDialog from '../components/SettingsDialog';
-import NewOrganizationDialog from '../components/NewOrganizationDialog';
-import NewProjectDialog from '../components/NewProjectDialog';
-import EditOrganizationDialog from '../components/EditOrganizationDialog';
-
-import { Box, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Tooltip, useMediaQuery } from "@mui/material";
 import {
-  Tab,
-  Tabs,
   AppBar,
   Toolbar,
   Typography,
-  Button,
   IconButton,
   Select,
   MenuItem,
@@ -27,17 +20,13 @@ import {
   ListItem,
   ListItemText,
   Grid,
-  Card,
-  CardActions,
-  CardContent,
-  CardHeader
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import SettingsIcon from '@mui/icons-material/Settings';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
   StartTimer,
   StopTimer,
@@ -52,15 +41,17 @@ import {
   GetProjects,
   SetProject,
   DeleteProject,
-  ShowWindow,
   ConfirmAction,
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
+  TimerRunning,
 } from "../../wailsjs/go/main/App";
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from '../utils/utils'
-import EditProjectDialog from '../components/EditProjectDialog';
-import NavBar from '../components/NavBar';
-import { useStore } from '../stores/main';
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from "../utils/utils";
+import EditProjectDialog from "../components/EditProjectDialog";
+import NavBar from "../components/NavBar";
+import { useStore } from "../stores/main";
+import { useTimerStore } from "../stores/timer";
+import ActiveSession from "../components/ActiveSession";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -68,22 +59,17 @@ function App() {
   const setProjects = useStore((state) => state.setProjects);
   const organizations = useStore((state) => state.organizations);
   const setOrganizations = useStore((state) => state.setOrganizations);
-  const isScreenHeightLessThan510px = useMediaQuery('(max-height:510px)');
+  const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
-  const TabMap = {
-    WorkTime: 0,
-    YearlyTable: 1
-  };
-  const [selectedTab, setSelectedTab] = useState(TabMap.WorkTime);
-  
+
   // Variables for timer
-  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerRunning, setTimerRunning] = useTimerStore((state) => [state.running, state.setRunning]);
   const [workTime, setWorkTime] = useState(0);
   const [currProjectWorkTime, setCurrProjectWorkTime] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const elapsedTimeRef = useRef(elapsedTime);
-  const [alertTime, setAlertTime] = useState(30); // Default to 30 minutes
+  const [elapsedTime, setElapsedTime] = useTimerStore((state) => [state.elapsedTime, state.setElapsedTime]);
+
+  const [alertTime, setAlertTime] = useStore((state) => [state.alertTime, state.setAlertTime]);
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
@@ -98,9 +84,9 @@ function App() {
   const setSelectedOrganization = useStore((state) => state.setSelectedOrganization);
   const selectedProject = useStore((state) => state.selectedProject);
   const setSelectedProject = useStore((state) => state.setSelectedProject);
-  
+
   // Dialogs
-  const [openConfirm, setOpenConfirm] = useState(false);
+  const setOpenConfirm = useTimerStore((state) => state.setOpenConfirm);
   const [showSettings, setShowSettings] = useState(false);
   const [openNewOrg, setOpenNewOrg] = useState(false);
   const [openNewProj, setOpenNewProj] = useState(false);
@@ -109,21 +95,17 @@ function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Editables
-  const [editOrg, setEditOrg] = useState('');
-  const [editProj, setEditProj] = useState('');
+  const [editOrg, setEditOrg] = useState("");
+  const [editProj, setEditProj] = useState("");
 
   useEffect(() => {
     currentDayRef.current = currentDay;
   }, [currentDay]);
 
-  useEffect(() => {
-    elapsedTimeRef.current = elapsedTime;
-  }, [elapsedTime]);
-
   const sumWeekWorktime = (week: number) => {
     return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
-  
+
   const sumMonthWorktime = (month: number) => {
     return Object.values(monthlyWorkTimes[month] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
@@ -131,7 +113,7 @@ function App() {
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  
+
   const handleMenuClose = () => {
     setAnchorEl(null);
     setShowSettings(false);
@@ -148,15 +130,13 @@ function App() {
   const stopTimer = async () => {
     await StopTimer(selectedOrganization, selectedProject);
 
-    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
-      .then(setWeeklyWorkTimes);
-    GetMonthlyWorkTime(currentYear, selectedOrganization)
-      .then(setMonthlyWorkTimes);
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then(setWeeklyWorkTimes);
+    GetMonthlyWorkTime(currentYear, selectedOrganization).then(setMonthlyWorkTimes);
     setTimerRunning(false);
     setElapsedTime(0);
     setOpenConfirm(false);
   };
-    
+
   const setOrganization = async (newOrganization: string) => {
     if (timerRunning) {
       await stopTimer();
@@ -201,17 +181,17 @@ function App() {
 
   const toggleFavoriteOrg = (organization: string) => {
     ToggleFavoriteOrganization(organization).then(() => {
-      const org = organizations.find(org => org.name === organization);
+      const org = organizations.find((org) => org.name === organization);
       if (org) {
         org.favorite = !org.favorite;
         setOrganizations([...organizations]);
       }
     });
   };
-  
+
   const toggleFavoriteProject = (project: string) => {
     ToggleFavoriteProject(selectedOrganization, project).then(() => {
-      const proj = projects.find(p => p.name === project);
+      const proj = projects.find((p) => p.name === project);
       if (proj) {
         proj.favorite = !proj.favorite;
         setProjects([...projects]);
@@ -230,14 +210,14 @@ function App() {
         return;
       }
       DeleteOrganization(organization).then(() => {
-        const newOrgs = organizations.filter(org => org.name !== organization);
+        const newOrgs = organizations.filter((org) => org.name !== organization);
         setOrganizations(newOrgs);
 
         if (organization === selectedOrganization) {
           const newSelectedOrganization = organizations.sort(handleSort)[0].name;
           setSelectedOrganization(newSelectedOrganization);
 
-          GetProjects(newSelectedOrganization).then(projs => {
+          GetProjects(newSelectedOrganization).then((projs) => {
             setProjects(projs);
             const newSelectedProject = projs.sort(handleSort)[0].name;
             setSelectedProject(newSelectedProject);
@@ -259,16 +239,15 @@ function App() {
         return;
       }
       DeleteProject(selectedOrganization, project).then(() => {
-        const newProjs = projects.filter(proj => proj.name !== project);
+        const newProjs = projects.filter((proj) => proj.name !== project);
         setProjects(newProjs);
-        
+
         if (project === selectedProject) {
           const newSelectedProject = projects.sort(handleSort)[0].name;
           setSelectedProject(newSelectedProject);
 
           SetProject(newSelectedProject).then(() => {
-            GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString())
-              .then(setCurrProjectWorkTime);
+            GetWorkTimeByProject(selectedOrganization, newSelectedProject, dateString()).then(setCurrProjectWorkTime);
           });
         }
       });
@@ -277,7 +256,7 @@ function App() {
 
   const handleSort = (a: Model, b: Model) => {
     if (a.favorite === b.favorite) {
-    // If both projects have the same Favorite status, sort by UpdatedAt
+      // If both projects have the same Favorite status, sort by UpdatedAt
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     } else {
       // Otherwise, sort by Favorite
@@ -286,6 +265,7 @@ function App() {
   };
 
   /**
+   * on page load
    * Get organizations defined in database when the app loads
    * If no organizations are defined, prompt the user to create one
    */
@@ -309,6 +289,14 @@ function App() {
         });
       }
     });
+    // TimerRunning().then((running) => {
+    //   console.debug("Timer running", running);
+    //   setTimerRunning(running);
+    // });
+    // TimeElapsed().then((currentElapsedTime) => {
+    //   console.debug("Current elapsed time", currentElapsedTime);
+    //   setElapsedTime(currentElapsedTime);
+    // });
   }, []);
 
   /**
@@ -318,15 +306,17 @@ function App() {
   useEffect(() => {
     if (!selectedOrganization) return;
     console.debug("Getting work time for organization", selectedOrganization);
-    GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
+    GetWorkTime(dateString(), selectedOrganization).then((data) => {
+      console.debug("Work time for organization", data);
+      setWorkTime(data);
+    });
     GetProjects(selectedOrganization).then((projs) => {
       setProjects(projs);
       projs.sort(handleSort);
       const project = projs[0].name;
       // Handle case where the old project name matches the new project name for different organizations
       if (project === selectedProject) {
-        GetWorkTimeByProject(selectedOrganization, project, dateString())
-          .then(setCurrProjectWorkTime);
+        GetWorkTimeByProject(selectedOrganization, project, dateString()).then(setCurrProjectWorkTime);
       }
       setSelectedProject(project);
     });
@@ -338,8 +328,7 @@ function App() {
   useEffect(() => {
     if (!selectedProject) return;
     console.debug("Getting work time for project", selectedProject);
-    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
-      .then(setCurrProjectWorkTime);
+    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
   }, [selectedProject]);
 
   /**
@@ -350,10 +339,8 @@ function App() {
     const interval = setInterval(() => {
       if (currentDayRef.current !== new Date().getDate()) {
         setCurrentDay(new Date().getDate());
-        GetWorkTime(dateString(), selectedOrganization)
-          .then(setWorkTime);
-        GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
-          .then(setCurrProjectWorkTime);
+        GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
+        GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
       }
     }, 1000 * 5);
     return () => clearInterval(interval);
@@ -365,51 +352,22 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
-      .then(setWeeklyWorkTimes);
-    GetMonthlyWorkTime(currentYear, selectedOrganization)
-      .then(setMonthlyWorkTimes);
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then(setWeeklyWorkTimes);
+    GetMonthlyWorkTime(currentYear, selectedOrganization).then(setMonthlyWorkTimes);
   }, [selectedOrganization]);
 
   /**
    * Update the work time every second if the timer is running
    */
   useEffect(() => {
-    if (timerRunning) {
-      const interval = setInterval(() => {
-        TimeElapsed().then(currentElapsedTime => {
-          setWorkTime(prevWorkTime => prevWorkTime + (currentElapsedTime - elapsedTimeRef.current));
-          setCurrProjectWorkTime(prevProjectWorkTime => prevProjectWorkTime + (currentElapsedTime - elapsedTimeRef.current));
-          setElapsedTime(currentElapsedTime);
-        });
-      }, 1000);
-      return () => clearInterval(interval);
+    if (elapsedTime > 0) {
+      setWorkTime((prevWorkTime) => prevWorkTime + 1);
+      setCurrProjectWorkTime((prevProjectWorkTime) => prevProjectWorkTime + 1);
     }
-  }, [timerRunning]);
-
-  useEffect(() => {
-    let interval: number | null | undefined = null;
-
-    if (timerRunning && !openConfirm && alertTime > 0) {
-      interval = setInterval(() => {
-        ShowWindow().then(() => {
-          setOpenConfirm(true);
-        });
-      }, 1000 * 60 * alertTime); // Show the alert every x minutes
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-}, [timerRunning, openConfirm, alertTime]);
+  }, [elapsedTime]);
 
   return (
     <div id="App">
-      {/* Notifcation container */}
-      <ToastContainer />
-
       {/* Our app bar */}
       <AppBar position="static">
         <Toolbar>
@@ -423,13 +381,9 @@ function App() {
           >
             <MenuIcon />
           </IconButton>
-          
+
           {/* Dropdown menu */}
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
             <MenuItem onClick={handleOpenSettings}>
               <ListItemIcon>
                 <SettingsIcon />
@@ -438,30 +392,20 @@ function App() {
             </MenuItem>
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
             <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
-            <MenuItem
-              onClick={() => handleOpenEditOrg(selectedOrganization)}
-            >
-              Edit Current Organization
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleDeleteOrganization(selectedOrganization)}
-            >
+            <MenuItem onClick={() => handleOpenEditOrg(selectedOrganization)}>Edit Current Organization</MenuItem>
+            <MenuItem onClick={() => handleDeleteOrganization(selectedOrganization)}>
               Delete Current Organization
             </MenuItem>
           </Menu>
-          
+
           <NavBar />
-          
+
           {/* what a terrible solution to space this */}
           <div style={{ flexGrow: 1 }}></div>
-          {/* Our App Title */}
-          {/* <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Work Hours Tracker
-          </Typography> */}
 
           {/* Dropdown to select organization */}
           <Box sx={{ marginRight: 5 }}>
-            <Typography variant="h6" component="h2" sx={{ display: 'inline-block', marginRight: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ display: "inline-block", marginRight: 2 }}>
               Organization:
             </Typography>
             <Select
@@ -473,8 +417,8 @@ function App() {
               renderValue={(selected) => <div>{selected}</div>}
             >
               {organizations.sort(handleSort).map((org, idx) => (
-                <MenuItem key={idx} value={org.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
+                <MenuItem key={idx} value={org.name} sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <div>
                     <IconButton
                       edge="start"
                       aria-label="favorite"
@@ -487,40 +431,40 @@ function App() {
                     </IconButton>
                     {org.name}
                   </div>
-                <div>
-                  <Tooltip title="Edit organization">
-                    <IconButton
-                      edge="end"
-                      aria-label="edit"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleOpenEditOrg(org.name);
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete organization">
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDeleteOrganization(org.name);
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              </MenuItem>
+                  <div>
+                    <Tooltip title="Edit organization">
+                      <IconButton
+                        edge="end"
+                        aria-label="edit"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenEditOrg(org.name);
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete organization">
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteOrganization(org.name);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
+                </MenuItem>
               ))}
             </Select>
           </Box>
 
           {/* Dropdown to select project */}
           <Box>
-            <Typography variant="h6" component="h2" sx={{ display: 'inline-block', marginRight: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ display: "inline-block", marginRight: 2 }}>
               Project:
             </Typography>
             <Select
@@ -534,7 +478,7 @@ function App() {
               renderValue={(selected) => <div>{selected}</div>}
             >
               {projects.sort(handleSort).map((project, idx) => (
-                <MenuItem key={idx} value={project.name} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <MenuItem key={idx} value={project.name} sx={{ display: "flex", justifyContent: "space-between" }}>
                   <div>
                     <IconButton
                       edge="start"
@@ -581,77 +525,77 @@ function App() {
         </Toolbar>
       </AppBar>
 
-      <Tabs
-        variant="fullWidth"
-        value={selectedTab}
-        onChange={(event, newValue) => setSelectedTab(newValue as number)}>
-        <Tab label="Work Time" id={`${TabMap.WorkTime}`} />
-        <Tab label="Yearly Table" id={`${TabMap.YearlyTable}`} />
-      </Tabs>
-      
       {/* The main portion, our timer */}
-      <div hidden={selectedTab !== TabMap.WorkTime} style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
+      <div style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
         {!isScreenHeightLessThan510px && (
           <Grid
             container
             spacing={{ xs: 2, md: 4 }}
             columns={{ xs: 4, sm: 8, md: 12 }}
-            sx={{ 
-              marginBottom: 4, 
-              justifyContent: 'space-evenly', 
-              paddingLeft: theme => theme.spacing(6), 
-              paddingRight: theme => theme.spacing(3) 
+            sx={{
+              marginBottom: 4,
+              justifyContent: "space-evenly",
+              paddingLeft: (theme) => theme.spacing(6),
+              paddingRight: (theme) => theme.spacing(3),
             }}
           >
             <Grid item xs={12} sm={4} md={4}>
-              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
+              >
                 Today's Work Total
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText
-                    primary={`Organization: ${formatTime(workTime)}`}
-                  />
+                  <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary={`Project (${selectedProject}): ${formatTime(currProjectWorkTime)}`} />
+                </ListItem>
+              </List>
+            </Grid>
+
+            <Grid item xs={12} sm={4} md={4}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
+              >
+                Weekly Work Total
+              </Typography>
+              <List>
+                <ListItem>
+                  <ListItemText primary={`Organization: ${formatTime(sumWeekWorktime(currentWeek))}`} />
                 </ListItem>
                 <ListItem>
                   <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(currProjectWorkTime)}`}
+                    primary={`Project (${selectedProject}): ${formatTime(
+                      weeklyWorkTimes[currentWeek]?.[selectedProject] ?? 0
+                    )}`}
                   />
                 </ListItem>
               </List>
             </Grid>
 
             <Grid item xs={12} sm={4} md={4}>
-              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
-                Weekly Work Total
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary={`Organization: ${formatTime(sumWeekWorktime(currentWeek))}`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(weeklyWorkTimes[currentWeek]?.[selectedProject] ?? 0)}`}
-                  />
-                </ListItem>
-              </List>
-            </Grid>
-            
-            <Grid item xs={12} sm={4} md={4}>
-              <Typography variant="h6" component="h2" sx={{ textAlign: 'left', 'marginLeft': (theme) => theme.spacing(2) }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
+              >
                 {months[currentMonth]}'s work totals
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText
-                    primary={`Organization: ${formatTime(sumMonthWorktime(currentMonth))}`}
-                  />
+                  <ListItemText primary={`Organization: ${formatTime(sumMonthWorktime(currentMonth))}`} />
                 </ListItem>
                 <ListItem>
                   <ListItemText
-                    primary={`Project (${selectedProject}): ${formatTime(monthlyWorkTimes[currentMonth]?.[selectedProject] ?? 0)}`}
+                    primary={`Project (${selectedProject}): ${formatTime(
+                      monthlyWorkTimes[currentMonth]?.[selectedProject] ?? 0
+                    )}`}
                   />
                 </ListItem>
               </List>
@@ -660,42 +604,8 @@ function App() {
         )}
 
         {/* Current session */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Card sx={{ display: 'inline-block', transform: 'scale(0.9)' }}>
-            <CardContent>
-              <CardHeader title="Current Work Session" />
-              <Typography variant="h5" component="h2">
-                {timerRunning ? formatTime(elapsedTime) : '00h 00m 00s'}
-              </Typography>
-            </CardContent>
-              <CardActions sx={{ justifyContent: 'flex-end' }}>
-                {timerRunning ? (
-                  <Button onClick={stopTimer} color='error'>Stop Timer</Button>
-                ) : (
-                  <Button onClick={startTimer}>Start Timer</Button>
-                )}
-              </CardActions>
-          </Card>
-        </div>
+        <ActiveSession startTimer={startTimer} stopTimer={stopTimer} />
       </div>
-      
-      {/* Table to display our totals */}
-      <div hidden={selectedTab !== TabMap.YearlyTable}>
-        <h2>Yearly Work Time</h2>
-        <WorkTimeAccordion
-          timerRunning={timerRunning}
-          selectedOrganization={selectedOrganization}
-          projects={projects.map(proj => proj.name)}
-        />
-      </div>
-
-      {/* Handle confirming user still active */}
-      <ActiveConfirmationDialog
-        openConfirm={openConfirm}
-        timerRunning={timerRunning}
-        setOpenConfirm={setOpenConfirm}
-        stopTimer={stopTimer}
-      />
 
       {/* Handle settings dialog */}
       <SettingsDialog
@@ -707,7 +617,7 @@ function App() {
         setNewAlertTime={setNewAlertTime}
         handleMenuClose={handleMenuClose}
       />
-      
+
       {/* Handle creating a new organization */}
       <NewOrganizationDialog
         openNewOrg={openNewOrg}
@@ -742,7 +652,7 @@ function App() {
         setOpenEditProj={setOpenEditProj}
       />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
