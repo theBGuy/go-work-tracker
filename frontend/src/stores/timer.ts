@@ -19,6 +19,8 @@ interface TimerStore {
   startTimer: () => void;
   stopTimer: () => void;
   resetTimer: () => void;
+  showMiniTimer: boolean;
+  setShowMiniTimer: (value: boolean) => void;
 }
 
 export const useTimerStore = create(subscribeWithSelector<TimerStore>((set, get) => ({
@@ -50,5 +52,7 @@ export const useTimerStore = create(subscribeWithSelector<TimerStore>((set, get)
   },
   resetTimer: () => {
     set({ running: false, openConfirm: false, elapsedTime: 0 });
-  }
+  },
+  showMiniTimer: false,
+  setShowMiniTimer: (value: boolean) => set({ showMiniTimer: value }),
 })));

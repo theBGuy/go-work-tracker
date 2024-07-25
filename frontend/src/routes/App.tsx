@@ -28,9 +28,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
-  StartTimer,
   StopTimer,
-  TimeElapsed,
   GetWorkTime,
   GetWorkTimeByProject,
   GetWeeklyWorkTime,
@@ -44,7 +42,7 @@ import {
   ConfirmAction,
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
-  TimerRunning,
+  GetActiveTimer,
 } from "../../wailsjs/go/main/App";
 import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from "../utils/utils";
 import EditProjectDialog from "../components/EditProjectDialog";
@@ -52,6 +50,7 @@ import NavBar from "../components/NavBar";
 import { useStore } from "../stores/main";
 import { useTimerStore } from "../stores/timer";
 import ActiveSession from "../components/ActiveSession";
+import { EventsOn } from "../../wailsjs/runtime/runtime";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -59,15 +58,17 @@ function App() {
   const setProjects = useStore((state) => state.setProjects);
   const organizations = useStore((state) => state.organizations);
   const setOrganizations = useStore((state) => state.setOrganizations);
+  const setShowMiniTimer = useTimerStore((state) => state.setShowMiniTimer);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
 
   // Variables for timer
-  const [timerRunning, setTimerRunning] = useTimerStore((state) => [state.running, state.setRunning]);
+  const resetTimer = useTimerStore((state) => state.resetTimer);
+  const timerRunning = useTimerStore((state) => state.running);
   const [workTime, setWorkTime] = useState(0);
   const [currProjectWorkTime, setCurrProjectWorkTime] = useState(0);
-  const [elapsedTime, setElapsedTime] = useTimerStore((state) => [state.elapsedTime, state.setElapsedTime]);
+  const elapsedTime = useTimerStore((state) => state.elapsedTime);
 
   const [alertTime, setAlertTime] = useStore((state) => [state.alertTime, state.setAlertTime]);
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
@@ -86,7 +87,6 @@ function App() {
   const setSelectedProject = useStore((state) => state.setSelectedProject);
 
   // Dialogs
-  const setOpenConfirm = useTimerStore((state) => state.setOpenConfirm);
   const [showSettings, setShowSettings] = useState(false);
   const [openNewOrg, setOpenNewOrg] = useState(false);
   const [openNewProj, setOpenNewProj] = useState(false);
@@ -101,6 +101,11 @@ function App() {
   useEffect(() => {
     currentDayRef.current = currentDay;
   }, [currentDay]);
+
+  EventsOn('new-day', () => {
+    GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
+    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
+  });
 
   const sumWeekWorktime = (week: number) => {
     return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
@@ -121,20 +126,12 @@ function App() {
     setOpenEditOrg(false);
   };
 
-  const startTimer = () => {
-    StartTimer(selectedOrganization, selectedProject).then(() => {
-      setTimerRunning(true);
-    });
-  };
-
   const stopTimer = async () => {
     await StopTimer(selectedOrganization, selectedProject);
 
     GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization).then(setMonthlyWorkTimes);
-    setTimerRunning(false);
-    setElapsedTime(0);
-    setOpenConfirm(false);
+    resetTimer();
   };
 
   const setOrganization = async (newOrganization: string) => {
@@ -270,33 +267,41 @@ function App() {
    * If no organizations are defined, prompt the user to create one
    */
   useEffect(() => {
+    setShowMiniTimer(false);
     getCurrentWeekOfMonth().then(setCurrentWeek);
-    GetOrganizations().then((orgs) => {
+    GetOrganizations().then(async (orgs) => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
       } else {
         setOrganizations(orgs);
         orgs.sort(handleSort);
+        const active = await GetActiveTimer();
+        // what should be our source of truth? zustand gives us persistent state with json storage
+        // so we could use that and update the backend if the frontend doesn't match
+        // however, we could also just use the backend as the source of truth which feels more correct
+        // this isn't our first load, just fetch the orgs and projects
+        if ((active.organization && active.organization === selectedOrganization)
+          && (active.project && active.project === selectedProject)) {
+          GetProjects(active.organization).then((projs) => {
+            setProjects(projs);
+            projs.sort(handleSort);
+          });
+          return;
+        }
         const organization = orgs[0].name;
         setSelectedOrganization(organization);
-
-        GetProjects(organization).then((projs) => {
-          setProjects(projs);
-          projs.sort(handleSort);
-          const project = projs[0].name;
-          setSelectedProject(project);
-          SetOrganization(organization, project);
-        });
+        const projs = await GetProjects(organization);
+        setProjects(projs);
+        projs.sort(handleSort);
+        const project = projs[0].name;
+        setSelectedProject(project);
+        SetOrganization(organization, project);
       }
     });
-    // TimerRunning().then((running) => {
-    //   console.debug("Timer running", running);
-    //   setTimerRunning(running);
-    // });
-    // TimeElapsed().then((currentElapsedTime) => {
-    //   console.debug("Current elapsed time", currentElapsedTime);
-    //   setElapsedTime(currentElapsedTime);
-    // });
+
+    return () => {
+      setShowMiniTimer(true);
+    };
   }, []);
 
   /**
@@ -330,21 +335,6 @@ function App() {
     console.debug("Getting work time for project", selectedProject);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
   }, [selectedProject]);
-
-  /**
-   * Check the day every minute and update the day if it changes
-   * Update workTime when the day changes and reset the timer
-   */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (currentDayRef.current !== new Date().getDate()) {
-        setCurrentDay(new Date().getDate());
-        GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
-        GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
-      }
-    }, 1000 * 5);
-    return () => clearInterval(interval);
-  }, [selectedOrganization]);
 
   /**
    * Get the yearly and monthly work times when the app loads
@@ -604,7 +594,7 @@ function App() {
         )}
 
         {/* Current session */}
-        <ActiveSession startTimer={startTimer} stopTimer={stopTimer} />
+        <ActiveSession stopTimer={stopTimer} />
       </div>
 
       {/* Handle settings dialog */}

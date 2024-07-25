@@ -1,4 +1,3 @@
-// AppFooter.tsx
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Tooltip, IconButton, Badge } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -6,10 +5,14 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 
 import { GetVersion, UpdateAvailable } from '../../wailsjs/go/main/App';
 import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
+import ActiveSession from './ActiveSession';
+import { useTimerStore } from '../stores/timer';
 
 const AppFooter: React.FC<{}> = () => {
   const [version, setVersion] = useState('');
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const stopTimer = useTimerStore((state) => state.stopTimer);
+  const showMiniTimer = useTimerStore((state) => state.showMiniTimer);
 
   EventsOn('update-available', () => {
     setUpdateAvailable(true);
@@ -44,6 +47,12 @@ const AppFooter: React.FC<{}> = () => {
           </IconButton>
           theBGuy
         </Typography>
+        {showMiniTimer && (
+          <ActiveSession
+            stopTimer={stopTimer}
+            mode="mini"
+          />
+        )}
         <Typography variant="h6" component="div">
           v{version}
         </Typography>
