@@ -1,5 +1,23 @@
 export namespace main {
 	
+	export class ActiveTimer {
+	    organization: string;
+	    project: string;
+	    isRunning: boolean;
+	    timeElapsed: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ActiveTimer(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.organization = source["organization"];
+	        this.project = source["project"];
+	        this.isRunning = source["isRunning"];
+	        this.timeElapsed = source["timeElapsed"];
+	    }
+	}
 	export class WorkHours {
 	    id: number;
 	    // Go type: time

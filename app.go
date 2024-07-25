@@ -81,6 +81,22 @@ func (a *App) UpdateAvailable() bool {
 	return a.newVersonAvailable
 }
 
+type ActiveTimer struct {
+	Organization string `json:"organization"`
+	Project      string `json:"project"`
+	IsRunning    bool   `json:"isRunning"`
+	TimeElapsed  int    `json:"timeElapsed"`
+}
+
+func (a *App) GetActiveTimer() ActiveTimer {
+	return ActiveTimer{
+		Organization: a.organization,
+		Project:      a.project,
+		IsRunning:    a.isRunning,
+		TimeElapsed:  a.TimeElapsed(),
+	}
+}
+
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
@@ -104,6 +120,7 @@ func (a *App) monitorTime() {
 			if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
 				a.StopTimer(a.organization, a.project)
 				a.StartTimer(a.organization, a.project)
+				runtime.EventsEmit(a.ctx, "new-day")
 			}
 		}
 	}()
