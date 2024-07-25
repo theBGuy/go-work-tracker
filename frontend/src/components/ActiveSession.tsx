@@ -61,6 +61,7 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
             zIndex: 1000,
             display: "flex",
             flexDirection: "row",
+            backgroundColor: "rgba(0, 0, 0, 0.5)"
           }}
           >
             <Typography variant="body1">
