@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { subscribeWithSelector } from 'zustand/middleware'
 import { main } from "../../wailsjs/go/models";
 
 interface Store {
@@ -24,7 +25,7 @@ interface Store {
 }
 
 export const useStore = create(
-  persist<Store>(
+  persist(subscribeWithSelector<Store>(
     (set, get) => ({
       organizations: [],
       getOrganizations: () => JSON.parse(JSON.stringify(get().organizations)),
@@ -62,7 +63,7 @@ export const useStore = create(
       setAlertTime: (time: number) => {
         set({ alertTime: time })
       }
-    }),
+    })),
     {
       name: "store",
       storage: createJSONStorage(() => sessionStorage),
