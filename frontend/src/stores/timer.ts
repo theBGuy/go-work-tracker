@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from 'zustand/middleware'
 import { StartTimer, StopTimer } from "../../wailsjs/go/main/App";
-import { useStore } from "./main";
+import { useAppStore } from "./main";
 
 interface TimerStore {
   running: boolean;
@@ -37,15 +37,15 @@ export const useTimerStore = create(subscribeWithSelector<TimerStore>((set, get)
   openConfirm: false,
   setOpenConfirm: (value: boolean) => set({ openConfirm: value }),
   startTimer: () => {
-    const selectedOrganization = useStore.getState().selectedOrganization;
-    const selectedProject = useStore.getState().selectedProject;
+    const selectedOrganization = useAppStore.getState().selectedOrganization;
+    const selectedProject = useAppStore.getState().selectedProject;
     StartTimer(selectedOrganization, selectedProject).then(() => {
       set({ running: true });
     });
   },
   stopTimer: () => {
-    const selectedOrganization = useStore.getState().selectedOrganization;
-    const selectedProject = useStore.getState().selectedProject;
+    const selectedOrganization = useAppStore.getState().selectedOrganization;
+    const selectedProject = useAppStore.getState().selectedProject;
     StopTimer(selectedOrganization, selectedProject).then(() => {
       get().resetTimer();
     });

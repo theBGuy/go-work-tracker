@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useTimerStore } from "./stores/timer";
 import { ShowWindow, TimeElapsed } from "../wailsjs/go/main/App";
 import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
-import { useStore } from "./stores/main";
+import { useAppStore } from "./stores/main";
 
 const router = createHashRouter([
   {
@@ -35,7 +35,7 @@ const timerRunning = useTimerStore.getState().running;
 const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const openConfirm = useTimerStore.getState().openConfirm;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
-const alertTime = useStore.getState().alertTime;
+const alertTime = useAppStore.getState().alertTime;
 /**
  * Update the work time (elapsed time) every second if the timer is running
  * This is a global effect that will run for the entire lifecycle of the app
@@ -63,7 +63,7 @@ const timerSubscription = useTimerStore.subscribe((state) => state.running, (cur
 /**
  * Update the alert time interval if the user changes it
  */
-const alertTimeSubscription = useStore.subscribe((state) => state.alertTime, (curr, prev) => {
+const alertTimeSubscription = useAppStore.subscribe((state) => state.alertTime, (curr, prev) => {
   console.log(`Alert time switched from ${prev} to ${curr}`);
   if (!timerRunning) return;
   if (curr > 0) {

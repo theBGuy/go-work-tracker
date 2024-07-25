@@ -11,7 +11,7 @@ import {
 import { NewProject, SetProject } from '../../wailsjs/go/main/App';
 import { getMonth, Model } from "../utils/utils";
 import { main } from "../../wailsjs/go/models";
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
@@ -32,7 +32,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   setMonthlyWorkTimes,
   setOpenNewProj,
 }) => {
-  const [projects, addProject] = useStore((state) => [state.projects, state.addProject]);
+  const [projects, addProject] = useAppStore((state) => [state.projects, state.addProject]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {

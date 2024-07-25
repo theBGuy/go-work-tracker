@@ -1,7 +1,7 @@
 import { useForm, SubmitHandler } from "react-hook-form"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
 import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 import { main } from "../../wailsjs/go/models";
 
 interface NewOrganizationDialogProps {
@@ -22,7 +22,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
   setSelectedProject,
   setOpenNewOrg,
 }) => {
-  const [organizations, addOrganization, addProject] = useStore((state) => [state.organizations, state.addOrganization, state.addProject]);
+  const [organizations, addOrganization, addProject] = useAppStore((state) => [state.organizations, state.addOrganization, state.addProject]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newOrg = watch("organization");
   const newProj = watch("project");

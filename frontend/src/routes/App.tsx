@@ -47,17 +47,17 @@ import {
 import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from "../utils/utils";
 import EditProjectDialog from "../components/EditProjectDialog";
 import NavBar from "../components/NavBar";
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 import { useTimerStore } from "../stores/timer";
 import ActiveSession from "../components/ActiveSession";
 import { EventsOn } from "../../wailsjs/runtime/runtime";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
-  const projects = useStore((state) => state.projects);
-  const setProjects = useStore((state) => state.setProjects);
-  const organizations = useStore((state) => state.organizations);
-  const setOrganizations = useStore((state) => state.setOrganizations);
+  const projects = useAppStore((state) => state.projects);
+  const setProjects = useAppStore((state) => state.setProjects);
+  const organizations = useAppStore((state) => state.organizations);
+  const setOrganizations = useAppStore((state) => state.setOrganizations);
   const setShowMiniTimer = useTimerStore((state) => state.setShowMiniTimer);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
@@ -70,7 +70,7 @@ function App() {
   const [currProjectWorkTime, setCurrProjectWorkTime] = useState(0);
   const elapsedTime = useTimerStore((state) => state.elapsedTime);
 
-  const [alertTime, setAlertTime] = useStore((state) => [state.alertTime, state.setAlertTime]);
+  const [alertTime, setAlertTime] = useAppStore((state) => [state.alertTime, state.setAlertTime]);
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
@@ -81,10 +81,10 @@ function App() {
   const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
-  const selectedOrganization = useStore((state) => state.selectedOrganization);
-  const setSelectedOrganization = useStore((state) => state.setSelectedOrganization);
-  const selectedProject = useStore((state) => state.selectedProject);
-  const setSelectedProject = useStore((state) => state.setSelectedProject);
+  const selectedOrganization = useAppStore((state) => state.selectedOrganization);
+  const setSelectedOrganization = useAppStore((state) => state.setSelectedOrganization);
+  const selectedProject = useAppStore((state) => state.selectedProject);
+  const setSelectedProject = useAppStore((state) => state.setSelectedProject);
 
   // Dialogs
   const [showSettings, setShowSettings] = useState(false);
@@ -276,6 +276,7 @@ function App() {
         setOrganizations(orgs);
         orgs.sort(handleSort);
         const active = await GetActiveTimer();
+        console.log("Active timer", active);
         // what should be our source of truth? zustand gives us persistent state with json storage
         // so we could use that and update the backend if the frontend doesn't match
         // however, we could also just use the backend as the source of truth which feels more correct
@@ -286,6 +287,10 @@ function App() {
             setProjects(projs);
             projs.sort(handleSort);
           });
+          if (active.isRunning && !timerRunning) {
+            useTimerStore.getState().setRunning(true);
+            useTimerStore.getState().setElapsedTime(active.timeElapsed);
+          }
           return;
         }
         const organization = orgs[0].name;

@@ -4,7 +4,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 
 import { RenameOrganization } from "../../wailsjs/go/main/App";
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
@@ -23,7 +23,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
   setSelectedOrganization,
   setOpenEditOrg,
 }) => {
-  const [organizations, setOrganizations] = useStore((state) => [state.organizations, state.setOrganizations]);
+  const [organizations, setOrganizations] = useAppStore((state) => [state.organizations, state.setOrganizations]);
   const {
     register,
     handleSubmit,

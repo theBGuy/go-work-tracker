@@ -1,7 +1,7 @@
 import { AppBar, Box, MenuItem, Select, Stack, Toolbar, Typography } from "@mui/material";
 import NavBar from "../components/NavBar";
 import WorkTimeAccordion from "../components/WorkTimeAccordian";
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 import { useEffect, useState } from "react";
 import { GetProjects } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
@@ -14,7 +14,7 @@ function Tables() {
   const [projects, setProjects] = useState<main.Project[]>([]);
 
   useEffect(() => {
-    const store = useStore.getState();
+    const store = useAppStore.getState();
     // deep clone to avoid mutating the original objects we just want the initial states
     setOrganizations(store.getOrganizations());
     setProjects(store.getProjects());

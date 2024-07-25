@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, SubmitHandler } from "react-hook-form"
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { RenameProject } from '../../wailsjs/go/main/App';
-import { useStore } from '../stores/main';
+import { useAppStore } from '../stores/main';
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
@@ -23,7 +23,7 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
   setSelectedProject,
   setOpenEditProj,
 }) => {
-  const [projects, setProjects] = useStore((state) => [state.projects, state.setProjects]);
+  const [projects, setProjects] = useAppStore((state) => [state.projects, state.setProjects]);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {

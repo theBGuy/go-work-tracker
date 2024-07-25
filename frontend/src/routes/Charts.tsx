@@ -13,7 +13,7 @@ import {
 import NavBar from "../components/NavBar";
 import { useEffect, useState } from "react";
 import { getMonth, months } from "../utils/utils";
-import { useStore } from "../stores/main";
+import { useAppStore } from "../stores/main";
 import { main } from "../../wailsjs/go/models";
 import { GetDailyWorkTimeByMonth, GetProjects } from "../../wailsjs/go/main/App";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -27,7 +27,7 @@ interface GraphData {
 function Charts() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1999 }, (_, i) => 2000 + i);
-  const organizations = useStore((state) => state.organizations);
+  const organizations = useAppStore((state) => state.organizations);
   const [selectedOrganization, setSelectedOrganization] = useState("");
   const [projects, setProjects] = useState<main.Project[]>([]);
   const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
@@ -48,7 +48,7 @@ function Charts() {
   ];
 
   useEffect(() => {
-    const store = useStore.getState();
+    const store = useAppStore.getState();
     // deep clone to avoid mutating the original objects we just want the initial states
     setProjects(store.getProjects());
     setSelectedOrganization(store.getSelectedOrganization());

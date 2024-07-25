@@ -24,7 +24,7 @@ interface Store {
   setAlertTime: (time: number) => void;
 }
 
-export const useStore = create(
+export const useAppStore = create(
   persist(subscribeWithSelector<Store>(
     (set, get) => ({
       organizations: [],
