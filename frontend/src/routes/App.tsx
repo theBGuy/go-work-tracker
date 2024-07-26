@@ -270,7 +270,6 @@ function App() {
         setOrganizations(orgs);
         orgs.sort(handleSort);
         const active = await GetActiveTimer();
-        console.log("Active timer", active);
         // what should be our source of truth? zustand gives us persistent state with json storage
         // so we could use that and update the backend if the frontend doesn't match
         // however, we could also just use the backend as the source of truth which feels more correct

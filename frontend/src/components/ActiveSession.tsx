@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, Typography, CardActions, Button, Box, IconButton } from "@mui/material";
 import { formatTime } from "../utils/utils";
 import { useTimerStore } from "../stores/timer";
-import { useEffect } from "react";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 
@@ -14,16 +13,6 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
   const startTimer = useTimerStore((state) => state.startTimer);
   const elapsedTime = useTimerStore((state) => state.elapsedTime);
   const timerRunning = useTimerStore((state) => state.running);
-  
-  useEffect(() => {
-    console.log("ActiveSession mounted");
-    console.log(`Timer running: ${timerRunning}, Elapsed time: ${elapsedTime}`);
-
-    return () => {
-      console.log("ActiveSession unmounted");
-      console.log(`Timer running: ${timerRunning}, Elapsed time: ${elapsedTime}`);
-    };
-  }, []);
 
   return (
     <>
