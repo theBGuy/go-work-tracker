@@ -21,9 +21,9 @@ here: https://wails.io/docs/reference/project-config -->
 ## Development
 
 ### Requirements
-- `Wails CLI v^2.8.0` [Install Wails](https://wails.io/docs/gettingstarted/installation)
-- `Go v^1.18` [Install Go](https://go.dev/doc/install)
-- `Node v^15.0.0` [Install Node](https://nodejs.org/en/download/current)
+- `Wails CLI v^2.9.1` [Install Wails](https://wails.io/docs/gettingstarted/installation)
+- `Go v^1.22.0` [Install Go](https://go.dev/doc/install)
+- `Node v^18.20.4` [Install Node](https://nodejs.org/en/download/current)
 
 ### Live Development
 
@@ -36,9 +36,8 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-![main-page](https://github.com/theBGuy/go-work-tracker/assets/60308670/6424d52a-9f0e-424e-abee-fb03126fbc12)
-![yearly-table](https://github.com/theBGuy/go-work-tracker/assets/60308670/5150f30b-2161-497e-8218-4b844135e2f4)
-
+![main-page](https://github.com/user-attachments/assets/2bb0c460-264a-415b-9929-25585e6b362e)
+![yearly-table](https://github.com/user-attachments/assets/54e07ba9-5706-467e-9d05-d2f816479d81)
 
 ## Contributing
 
