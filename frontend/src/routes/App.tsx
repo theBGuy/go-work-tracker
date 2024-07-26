@@ -66,9 +66,10 @@ function App() {
   // Variables for timer
   const resetTimer = useTimerStore((state) => state.resetTimer);
   const timerRunning = useTimerStore((state) => state.running);
-  const [workTime, setWorkTime] = useState(0);
-  const [currProjectWorkTime, setCurrProjectWorkTime] = useState(0);
-  const elapsedTime = useTimerStore((state) => state.elapsedTime);
+  const workTime = useTimerStore((state) => state.workTime);
+  const setWorkTime = useTimerStore((state) => state.setWorkTime);
+  const currProjectWorkTime = useTimerStore((state) => state.projectWorkTime);
+  const setCurrProjectWorkTime = useTimerStore((state) => state.setProjectWorkTime);
 
   const [alertTime, setAlertTime] = useAppStore((state) => [state.alertTime, state.setAlertTime]);
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
@@ -343,16 +344,6 @@ function App() {
     GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then(setWeeklyWorkTimes);
     GetMonthlyWorkTime(currentYear, selectedOrganization).then(setMonthlyWorkTimes);
   }, [selectedOrganization]);
-
-  /**
-   * Update the work time every second if the timer is running
-   */
-  useEffect(() => {
-    if (elapsedTime > 0) {
-      setWorkTime((prevWorkTime) => prevWorkTime + 1);
-      setCurrProjectWorkTime((prevProjectWorkTime) => prevProjectWorkTime + 1);
-    }
-  }, [elapsedTime]);
 
   return (
     <div id="App">

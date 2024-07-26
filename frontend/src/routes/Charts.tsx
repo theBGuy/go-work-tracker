@@ -183,13 +183,13 @@ function Charts() {
               {
                 label: "Total Work Time (s)",
                 scaleType: "linear",
+                min: 0,
               },
             ]}
             series={projects.map((project, index) => ({
               dataKey: project.name,
               label: project.name,
               color: colors[index],
-              stack: "total",
               valueFormatter: (value) => `${value || 0}s`,
             }))}
             dataset={dailyWorkTimes}

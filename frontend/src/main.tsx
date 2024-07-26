@@ -36,6 +36,8 @@ const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const openConfirm = useTimerStore.getState().openConfirm;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
 const alertTime = useAppStore.getState().alertTime;
+const updateWorkTime = useTimerStore.getState().updateWorkTime;
+const updateProjWorktime = useTimerStore.getState().updateProjectWorkTime;
 /**
  * Update the work time (elapsed time) every second if the timer is running
  * This is a global effect that will run for the entire lifecycle of the app
@@ -46,6 +48,8 @@ const timerSubscription = useTimerStore.subscribe((state) => state.running, (cur
     workTimeInterval = setInterval(() => {
       TimeElapsed().then((currentElapsedTime) => {
         setElapsedTime(currentElapsedTime);
+        updateWorkTime(1);
+        updateProjWorktime(1);
       });
     }, 1000);
     if (!openConfirm && alertTime > 0) {
