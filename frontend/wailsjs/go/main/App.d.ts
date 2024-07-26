@@ -3,6 +3,8 @@
 import {main} from '../models';
 import {time} from '../models';
 
+export function CheckForUpdates():Promise<boolean>;
+
 export function ConfirmAction(arg1:string,arg2:string):Promise<boolean>;
 
 export function DeleteOrganization(arg1:string):Promise<void>;

@@ -150,6 +150,15 @@ func (a *App) monitorUpdates() {
 	}()
 }
 
+func (a *App) CheckForUpdates() bool {
+	newVersonAvailable, _ := auto_update.GetUpdateAvailable(a.version)
+	if newVersonAvailable {
+		a.newVersonAvailable = true
+		runtime.EventsEmit(a.ctx, "update-available")
+	}
+	return newVersonAvailable
+}
+
 func (a *App) TimerRunning() bool {
 	return a.isRunning
 }
