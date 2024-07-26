@@ -1,13 +1,4 @@
-import {
-  AppBar,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Toolbar,
-} from "@mui/material";
+import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
 import NavBar from "../components/NavBar";
 import { useEffect, useState } from "react";
 import { formatTime, getMonth, months } from "../utils/utils";
@@ -54,32 +45,35 @@ function Charts() {
   }, []);
 
   useEffect(() => {
-    const timerSubscription = useTimerStore.subscribe((state) => state.running, (curr, prev) => {
-      // timer was running and not it's stopped
-      if (!curr && prev) {
-        const activeOrg = useAppStore.getState().selectedOrganization;
-        const activeProj = useAppStore.getState().selectedProject;
-        // updating it's necessary as it's now the visible data we are working with
-        if (activeOrg !== selectedOrganization) return;
-        setDailyWorkTimes((prevData) => {
-          const today = new Date().toISOString().split("T")[0];
-          const index = prevData.findIndex((el) => el.day.toISOString().split("T")[0] === today);
-          const workTime = useTimerStore.getState().elapsedTime;
-          if (index > -1) {
-            if (!prevData[index][activeProj]) {
-              prevData[index][activeProj] = 0;
+    const timerSubscription = useTimerStore.subscribe(
+      (state) => state.running,
+      (curr, prev) => {
+        // timer was running and not it's stopped
+        if (!curr && prev) {
+          const activeOrg = useAppStore.getState().selectedOrganization;
+          const activeProj = useAppStore.getState().selectedProject;
+          // updating it's necessary as it's now the visible data we are working with
+          if (activeOrg !== selectedOrganization) return;
+          setDailyWorkTimes((prevData) => {
+            const today = new Date().toISOString().split("T")[0];
+            const index = prevData.findIndex((el) => el.day.toISOString().split("T")[0] === today);
+            const workTime = useTimerStore.getState().elapsedTime;
+            if (index > -1) {
+              if (!prevData[index][activeProj]) {
+                prevData[index][activeProj] = 0;
+              }
+              console.log("updating work time", prevData[index][activeProj], workTime);
+              prevData[index][activeProj] += workTime;
+            } else {
+              // @ts-ignore
+              const newData: GraphData = { day: new Date(today), [activeProj]: workTime };
+              return [...prevData, newData];
             }
-            console.log("updating work time", prevData[index][activeProj], workTime);
-            prevData[index][activeProj] += workTime;
-          } else {
-            // @ts-ignore
-            const newData: GraphData = { day: new Date(today), [activeProj]: workTime };
-            return [...prevData, newData];
-          }
-          return [...prevData];
-        });
+            return [...prevData];
+          });
+        }
       }
-    });
+    );
 
     return () => {
       timerSubscription();
@@ -126,10 +120,7 @@ function Charts() {
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth margin="normal">
               <InputLabel>Year</InputLabel>
-              <Select
-                value={selectedYear}
-                onChange={(event) => setSelectedYear(event.target.value as number)}
-              >
+              <Select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value as number)}>
                 {years.map((year) => (
                   <MenuItem key={year} value={year}>
                     {year}

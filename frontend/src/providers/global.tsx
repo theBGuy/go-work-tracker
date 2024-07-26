@@ -12,10 +12,10 @@ export const GlobalContext = createContext<GlobalContext>({
   projects: [],
   setProjects: () => {},
   organizations: [],
-  setOrganizations: () => {}
+  setOrganizations: () => {},
 });
 
-export default function GlobalProvider ({ children }: { children: React.ReactNode }) {
+export default function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<main.Project[]>([]);
   const [organizations, setOrganizations] = useState<main.Organization[]>([]);
 
@@ -25,7 +25,7 @@ export default function GlobalProvider ({ children }: { children: React.ReactNod
         projects,
         setProjects,
         organizations,
-        setOrganizations
+        setOrganizations,
       }}
     >
       {children}

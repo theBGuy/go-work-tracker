@@ -1,8 +1,8 @@
-import React from 'react';
-import { useForm, SubmitHandler } from "react-hook-form"
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
-import { RenameProject } from '../../wailsjs/go/main/App';
-import { useAppStore } from '../stores/main';
+import React from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import { RenameProject } from "../../wailsjs/go/main/App";
+import { useAppStore } from "../stores/main";
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
@@ -24,7 +24,13 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
   setOpenEditProj,
 }) => {
   const [projects, setProjects] = useAppStore((state) => [state.projects, state.setProjects]);
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (data.project && data.project !== project) {
@@ -42,10 +48,7 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
   };
 
   return (
-    <Dialog
-      open={openEditProj}
-      onClose={() => setOpenEditProj(false)}
-    >
+    <Dialog open={openEditProj} onClose={() => setOpenEditProj(false)}>
       <DialogTitle>Edit Project ({project})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
@@ -56,18 +59,15 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
             type="text"
             fullWidth
             error={projects.some((el) => el.name === newProj)}
-            helperText={projects.some((el) => el.name === newProj) ? 'Project name already exists' : ''}
+            helperText={projects.some((el) => el.name === newProj) ? "Project name already exists" : ""}
             {...register("project")}
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            type="submit"
-            disabled={!newProj || projects.some((el) => el.name === newProj)}
-          >
+          <Button type="submit" disabled={!newProj || projects.some((el) => el.name === newProj)}>
             Save
           </Button>
-          <Button color='error' onClick={() => setOpenEditProj(false)}>
+          <Button color="error" onClick={() => setOpenEditProj(false)}>
             Close
           </Button>
         </DialogActions>

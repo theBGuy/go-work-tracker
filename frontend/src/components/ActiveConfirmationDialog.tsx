@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-import { Dialog, DialogTitle, DialogActions, Button } from '@mui/material';
-import { useTimerStore } from '../stores/timer';
+import React, { useEffect } from "react";
+import { Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
+import { useTimerStore } from "../stores/timer";
 
 const ActiveConfirmationDialog: React.FC = () => {
   const timerRunning = useTimerStore((state) => state.running);
   const stopTimer = useTimerStore((state) => state.stopTimer);
   const [openConfirm, setOpenConfirm] = useTimerStore((state) => [state.openConfirm, state.setOpenConfirm]);
-  
+
   useEffect(() => {
     // TODO: maybe some sort of sound alert? or a notification? In case the user is not looking at the app
     if (openConfirm) {
@@ -19,13 +19,9 @@ const ActiveConfirmationDialog: React.FC = () => {
       return () => clearTimeout(timeout);
     }
   }, [openConfirm]);
-  
+
   return (
-    <Dialog
-      disableEscapeKeyDown
-      open={openConfirm}
-      onClose={() => setOpenConfirm(false)}
-    >
+    <Dialog disableEscapeKeyDown open={openConfirm} onClose={() => setOpenConfirm(false)}>
       <DialogTitle>Are you still working?</DialogTitle>
       <DialogActions>
         <Button onClick={() => setOpenConfirm(false)}>Yes</Button>

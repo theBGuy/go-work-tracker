@@ -52,9 +52,7 @@ function Tables() {
                 <MenuItem key={idx} value={org.name} sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Stack direction="row" spacing={1}>
                     {org.favorite ? <StarIcon /> : <StarBorderIcon />}
-                    <Typography>
-                      {org.name}
-                    </Typography>
+                    <Typography>{org.name}</Typography>
                   </Stack>
                 </MenuItem>
               ))}
@@ -63,10 +61,7 @@ function Tables() {
         </Toolbar>
       </AppBar>
       <h2>Yearly Work Time</h2>
-      <WorkTimeAccordion
-        selectedOrganization={selectedOrganization}
-        projects={projects.map((proj) => proj.name)}
-      />
+      <WorkTimeAccordion selectedOrganization={selectedOrganization} projects={projects.map((proj) => proj.name)} />
     </div>
   );
 }

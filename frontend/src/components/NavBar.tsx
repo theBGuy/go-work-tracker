@@ -1,15 +1,15 @@
-import { NavLink } from 'react-router-dom';
-import { Typography, Box, Stack } from '@mui/material';
+import { NavLink } from "react-router-dom";
+import { Typography, Box, Stack } from "@mui/material";
 
 const NavBar = () => {
   const linkStyle = {
-    textDecoration: 'none',
-    color: 'white',
+    textDecoration: "none",
+    color: "white",
   };
 
   const activeLinkStyle = {
-    textDecoration: 'underline',
-    color: 'yellow',
+    textDecoration: "underline",
+    color: "yellow",
   };
 
   return (

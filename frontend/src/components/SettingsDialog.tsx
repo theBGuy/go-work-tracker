@@ -8,10 +8,10 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
-  Select
-} from '@mui/material';
+  Select,
+} from "@mui/material";
 
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 interface SettingsDialogProps {
   showSettings: boolean;
@@ -30,7 +30,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
   setShowSettings,
   setAlertTime,
   setNewAlertTime,
-  handleMenuClose
+  handleMenuClose,
 }) => {
   const handleUpdateSettings = () => {
     handleMenuClose();
@@ -54,18 +54,12 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
       }
     }
   };
-  
+
   return (
-    <Dialog
-      disableEscapeKeyDown
-      open={showSettings}
-      onClose={() => setShowSettings(false)}
-    >
+    <Dialog disableEscapeKeyDown open={showSettings} onClose={() => setShowSettings(false)}>
       <DialogTitle>Settings</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Set the time interval for the `Are you still working?` notification.
-        </DialogContentText>
+        <DialogContentText>Set the time interval for the `Are you still working?` notification.</DialogContentText>
 
         <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="alert-time-select">Confirmation Popup Interval (minutes)</InputLabel>
@@ -86,7 +80,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleUpdateSettings}>Save</Button>
-        <Button onClick={handleMenuClose} color='error'>Close</Button>
+        <Button onClick={handleMenuClose} color="error">
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

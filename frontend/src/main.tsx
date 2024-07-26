@@ -7,7 +7,7 @@ import Tables from "./routes/Tables";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import AppFooter from "./components/AppFooter";
 import { ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import { useTimerStore } from "./stores/timer";
 import { ShowWindow, TimeElapsed } from "../wailsjs/go/main/App";
 import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
@@ -42,44 +42,50 @@ const updateProjWorktime = useTimerStore.getState().updateProjectWorkTime;
  * Update the work time (elapsed time) every second if the timer is running
  * This is a global effect that will run for the entire lifecycle of the app
  */
-const timerSubscription = useTimerStore.subscribe((state) => state.running, (curr, prev) => {
-  console.log(`Time state switched from ${prev} to ${curr}`);
-  if (curr) {
-    workTimeInterval = setInterval(() => {
-      TimeElapsed().then((currentElapsedTime) => {
-        setElapsedTime(currentElapsedTime);
-        updateWorkTime(1);
-        updateProjWorktime(1);
-      });
-    }, 1000);
-    if (!openConfirm && alertTime > 0) {
+const timerSubscription = useTimerStore.subscribe(
+  (state) => state.running,
+  (curr, prev) => {
+    console.log(`Time state switched from ${prev} to ${curr}`);
+    if (curr) {
+      workTimeInterval = setInterval(() => {
+        TimeElapsed().then((currentElapsedTime) => {
+          setElapsedTime(currentElapsedTime);
+          updateWorkTime(1);
+          updateProjWorktime(1);
+        });
+      }, 1000);
+      if (!openConfirm && alertTime > 0) {
+        confirmationInterval = setInterval(() => {
+          ShowWindow().then(() => {
+            setOpenConfirm(true);
+          });
+        }, 1000 * 60 * alertTime); // Show the alert every x minutes
+      }
+    } else {
+      clearInterval(workTimeInterval);
+      clearInterval(confirmationInterval);
+    }
+  }
+);
+/**
+ * Update the alert time interval if the user changes it
+ */
+const alertTimeSubscription = useAppStore.subscribe(
+  (state) => state.alertTime,
+  (curr, prev) => {
+    console.log(`Alert time switched from ${prev} to ${curr}`);
+    if (!timerRunning) return;
+    if (curr > 0) {
       confirmationInterval = setInterval(() => {
         ShowWindow().then(() => {
           setOpenConfirm(true);
         });
-      }, 1000 * 60 * alertTime); // Show the alert every x minutes
+      }, 1000 * 60 * curr); // Show the alert every x minutes
+    } else {
+      clearInterval(confirmationInterval);
     }
-  } else {
-    clearInterval(workTimeInterval);
-    clearInterval(confirmationInterval);
   }
-})
-/**
- * Update the alert time interval if the user changes it
- */
-const alertTimeSubscription = useAppStore.subscribe((state) => state.alertTime, (curr, prev) => {
-  console.log(`Alert time switched from ${prev} to ${curr}`);
-  if (!timerRunning) return;
-  if (curr > 0) {
-    confirmationInterval = setInterval(() => {
-      ShowWindow().then(() => {
-        setOpenConfirm(true);
-      });
-    }, 1000 * 60 * curr); // Show the alert every x minutes
-  } else {
-    clearInterval(confirmationInterval);
-  }
-});
+);
 
 const container = document.getElementById("root");
 const root = createRoot(container!);

@@ -39,10 +39,10 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
             </CardActions>
           </Card>
         </div>
-        ) : (
-          // sorta hate how this looks
-          <Box
-            sx={{
+      ) : (
+        // sorta hate how this looks
+        <Box
+          sx={{
             position: "fixed",
             bottom: 70,
             left: 5,
@@ -50,22 +50,22 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
             boxShadow: 3,
             borderRadius: 4,
             zIndex: 1000,
-            backgroundColor: "rgba(0, 0, 0, 0.5)"
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}
-          >
-            <Stack>
-              <Typography variant="caption">{org} - {proj}</Typography>
-              <Stack direction="row" alignItems="center" flex={1} justifyContent="space-between">
-                <Typography variant="body1">
-                  {timerRunning ? formatTime(elapsedTime) : "00h 00m 00s"}
-                </Typography>
-                <IconButton color="inherit" size="small" onClick={timerRunning ? stopTimer : startTimer}>
-                  {timerRunning ? <StopIcon /> : <PlayArrowIcon />}
-                </IconButton>
-              </Stack>
+        >
+          <Stack>
+            <Typography variant="caption">
+              {org} - {proj}
+            </Typography>
+            <Stack direction="row" alignItems="center" flex={1} justifyContent="space-between">
+              <Typography variant="body1">{timerRunning ? formatTime(elapsedTime) : "00h 00m 00s"}</Typography>
+              <IconButton color="inherit" size="small" onClick={timerRunning ? stopTimer : startTimer}>
+                {timerRunning ? <StopIcon /> : <PlayArrowIcon />}
+              </IconButton>
             </Stack>
-          </Box>
-        )}
+          </Stack>
+        </Box>
+      )}
     </>
   );
 };

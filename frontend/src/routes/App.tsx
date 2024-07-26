@@ -97,7 +97,7 @@ function App() {
   const [editOrg, setEditOrg] = useState("");
   const [editProj, setEditProj] = useState("");
 
-  EventsOn('new-day', () => {
+  EventsOn("new-day", () => {
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
   });
@@ -274,8 +274,12 @@ function App() {
         // so we could use that and update the backend if the frontend doesn't match
         // however, we could also just use the backend as the source of truth which feels more correct
         // this isn't our first load, just fetch the orgs and projects
-        if ((active.organization && active.organization === selectedOrganization)
-          && (active.project && active.project === selectedProject)) {
+        if (
+          active.organization &&
+          active.organization === selectedOrganization &&
+          active.project &&
+          active.project === selectedProject
+        ) {
           GetProjects(active.organization).then((projs) => {
             setProjects(projs);
             projs.sort(handleSort);
@@ -318,11 +322,10 @@ function App() {
       const project = projs[0].name;
       // Handle case where the old project name matches the new project name for different organizations
       if (project === selectedProject) {
-        GetWorkTimeByProject(selectedOrganization, project, dateString())
-          .then((time) => {
-            console.debug(`Work time for ${project}`, time);
-            return setCurrProjectWorkTime(time);
-          });
+        GetWorkTimeByProject(selectedOrganization, project, dateString()).then((time) => {
+          console.debug(`Work time for ${project}`, time);
+          return setCurrProjectWorkTime(time);
+        });
       }
       setSelectedProject(project);
     });
@@ -333,11 +336,10 @@ function App() {
    */
   useEffect(() => {
     if (!selectedProject) return;
-    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
-      .then((times) => {
-        console.debug(`Work time for ${selectedOrganization}/${selectedProject}`, times);
-        return setCurrProjectWorkTime(times);
-      });
+    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then((times) => {
+      console.debug(`Work time for ${selectedOrganization}/${selectedProject}`, times);
+      return setCurrProjectWorkTime(times);
+    });
   }, [selectedProject]);
 
   /**
@@ -346,11 +348,10 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
-      .then((times) => {
-        console.debug("Weekly work times", times);
-        return setWeeklyWorkTimes(times);
-      });
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then((times) => {
+      console.debug("Weekly work times", times);
+      return setWeeklyWorkTimes(times);
+    });
     GetMonthlyWorkTime(currentYear, selectedOrganization).then((times) => {
       console.debug("Monthly work times", times);
       return setMonthlyWorkTimes(times);
