@@ -73,7 +73,6 @@ function Tables() {
       </AppBar>
       <h2>Yearly Work Time</h2>
       <WorkTimeAccordion
-        timerRunning={false}
         selectedOrganization={selectedOrganization}
         projects={projects.map((proj) => proj.name)}
       />

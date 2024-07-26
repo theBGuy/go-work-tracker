@@ -1,6 +1,5 @@
 import {
   AppBar,
-  Box,
   FormControl,
   InputLabel,
   MenuItem,
@@ -8,7 +7,6 @@ import {
   Select,
   Stack,
   Toolbar,
-  Typography,
 } from "@mui/material";
 import NavBar from "../components/NavBar";
 import { useEffect, useState } from "react";
@@ -17,10 +15,11 @@ import { useAppStore } from "../stores/main";
 import { main } from "../../wailsjs/go/models";
 import { GetDailyWorkTimeByMonth, GetProjects } from "../../wailsjs/go/main/App";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { useTimerStore } from "../stores/timer";
 
 interface GraphData {
   // @ts-ignore
-  day: string;
+  day: Date;
   [project: string]: number;
 }
 
@@ -55,6 +54,39 @@ function Charts() {
   }, []);
 
   useEffect(() => {
+    const timerSubscription = useTimerStore.subscribe((state) => state.running, (curr, prev) => {
+      // timer was running and not it's stopped
+      if (!curr && prev) {
+        const activeOrg = useAppStore.getState().selectedOrganization;
+        const activeProj = useAppStore.getState().selectedProject;
+        // updating it's necessary as it's now the visible data we are working with
+        if (activeOrg !== selectedOrganization) return;
+        setDailyWorkTimes((prevData) => {
+          const today = new Date().toISOString().split("T")[0];
+          const index = prevData.findIndex((el) => el.day.toISOString().split("T")[0] === today);
+          const workTime = useTimerStore.getState().elapsedTime;
+          if (index > -1) {
+            if (!prevData[index][activeProj]) {
+              prevData[index][activeProj] = 0;
+            }
+            console.log("updating work time", prevData[index][activeProj], workTime);
+            prevData[index][activeProj] += workTime;
+          } else {
+            // @ts-ignore
+            const newData: GraphData = { day: new Date(today), [activeProj]: workTime };
+            return [...prevData, newData];
+          }
+          return [...prevData];
+        });
+      }
+    });
+
+    return () => {
+      timerSubscription();
+    };
+  }, [selectedOrganization]);
+
+  useEffect(() => {
     if (!selectedOrganization) return;
     GetProjects(selectedOrganization).then((projs) => {
       setProjects(projs);
@@ -67,7 +99,6 @@ function Charts() {
       console.log("daily work times", data);
       const graphData: GraphData[] = [];
       for (const [day, projs] of Object.entries(data)) {
-        console.log("day", new Date(day).getDate());
         // @ts-ignore
         graphData.push({ day: new Date(day), ...projs });
       }

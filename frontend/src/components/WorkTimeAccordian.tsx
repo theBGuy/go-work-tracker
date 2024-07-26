@@ -1,4 +1,3 @@
-// WorkTimeAccordion.tsx
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -22,16 +21,8 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GetAppIcon from '@mui/icons-material/GetApp';
-
 import { styled } from '@mui/system';
 import MuiAccordion from '@mui/material/Accordion';
-
-const Accordion = styled(MuiAccordion)(({ theme }) => ({
-  '&.Mui-expanded': {
-    margin: theme.spacing(5),
-  },
-}));
-
 import {
   GetYearlyWorkTime,
   GetMonthlyWorkTime,
@@ -40,17 +31,18 @@ import {
 } from '../../wailsjs/go/main/App';
 
 import { months, formatTime, getMonth } from '../utils/utils';
-
-interface WorkTimeAccordionProps {
-  timerRunning: boolean;
-  selectedOrganization: string;
-  projects: string[];
-}
+import { useTimerStore } from '../stores/timer';
 
 enum ExportType {
   CSV = "csv",
   PDF = "pdf",
 }
+
+const Accordion = styled(MuiAccordion)(({ theme }) => ({
+  '&.Mui-expanded': {
+    margin: theme.spacing(5),
+  },
+}));
 
 const DownloadButton: React.FC<{ type: ExportType, onClick: () => void }> = ({ type, onClick }) => (
   <Tooltip title={`Download as ${type.toUpperCase()}`} placement="top">
@@ -65,11 +57,16 @@ const DownloadButton: React.FC<{ type: ExportType, onClick: () => void }> = ({ t
   </Tooltip>
 );
 
+interface WorkTimeAccordionProps {
+  selectedOrganization: string;
+  projects: string[];
+}
+
 const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({
-  timerRunning,
   selectedOrganization,
   projects,
 }) => {
+  const timerRunning = useTimerStore((state) => state.running);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
   const [yearlyWorkTime, setYearlyWorkTime] = useState(0);

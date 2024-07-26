@@ -40,7 +40,7 @@ export const useTimerStore = create(subscribeWithSelector<TimerStore>((set, get)
     const selectedOrganization = useAppStore.getState().selectedOrganization;
     const selectedProject = useAppStore.getState().selectedProject;
     StartTimer(selectedOrganization, selectedProject).then(() => {
-      set({ running: true });
+      set({ running: true, elapsedTime: 0 });
     });
   },
   stopTimer: () => {
@@ -51,7 +51,7 @@ export const useTimerStore = create(subscribeWithSelector<TimerStore>((set, get)
     });
   },
   resetTimer: () => {
-    set({ running: false, openConfirm: false, elapsedTime: 0 });
+    set({ running: false, openConfirm: false });
   },
   showMiniTimer: false,
   setShowMiniTimer: (value: boolean) => set({ showMiniTimer: value }),
