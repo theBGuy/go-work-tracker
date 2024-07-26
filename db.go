@@ -607,10 +607,11 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organizationName str
 			Logger.Println(err)
 			return nil, err
 		}
-		if _, ok := weeklyWorkTimes[week]; !ok {
-			weeklyWorkTimes[week] = make(map[string]int)
+		adjustedWeek := week + 1
+		if _, ok := weeklyWorkTimes[adjustedWeek]; !ok {
+			weeklyWorkTimes[adjustedWeek] = make(map[string]int)
 		}
-		weeklyWorkTimes[week][project] = seconds
+		weeklyWorkTimes[adjustedWeek][project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {
