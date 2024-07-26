@@ -7,6 +7,7 @@ import { GetProjects } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import { handleSort } from "../utils/utils";
 
 function Tables() {
   const [selectedOrganization, setSelectedOrganization] = useState("");
@@ -27,16 +28,6 @@ function Tables() {
       setProjects(projs);
     });
   }, [selectedOrganization]);
-
-  const handleSort = (a: main.Organization, b: main.Organization) => {
-    if (a.favorite === b.favorite) {
-      // If both projects have the same Favorite status, sort by UpdatedAt
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-    } else {
-      // Otherwise, sort by Favorite
-      return Number(b.favorite) - Number(a.favorite);
-    }
-  };
 
   return (
     <div id="app">

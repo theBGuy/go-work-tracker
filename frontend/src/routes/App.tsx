@@ -44,7 +44,7 @@ import {
   ToggleFavoriteProject,
   GetActiveTimer,
 } from "../../wailsjs/go/main/App";
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model } from "../utils/utils";
+import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model, handleSort } from "../utils/utils";
 import EditProjectDialog from "../components/EditProjectDialog";
 import NavBar from "../components/NavBar";
 import { useAppStore } from "../stores/main";
@@ -246,16 +246,6 @@ function App() {
     });
   };
 
-  const handleSort = (a: Model, b: Model) => {
-    if (a.favorite === b.favorite) {
-      // If both projects have the same Favorite status, sort by UpdatedAt
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-    } else {
-      // Otherwise, sort by Favorite
-      return Number(b.favorite) - Number(a.favorite);
-    }
-  };
-
   /**
    * on page load
    * Get organizations defined in database when the app loads
@@ -290,8 +280,8 @@ function App() {
         const organization = orgs[0].name;
         setSelectedOrganization(organization);
         const projs = await GetProjects(organization);
-        setProjects(projs);
         projs.sort(handleSort);
+        setProjects(projs);
         const project = projs[0].name;
         setSelectedProject(project);
         SetOrganization(organization, project);
@@ -309,9 +299,8 @@ function App() {
    */
   useEffect(() => {
     if (!selectedOrganization) return;
-    console.debug("Getting work time for organization", selectedOrganization);
     GetWorkTime(dateString(), selectedOrganization).then((data) => {
-      console.debug("Work time for organization", data);
+      console.debug(`Work time for ${selectedOrganization}`, data);
       setWorkTime(data);
     });
     GetProjects(selectedOrganization).then((projs) => {
@@ -320,7 +309,11 @@ function App() {
       const project = projs[0].name;
       // Handle case where the old project name matches the new project name for different organizations
       if (project === selectedProject) {
-        GetWorkTimeByProject(selectedOrganization, project, dateString()).then(setCurrProjectWorkTime);
+        GetWorkTimeByProject(selectedOrganization, project, dateString())
+          .then((time) => {
+            console.debug(`Work time for ${project}`, time);
+            return setCurrProjectWorkTime(time);
+          });
       }
       setSelectedProject(project);
     });
@@ -331,8 +324,11 @@ function App() {
    */
   useEffect(() => {
     if (!selectedProject) return;
-    console.debug("Getting work time for project", selectedProject);
-    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
+    GetWorkTimeByProject(selectedOrganization, selectedProject, dateString())
+      .then((times) => {
+        console.debug(`Work time for ${selectedOrganization}/${selectedProject}`, times);
+        return setCurrProjectWorkTime(times);
+      });
   }, [selectedProject]);
 
   /**
@@ -341,8 +337,15 @@ function App() {
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then(setWeeklyWorkTimes);
-    GetMonthlyWorkTime(currentYear, selectedOrganization).then(setMonthlyWorkTimes);
+    GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization)
+      .then((times) => {
+        console.debug("Weekly work times", times);
+        return setWeeklyWorkTimes(times);
+      });
+    GetMonthlyWorkTime(currentYear, selectedOrganization).then((times) => {
+      console.debug("Monthly work times", times);
+      return setMonthlyWorkTimes(times);
+    });
   }, [selectedOrganization]);
 
   return (
