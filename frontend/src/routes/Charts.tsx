@@ -71,6 +71,13 @@ function Charts() {
         // @ts-ignore
         graphData.push({ day: new Date(day), ...projs });
       }
+      projects.forEach((project) => {
+        graphData.forEach((data) => {
+          if (!data[project.name]) {
+            data[project.name] = 0;
+          }
+        });
+      });
       console.log("graph data", graphData);
       setDailyWorkTimes(graphData);
     });
