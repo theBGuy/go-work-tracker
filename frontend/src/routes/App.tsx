@@ -6,7 +6,7 @@ import NewOrganizationDialog from "../components/NewOrganizationDialog";
 import NewProjectDialog from "../components/NewProjectDialog";
 import EditOrganizationDialog from "../components/EditOrganizationDialog";
 
-import { Box, Tooltip, useMediaQuery } from "@mui/material";
+import { Box, CircularProgress, Divider, Tooltip, useMediaQuery } from "@mui/material";
 import {
   AppBar,
   Toolbar,
@@ -43,6 +43,7 @@ import {
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
   GetActiveTimer,
+  CheckForUpdates,
 } from "../../wailsjs/go/main/App";
 import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, Model, handleSort } from "../utils/utils";
 import EditProjectDialog from "../components/EditProjectDialog";
@@ -86,6 +87,7 @@ function App() {
   const setSelectedProject = useAppStore((state) => state.setSelectedProject);
 
   // Dialogs
+  const [showSpinner, setShowSpinner] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [openNewOrg, setOpenNewOrg] = useState(false);
   const [openNewProj, setOpenNewProj] = useState(false);
@@ -101,6 +103,16 @@ function App() {
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
   });
+
+  const checkForUpdates = async () => {
+    setShowSpinner(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await CheckForUpdates();
+    if (!result) {
+      toast.info("No updates available");
+    }
+    setShowSpinner(false);
+  };
 
   const sumWeekWorktime = (week: number) => {
     return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
@@ -382,6 +394,15 @@ function App() {
               </ListItemIcon>
               Settings
             </MenuItem>
+            <MenuItem onClick={checkForUpdates}>
+              {showSpinner && (
+                <ListItemIcon>
+                  <CircularProgress size={20} />
+                </ListItemIcon>
+              )}
+              Check for updates
+            </MenuItem>
+            <Divider />
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
             <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
             <MenuItem onClick={() => handleOpenEditOrg(selectedOrganization)}>Edit Current Organization</MenuItem>
