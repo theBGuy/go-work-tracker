@@ -144,6 +144,15 @@ function App() {
     });
   };
 
+  const setProject = async (newProject: string) => {
+    if (timerRunning) {
+      await stopTimer();
+    }
+    SetProject(newProject).then(() => {
+      setSelectedProject(newProject);
+    });
+  };
+
   const handleOpenSettings = () => {
     setAnchorEl(null);
     setShowSettings(true);
@@ -452,11 +461,7 @@ function App() {
             <Select
               variant="standard"
               value={selectedProject}
-              onChange={(event) => {
-                SetProject(event.target.value as string).then(() => {
-                  setSelectedProject(event.target.value as string);
-                });
-              }}
+              onChange={(event) => setProject(event.target.value as string)}
               renderValue={(selected) => <div>{selected}</div>}
             >
               {projects.sort(handleSort).map((project, idx) => (
