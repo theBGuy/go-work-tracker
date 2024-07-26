@@ -1,4 +1,5 @@
 # Go-Work-Tracker
+
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/theBGuy/go-work-tracker/total?style=for-the-badge)
 
 Work Tracker is a time tracking application that allows you to record and total your work time for each day, month, and year, and per organization. It provides a simple and intuitive interface for starting and stopping the timer, changing the organization, and viewing the total work time.
@@ -6,24 +7,29 @@ Work Tracker is a time tracking application that allows you to record and total 
 ## Features
 
 - **Time Tracking**: Track your work time with a simple start/stop timer.
-- **Per Organization Tracking**: Record work time separately for each organization.
+- **Per Organization/Per Project Tracking**: Record work time separately for each organization.
 - **Daily, Monthly, and Yearly Totals**: View the total work time for each day, month, and year.
-- **CSV Export**: Export the work time data to a CSV file for each month and year.
-- **In-App Totals**: View the yearly and monthly totals directly within the application.
-
-<!-- ## Development
-
-This is the official Wails React-TS template.
-
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config -->
+- **CSV/PDF Exports**: Export the work time data to a CSV or PDF file.
+- **In-App Totals**: View the yearly, monthly, and weekly totals directly within the application.
 
 ## Development
 
 ### Requirements
+
 - `Wails CLI v^2.9.1` [Install Wails](https://wails.io/docs/gettingstarted/installation)
 - `Go v^1.22.0` [Install Go](https://go.dev/doc/install)
 - `Node v^18.20.4` [Install Node](https://nodejs.org/en/download/current)
+
+### Dependencies
+
+- **React v18**: A JavaScript library for building user interfaces.
+- **React Router v6**: A collection of navigational components for React applications.
+- **Zustand v4**: A small, fast, and scalable state-management solution.
+- **MUI v5**: A popular React UI framework that provides a comprehensive set of components and tools to build consistent, beautiful, and responsive user interfaces.
+- **SQLite**: A C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.
+- **Wails v2**: A framework for building desktop applications using Go & Web Technologies.
+- **Vite v3**: A fast and modern build tool that leverages native ES modules and provides a lightning-fast development server with hot module replacement (HMR).
+- **TypeScript v4**: A strongly typed programming language that builds on JavaScript, giving you better tooling at any scale.
 
 ### Live Development
 
