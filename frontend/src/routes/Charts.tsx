@@ -96,7 +96,6 @@ function Charts() {
             <FormControl fullWidth margin="normal">
               <InputLabel>Year</InputLabel>
               <Select
-                variant="filled"
                 value={selectedYear}
                 onChange={(event) => setSelectedYear(event.target.value as number)}
               >
