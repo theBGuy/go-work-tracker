@@ -76,9 +76,7 @@ function App() {
   // Variables for handling work time totals
   const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
-  const [currentDay, setCurrentDay] = useState(new Date().getDate());
   const [currentWeek, setCurrentWeek] = useState(1);
-  const currentDayRef = useRef(currentDay);
 
   // Variables for handling organizations
   const selectedOrganization = useAppStore((state) => state.selectedOrganization);
@@ -97,10 +95,6 @@ function App() {
   // Editables
   const [editOrg, setEditOrg] = useState("");
   const [editProj, setEditProj] = useState("");
-
-  useEffect(() => {
-    currentDayRef.current = currentDay;
-  }, [currentDay]);
 
   EventsOn('new-day', () => {
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);

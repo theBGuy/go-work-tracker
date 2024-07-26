@@ -159,8 +159,10 @@ function Charts() {
               label: project.name,
               color: colors[index],
               stack: "total",
+              valueFormatter: (value) => `${value || 0}s`,
             }))}
             dataset={dailyWorkTimes}
+            grid={{ vertical: true, horizontal: true }}
           />
         </Paper>
       </Stack>
