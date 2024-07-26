@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import NavBar from "../components/NavBar";
 import { useEffect, useState } from "react";
-import { getMonth, months } from "../utils/utils";
+import { formatTime, getMonth, months } from "../utils/utils";
 import { useAppStore } from "../stores/main";
 import { main } from "../../wailsjs/go/models";
 import { GetDailyWorkTimeByMonth, GetProjects } from "../../wailsjs/go/main/App";
@@ -175,7 +175,6 @@ function Charts() {
                 min: new Date(selectedYear, selectedMonth - 1, 1),
                 max: new Date(selectedYear, selectedMonth, 0),
                 dataKey: "day",
-                label: "Date",
                 scaleType: "utc",
               },
             ]}
@@ -190,7 +189,7 @@ function Charts() {
               dataKey: project.name,
               label: project.name,
               color: colors[index],
-              valueFormatter: (value) => `${value || 0}s`,
+              valueFormatter: (value) => `${formatTime(value || 0)}`,
             }))}
             dataset={dailyWorkTimes}
             grid={{ vertical: true, horizontal: true }}
