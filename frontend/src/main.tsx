@@ -9,7 +9,7 @@ import AppFooter from "./components/AppFooter";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTimerStore } from "./stores/timer";
-import { ShowWindow, TimeElapsed } from "../wailsjs/go/main/App";
+import { ShowWindow, TimeElapsed } from "@go/main/App";
 import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
 import { useAppStore } from "./stores/main";
 
@@ -29,8 +29,8 @@ const router = createHashRouter([
 ]);
 
 // Track active timer outside of the component to avoid it stopping when we change pages
-let workTimeInterval: number;
-let confirmationInterval: number;
+let workTimeInterval: NodeJS.Timeout;
+let confirmationInterval: NodeJS.Timeout;
 const timerRunning = useTimerStore.getState().running;
 const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const openConfirm = useTimerStore.getState().openConfirm;

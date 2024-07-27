@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { toast } from "react-toastify";
 import SettingsDialog from "../components/SettingsDialog";
@@ -277,7 +277,6 @@ function App() {
   useEffect(() => {
     setShowMiniTimer(false);
     getCurrentWeekOfMonth().then(setCurrentWeek);
-    console.debug(`OrgWeekTotal: ${orgWeekTotal} OrgMonthTotal: ${orgMonthTotal}`);
     GetOrganizations().then(async (orgs) => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
