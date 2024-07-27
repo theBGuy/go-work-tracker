@@ -22,6 +22,20 @@ interface Store {
   setSelectedProject: (project: string) => void;
   alertTime: number;
   setAlertTime: (time: number) => void;
+  workTime: number;
+  setWorkTime: (value: number) => void;
+  updateWorkTime: (value: number) => void;
+  projectWorkTime: number;
+  setProjectWorkTime: (value: number) => void;
+  updateProjectWorkTime: (value: number) => void;
+  orgWeekTotal: number;
+  setOrgWeekTotal: (value: number) => void;
+  updateOrgWeekTotal: (value: number) => void;
+  orgMonthTotal: number;
+  setOrgMonthTotal: (value: number) => void;
+  updateOrgMonthTotal: (value: number) => void;
+  currentWeek: number;
+  setCurrentWeek: (week: number) => void;
 }
 
 export const useAppStore = create(
@@ -63,6 +77,20 @@ export const useAppStore = create(
       setAlertTime: (time: number) => {
         set({ alertTime: time });
       },
+      workTime: 0,
+      setWorkTime: (value: number) => set({ workTime: value }),
+      updateWorkTime: (value: number) => set((state) => ({ workTime: state.workTime + value })),
+      projectWorkTime: 0,
+      setProjectWorkTime: (value: number) => set({ projectWorkTime: value }),
+      updateProjectWorkTime: (value: number) => set((state) => ({ projectWorkTime: state.projectWorkTime + value })),
+      orgWeekTotal: 0,
+      setOrgWeekTotal: (value: number) => set({ orgWeekTotal: value }),
+      updateOrgWeekTotal: (value: number) => set((state) => ({ orgWeekTotal: state.orgWeekTotal + value })),
+      orgMonthTotal: 0,
+      setOrgMonthTotal: (value: number) => set({ orgMonthTotal: value }),
+      updateOrgMonthTotal: (value: number) => set((state) => ({ orgMonthTotal: state.orgMonthTotal + value })),
+      currentWeek: 1,
+      setCurrentWeek: (week: number) => set({ currentWeek: week }),
     })),
     {
       name: "store",

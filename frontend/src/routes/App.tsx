@@ -67,18 +67,22 @@ function App() {
   // Variables for timer
   const resetTimer = useTimerStore((state) => state.resetTimer);
   const timerRunning = useTimerStore((state) => state.running);
-  const workTime = useTimerStore((state) => state.workTime);
-  const setWorkTime = useTimerStore((state) => state.setWorkTime);
-  const currProjectWorkTime = useTimerStore((state) => state.projectWorkTime);
-  const setCurrProjectWorkTime = useTimerStore((state) => state.setProjectWorkTime);
+  const workTime = useAppStore((state) => state.workTime);
+  const setWorkTime = useAppStore((state) => state.setWorkTime);
+  const currProjectWorkTime = useAppStore((state) => state.projectWorkTime);
+  const setCurrProjectWorkTime = useAppStore((state) => state.setProjectWorkTime);
 
   const [alertTime, setAlertTime] = useAppStore((state) => [state.alertTime, state.setAlertTime]);
   const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
+  const orgWeekTotal = useAppStore((state) => state.orgWeekTotal);
+  const setOrgWeekTotal = useAppStore((state) => state.setOrgWeekTotal);
+  const orgMonthTotal = useAppStore((state) => state.orgMonthTotal);
+  const setOrgMonthTotal = useAppStore((state) => state.setOrgMonthTotal);
   const [weeklyWorkTimes, setWeeklyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
-  const [currentWeek, setCurrentWeek] = useState(1);
+  const [currentWeek, setCurrentWeek] = useAppStore((state) => [state.currentWeek, state.setCurrentWeek]);
 
   // Variables for handling organizations
   const selectedOrganization = useAppStore((state) => state.selectedOrganization);
@@ -116,12 +120,8 @@ function App() {
     setShowSpinner(false);
   };
 
-  const sumWeekWorktime = (week: number) => {
-    return Object.values(weeklyWorkTimes[week] ?? {}).reduce((acc, curr) => acc + curr, 0);
-  };
-
-  const sumMonthWorktime = (month: number) => {
-    return Object.values(monthlyWorkTimes[month] ?? {}).reduce((acc, curr) => acc + curr, 0);
+  const sumWorktime = (key: number, data: Record<number, Record<string, number>>) => {
+    return Object.values(data[key] ?? {}).reduce((acc, curr) => acc + curr, 0);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -277,6 +277,7 @@ function App() {
   useEffect(() => {
     setShowMiniTimer(false);
     getCurrentWeekOfMonth().then(setCurrentWeek);
+    console.debug(`OrgWeekTotal: ${orgWeekTotal} OrgMonthTotal: ${orgMonthTotal}`);
     GetOrganizations().then(async (orgs) => {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
@@ -302,6 +303,7 @@ function App() {
           useTimerStore.getState().setElapsedTime(active.timeElapsed);
           return;
         }
+        console.debug("No active timer found");
         const organization = orgs[0].name;
         setSelectedOrganization(organization);
         const projs = await GetProjects(organization);
@@ -361,14 +363,16 @@ function App() {
    */
   useEffect(() => {
     GetWeeklyWorkTime(currentYear, currentMonth, selectedOrganization).then((times) => {
-      console.debug("Weekly work times", times);
+      console.debug("Weekly work times", times, currentWeek);
+      setOrgWeekTotal(sumWorktime(currentWeek, times));
       return setWeeklyWorkTimes(times);
     });
     GetMonthlyWorkTime(currentYear, selectedOrganization).then((times) => {
       console.debug("Monthly work times", times);
+      setOrgMonthTotal(sumWorktime(currentMonth, times));
       return setMonthlyWorkTimes(times);
     });
-  }, [selectedOrganization]);
+  }, [selectedOrganization, currentWeek]);
 
   return (
     <div id="App">
@@ -584,7 +588,7 @@ function App() {
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(sumWeekWorktime(currentWeek))}`} />
+                  <ListItemText primary={`Organization: ${formatTime(orgWeekTotal)}`} />
                 </ListItem>
                 <ListItem>
                   <ListItemText
@@ -606,7 +610,7 @@ function App() {
               </Typography>
               <List>
                 <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(sumMonthWorktime(currentMonth))}`} />
+                  <ListItemText primary={`Organization: ${formatTime(orgMonthTotal)}`} />
                 </ListItem>
                 <ListItem>
                   <ListItemText
@@ -636,38 +640,20 @@ function App() {
       />
 
       {/* Handle creating a new organization */}
-      <NewOrganizationDialog
-        openNewOrg={openNewOrg}
-        setSelectedOrganization={setSelectedOrganization}
-        setSelectedProject={setSelectedProject}
-        setOpenNewOrg={setOpenNewOrg}
-      />
+      <NewOrganizationDialog openNewOrg={openNewOrg} setOpenNewOrg={setOpenNewOrg} />
 
       {/* Handle creating a new project for current selected organization */}
       <NewProjectDialog
         openNewProj={openNewProj}
-        organization={selectedOrganization}
-        setSelectedProject={setSelectedProject}
         setMonthlyWorkTimes={setMonthlyWorkTimes}
         setOpenNewProj={setOpenNewProj}
       />
 
       {/* Handle editing current organization */}
-      <EditOrganizationDialog
-        openEditOrg={openEditOrg}
-        organization={editOrg}
-        setSelectedOrganization={setSelectedOrganization}
-        setOpenEditOrg={setOpenEditOrg}
-      />
+      <EditOrganizationDialog openEditOrg={openEditOrg} setOpenEditOrg={setOpenEditOrg} />
 
       {/* Handle editing a project from the current organization */}
-      <EditProjectDialog
-        openEditProj={openEditProj}
-        organization={selectedOrganization}
-        project={editProj}
-        setSelectedProject={setSelectedProject}
-        setOpenEditProj={setOpenEditProj}
-      />
+      <EditProjectDialog openEditProj={openEditProj} setOpenEditProj={setOpenEditProj} />
     </div>
   );
 }
