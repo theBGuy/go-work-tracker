@@ -8,8 +8,6 @@ import { useAppStore } from "../stores/main";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
-  organization: string;
-  setSelectedOrganization: (org: string) => void;
   setOpenEditOrg: (value: boolean) => void;
 }
 
@@ -17,13 +15,13 @@ type Inputs = {
   organization: string;
 };
 
-const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({
-  openEditOrg,
-  organization,
-  setSelectedOrganization,
-  setOpenEditOrg,
-}) => {
-  const [organizations, setOrganizations] = useAppStore((state) => [state.organizations, state.setOrganizations]);
+const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEditOrg, setOpenEditOrg }) => {
+  const [organizations, setOrganizations, organization, setSelectedOrganization] = useAppStore((state) => [
+    state.organizations,
+    state.setOrganizations,
+    state.selectedOrganization,
+    state.setSelectedOrganization,
+  ]);
   const {
     register,
     handleSubmit,

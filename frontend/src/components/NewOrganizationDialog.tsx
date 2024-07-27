@@ -6,8 +6,6 @@ import { main } from "../../wailsjs/go/models";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
-  setSelectedOrganization: (org: string) => void;
-  setSelectedProject: (proj: string) => void;
   setOpenNewOrg: (value: boolean) => void;
 }
 
@@ -16,17 +14,16 @@ type Inputs = {
   project: string;
 };
 
-const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
-  openNewOrg,
-  setSelectedOrganization,
-  setSelectedProject,
-  setOpenNewOrg,
-}) => {
-  const [organizations, addOrganization, addProject] = useAppStore((state) => [
-    state.organizations,
-    state.addOrganization,
-    state.addProject,
-  ]);
+const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOrg, setOpenNewOrg }) => {
+  const [organizations, addOrganization, addProject, setSelectedOrganization, setSelectedProject] = useAppStore(
+    (state) => [
+      state.organizations,
+      state.addOrganization,
+      state.addProject,
+      state.setSelectedOrganization,
+      state.setSelectedProject,
+    ]
+  );
   const {
     register,
     handleSubmit,

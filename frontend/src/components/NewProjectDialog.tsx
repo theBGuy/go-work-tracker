@@ -7,8 +7,6 @@ import { useAppStore } from "../stores/main";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
-  organization: string;
-  setSelectedProject: (proj: string) => void;
   setMonthlyWorkTimes: React.Dispatch<React.SetStateAction<Record<number, Record<string, number>>>>;
   setOpenNewProj: (value: boolean) => void;
 }
@@ -17,14 +15,13 @@ type Inputs = {
   project: string;
 };
 
-const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
-  openNewProj,
-  organization,
-  setSelectedProject,
-  setMonthlyWorkTimes,
-  setOpenNewProj,
-}) => {
-  const [projects, addProject] = useAppStore((state) => [state.projects, state.addProject]);
+const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMonthlyWorkTimes, setOpenNewProj }) => {
+  const [projects, addProject, organization, setSelectedProject] = useAppStore((state) => [
+    state.projects,
+    state.addProject,
+    state.selectedOrganization,
+    state.setSelectedProject,
+  ]);
   const {
     register,
     handleSubmit,

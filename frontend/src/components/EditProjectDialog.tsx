@@ -6,9 +6,6 @@ import { useAppStore } from "../stores/main";
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
-  organization: string;
-  project: string;
-  setSelectedProject: (proj: string) => void;
   setOpenEditProj: (value: boolean) => void;
 }
 
@@ -16,14 +13,14 @@ type Inputs = {
   project: string;
 };
 
-const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
-  openEditProj,
-  organization,
-  project,
-  setSelectedProject,
-  setOpenEditProj,
-}) => {
-  const [projects, setProjects] = useAppStore((state) => [state.projects, state.setProjects]);
+const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, setOpenEditProj }) => {
+  const [projects, setProjects, organization, project, setSelectedProject] = useAppStore((state) => [
+    state.projects,
+    state.setProjects,
+    state.selectedOrganization,
+    state.selectedProject,
+    state.setSelectedProject,
+  ]);
   const {
     register,
     handleSubmit,
