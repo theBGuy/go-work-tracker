@@ -100,6 +100,8 @@ function App() {
   const [editProj, setEditProj] = useState("");
 
   EventsOn("new-day", () => {
+    console.debug("New day event received");
+    getCurrentWeekOfMonth().then(setCurrentWeek);
     GetWorkTime(dateString(), selectedOrganization).then(setWorkTime);
     GetWorkTimeByProject(selectedOrganization, selectedProject, dateString()).then(setCurrProjectWorkTime);
   });
