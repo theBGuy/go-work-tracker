@@ -6,7 +6,7 @@ import NewOrganizationDialog from "../components/NewOrganizationDialog";
 import NewProjectDialog from "../components/NewProjectDialog";
 import EditOrganizationDialog from "../components/EditOrganizationDialog";
 
-import { Box, CircularProgress, Divider, Tooltip, useMediaQuery } from "@mui/material";
+import { Box, CircularProgress, Divider, Stack, Tooltip, useMediaQuery } from "@mui/material";
 import {
   AppBar,
   Toolbar,
@@ -296,10 +296,8 @@ function App() {
             setProjects(projs);
             projs.sort(handleSort);
           });
-          if (active.isRunning && !timerRunning) {
-            useTimerStore.getState().setRunning(true);
-            useTimerStore.getState().setElapsedTime(active.timeElapsed);
-          }
+          useTimerStore.getState().setRunning(active.isRunning);
+          useTimerStore.getState().setElapsedTime(active.timeElapsed);
           return;
         }
         const organization = orgs[0].name;
@@ -430,8 +428,12 @@ function App() {
               renderValue={(selected) => <div>{selected}</div>}
             >
               {organizations.sort(handleSort).map((org, idx) => (
-                <MenuItem key={idx} value={org.name} sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <div>
+                <MenuItem
+                  key={idx}
+                  value={org.name}
+                  sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <Stack direction="row" alignItems="center">
                     <IconButton
                       edge="start"
                       aria-label="favorite"
@@ -443,8 +445,8 @@ function App() {
                       {org.favorite ? <StarIcon /> : <StarBorderIcon />}
                     </IconButton>
                     {org.name}
-                  </div>
-                  <div>
+                  </Stack>
+                  <Stack direction="row" alignItems="center">
                     <Tooltip title="Edit organization">
                       <IconButton
                         edge="end"
@@ -469,7 +471,7 @@ function App() {
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
-                  </div>
+                  </Stack>
                 </MenuItem>
               ))}
             </Select>
@@ -487,8 +489,12 @@ function App() {
               renderValue={(selected) => <div>{selected}</div>}
             >
               {projects.sort(handleSort).map((project, idx) => (
-                <MenuItem key={idx} value={project.name} sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <div>
+                <MenuItem
+                  key={idx}
+                  value={project.name}
+                  sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <Stack direction="row" alignItems="center">
                     <IconButton
                       edge="start"
                       aria-label="favorite"
@@ -500,8 +506,8 @@ function App() {
                       {project.favorite ? <StarIcon /> : <StarBorderIcon />}
                     </IconButton>
                     {project.name}
-                  </div>
-                  <div>
+                  </Stack>
+                  <Stack direction="row" alignItems="center">
                     <Tooltip title="Edit project">
                       <IconButton
                         edge="end"
@@ -526,7 +532,7 @@ function App() {
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
-                  </div>
+                  </Stack>
                 </MenuItem>
               ))}
             </Select>
