@@ -38,6 +38,14 @@ export function GetMonthlyWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetMonthlyWorkTime'](arg1, arg2);
 }
 
+export function GetOrgWorkTimeByMonth(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetOrgWorkTimeByMonth'](arg1, arg2, arg3);
+}
+
+export function GetOrgWorkTimeByWeek(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GetOrgWorkTimeByWeek'](arg1, arg2, arg3, arg4);
+}
+
 export function GetOrganizations() {
   return window['go']['main']['App']['GetOrganizations']();
 }

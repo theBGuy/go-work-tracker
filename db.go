@@ -629,6 +629,31 @@ func (a *App) GetWorkTimeByWeek(year int, month time.Month, week int, organizati
 	return workTime, nil
 }
 
+// GetOrgWorkTimeByWeek returns the total seconds worked an organization a week of the specified month
+func (a *App) GetOrgWorkTimeByWeek(year int, month time.Month, week int, organizationID uint) (workTime int, err error) {
+	workTime = 0
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
 // GetProjWorkTimeByWeek returns the total seconds worked a project of a week of the specified month
 func (a *App) GetProjWorkTimeByWeek(year int, month time.Month, week int, projectID uint) (workTime int, err error) {
 	workTime = 0
@@ -709,6 +734,29 @@ func (a *App) GetProjWorkTimeByMonth(year int, month time.Month, projectID uint)
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
 		Where("strftime('%Y-%m', date) = ?", fmt.Sprintf("%04d-%02d", year, month)).
 		Where("projects.id = ?", project.ID).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
+// GetOrgWorkTimeByMonth returns the total seconds worked for a organization of a month of the specified year
+func (a *App) GetOrgWorkTimeByMonth(year int, month time.Month, organizationID uint) (workTime int, err error) {
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
 		Row().Scan(&workTime)
 
 	if err != nil {

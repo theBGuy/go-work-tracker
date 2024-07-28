@@ -21,6 +21,10 @@ export function GetDailyWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number)
 
 export function GetMonthlyWorkTime(arg1:number,arg2:number):Promise<{[key: number]: {[key: string]: number}}>;
 
+export function GetOrgWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):Promise<number>;
+
+export function GetOrgWorkTimeByWeek(arg1:number,arg2:time.Month,arg3:number,arg4:number):Promise<number>;
+
 export function GetOrganizations():Promise<Array<main.Organization>>;
 
 export function GetProjWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):Promise<number>;
