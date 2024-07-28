@@ -36,8 +36,7 @@ const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const openConfirm = useTimerStore.getState().openConfirm;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
 const alertTime = useAppStore.getState().alertTime;
-const updateWorkTime = useAppStore.getState().updateWorkTime;
-const updateProjWorktime = useAppStore.getState().updateProjectWorkTime;
+const updateDayWorkTotals = useAppStore.getState().updateDayWorkTotals;
 const updateOrgWeekTotal = useAppStore.getState().updateOrgWeekTotal;
 const updateProjWeekTotal = useAppStore.getState().updateProjWeekTotal;
 const updateOrgMonthTotal = useAppStore.getState().updateOrgMonthTotal;
@@ -54,8 +53,7 @@ const timerSubscription = useTimerStore.subscribe(
       workTimeInterval = setInterval(() => {
         TimeElapsed().then((currentElapsedTime) => {
           setElapsedTime(currentElapsedTime);
-          updateWorkTime(1);
-          updateProjWorktime(1);
+          updateDayWorkTotals(1);
         });
       }, 1000);
       if (!openConfirm && alertTime > 0) {

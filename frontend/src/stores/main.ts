@@ -28,6 +28,7 @@ interface Store {
   projectWorkTime: number;
   setProjectWorkTime: (value: number) => void;
   updateProjectWorkTime: (value: number) => void;
+  updateDayWorkTotals: (value: number) => void;
   orgWeekTotal: number;
   setOrgWeekTotal: (value: number) => void;
   updateOrgWeekTotal: (value: number) => void;
@@ -123,6 +124,12 @@ export const useAppStore = create(
         set({ projectWorkTime: value });
       },
       updateProjectWorkTime: (value: number) => set((state) => ({ projectWorkTime: state.projectWorkTime + value })),
+      updateDayWorkTotals: (value: number) => {
+        set((state) => ({
+          workTime: state.workTime + value,
+          projectWorkTime: state.projectWorkTime + value,
+        }));
+      },
       orgWeekTotal: 0,
       setOrgWeekTotal: (value: number) => {
         if (value === get().orgWeekTotal) return;
