@@ -55,6 +55,7 @@ import { useTimerStore } from "../stores/timer";
 import ActiveSession from "../components/ActiveSession";
 import { EventsOn } from "@runtime/runtime";
 import { main } from "@go/models";
+import ModelSelect from "@/components/ModelSelect";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -195,9 +196,12 @@ function App() {
     setOpenEditOrg(true);
   };
 
-  const handleOpenEditProj = (project: string) => {
+  const handleOpenEditProj = (projectID: number) => {
+    if (!projectID) {
+      return;
+    }
     setAnchorEl(null);
-    setEditProj(project);
+    // setEditProj(project);
     setOpenEditProj(true);
   };
 
@@ -433,13 +437,8 @@ function App() {
 
           {/* Dropdown to select organization */}
           <Box sx={{ marginRight: 5 }}>
-            <Typography variant="h6" component="h2" sx={{ display: "inline-block", marginRight: 2 }}>
-              Organization:
-            </Typography>
-            <Select
+            <ModelSelect
               label="Organization"
-              labelId="organization-select-label"
-              variant="standard"
               value={activeOrg?.name}
               onChange={(event) => {
                 const foundOrg = organizations.find((org) => org.name === event.target.value);
@@ -447,65 +446,20 @@ function App() {
                   setOrganization(foundOrg);
                 }
               }}
-              renderValue={(selected) => <div>{selected}</div>}
-            >
-              {organizations.sort(handleSort).map((org, idx) => (
-                <MenuItem
-                  key={idx}
-                  value={org.name}
-                  sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <Stack direction="row" alignItems="center">
-                    <IconButton
-                      edge="start"
-                      aria-label="favorite"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        toggleFavoriteOrg(org.id);
-                      }}
-                    >
-                      {org.favorite ? <StarIcon /> : <StarBorderIcon />}
-                    </IconButton>
-                    {org.name}
-                  </Stack>
-                  <Stack direction="row" alignItems="center">
-                    <Tooltip title="Edit organization">
-                      <IconButton
-                        edge="end"
-                        aria-label="edit"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleOpenEditOrg(org.id);
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete organization">
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleDeleteOrganization(org.id);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </MenuItem>
-              ))}
-            </Select>
+              items={organizations}
+              showFavorite={true}
+              toggleFavoriteOnClick={toggleFavoriteOrg}
+              showEdit={true}
+              editOnClick={handleOpenEditOrg}
+              showDelete={true}
+              deleteOnClick={handleDeleteOrganization}
+            />
           </Box>
 
           {/* Dropdown to select project */}
           <Box>
-            <Typography variant="h6" component="h2" sx={{ display: "inline-block", marginRight: 2 }}>
-              Project:
-            </Typography>
-            <Select
-              variant="standard"
+            <ModelSelect
+              label="Project"
               value={activeProj?.name}
               onChange={(event) => {
                 const foundProject = projects.find((proj) => proj.name === event.target.value);
@@ -513,56 +467,14 @@ function App() {
                   setProject(foundProject);
                 }
               }}
-              renderValue={(selected) => <div>{selected}</div>}
-            >
-              {projects.sort(handleSort).map((project, idx) => (
-                <MenuItem
-                  key={idx}
-                  value={project.name}
-                  sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <Stack direction="row" alignItems="center">
-                    <IconButton
-                      edge="start"
-                      aria-label="favorite"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        toggleFavoriteProject(project.id);
-                      }}
-                    >
-                      {project.favorite ? <StarIcon /> : <StarBorderIcon />}
-                    </IconButton>
-                    {project.name}
-                  </Stack>
-                  <Stack direction="row" alignItems="center">
-                    <Tooltip title="Edit project">
-                      <IconButton
-                        edge="end"
-                        aria-label="edit"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleOpenEditProj(project.name);
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete project">
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleDeleteProject(project.id);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </MenuItem>
-              ))}
-            </Select>
+              items={projects}
+              showFavorite={true}
+              toggleFavoriteOnClick={toggleFavoriteProject}
+              showEdit={true}
+              editOnClick={handleOpenEditProj}
+              showDelete={true}
+              deleteOnClick={handleDeleteProject}
+            />
           </Box>
         </Toolbar>
       </AppBar>
