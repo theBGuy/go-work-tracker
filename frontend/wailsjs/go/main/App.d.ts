@@ -59,9 +59,9 @@ export function RenameOrganization(arg1:number,arg2:string):Promise<main.Organiz
 
 export function RenameProject(arg1:number,arg2:string):Promise<main.Project>;
 
-export function SetOrganization(arg1:string,arg2:string):Promise<void>;
+export function SetOrganization(arg1:number):Promise<void>;
 
-export function SetProject(arg1:main.Project):Promise<void>;
+export function SetProject(arg1:number):Promise<void>;
 
 export function ShowWindow():Promise<void>;
 

@@ -143,37 +143,15 @@ func (a *App) NewOrganization(organizationName string, projectName string) (NewO
 	return NewOrgRet{Organization: organization, Project: project}, nil
 }
 
-func (a *App) SetOrganization(organizationName string, projectName string) {
-	if a.isRunning {
-		a.StopTimer()
+func (a *App) SetOrganization(organizationID uint) error {
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return err
 	}
-
-	// Check if the organization exists
-	var organization Organization
-	if err := a.db.Where(&Organization{Name: organizationName}).First(&organization).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// No entry for the given organization
-			a.NewOrganization(organizationName, projectName)
-		} else {
-			handleDBError(err)
-			return
-		}
-	}
-
-	// Check if the project exists within the organization
-	var project Project
-	if err := a.db.Where(&Project{Name: projectName, OrganizationID: organization.ID}).First(&project).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// No entry for the given project within the organization
-			a.NewOrganization(organizationName, projectName)
-		} else {
-			handleDBError(err)
-			return
-		}
-	}
-
+	fmt.Println("Organization set to:", organization.Name)
 	a.organization = organization
-	a.project = project
+
+	return nil
 }
 
 func (a *App) RenameOrganization(organizationID uint, newName string) (Organization, error) {
@@ -249,6 +227,21 @@ func (a *App) NewProject(organizationName string, projectName string) (Project, 
 		handleDBError(err)
 	}
 	return project, nil
+}
+
+func (a *App) SetProject(projectID uint) error {
+	if a.isRunning {
+		a.StopTimer()
+	}
+
+	project, err := a.getProject(projectID)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Project set to:", project.Name, "for Organization:", a.organization.Name)
+	a.project = project
+
+	return nil
 }
 
 func (a *App) RenameProject(projectID uint, newName string) (Project, error) {
