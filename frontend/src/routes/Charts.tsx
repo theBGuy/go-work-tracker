@@ -172,11 +172,11 @@ function Charts() {
             leftAxis={{
               label: "Total Work Time (s)",
               labelStyle: {
-                transform: "rotate(-90deg) translate(-173px, -238px)",
-                padding: 10,
+                // transform: "rotate(-90deg) translate(-173px, -238px)",
+                // padding: 10,
               },
             }}
-            margin={{ right: 10 }}
+            // margin={{ right: 10 }}
             series={projects.map((project, index) => ({
               dataKey: project.name,
               label: project.name,
