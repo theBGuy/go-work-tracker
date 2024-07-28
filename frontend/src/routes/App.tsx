@@ -293,13 +293,9 @@ function App() {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
       } else {
-        setOrganizations(orgs);
         orgs.sort(handleSort);
+        setOrganizations(orgs);
         const active = await GetActiveTimer();
-        // what should be our source of truth? zustand gives us persistent state with json storage
-        // so we could use that and update the backend if the frontend doesn't match
-        // however, we could also just use the backend as the source of truth which feels more correct
-        // this isn't our first load, just fetch the orgs and projects
         if (
           active.organization &&
           active.organization.id === activeOrg?.id &&
@@ -319,8 +315,8 @@ function App() {
         setSelectedOrganization(organization);
         const projs = await GetProjects(organization.id);
         projs.sort(handleSort);
-        setProjects(projs);
         const project = projs[0];
+        setProjects(projs);
         setSelectedProject(project);
         await SetOrganization(organization.name, project.name);
       }
@@ -364,7 +360,7 @@ function App() {
       setOrgMonthTotal(Object.values(times).reduce((acc, curr) => acc + curr, 0));
       setMonthWorkTimes(times);
     });
-  }, [activeOrg, currentWeek]);
+  }, [activeOrg, currentWeek, projects]);
 
   /**
    * Get the work time for the current project when the app loads
@@ -383,7 +379,7 @@ function App() {
       console.debug(`Work time for ${activeOrg?.name}/${activeProj.name} for month ${currentMonth} - ${time}`);
       setProjMonthTotal(time);
     });
-  }, [activeProj]);
+  }, [activeProj, projects]);
 
   return (
     <div id="App">
