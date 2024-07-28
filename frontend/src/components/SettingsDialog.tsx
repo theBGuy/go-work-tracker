@@ -1,3 +1,4 @@
+import { useAppStore } from "@/stores/main";
 import {
   Button,
   Dialog,
@@ -10,28 +11,20 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
+import { useState } from "react";
 
 import { toast } from "react-toastify";
 
 interface SettingsDialogProps {
   showSettings: boolean;
-  alertTime: number;
-  newAlertTime: number;
   setShowSettings: (show: boolean) => void;
-  setAlertTime: (time: number) => void;
-  setNewAlertTime: (time: number) => void;
   handleMenuClose: () => void;
 }
 
-const SettingsDialog: React.FC<SettingsDialogProps> = ({
-  showSettings,
-  alertTime,
-  newAlertTime,
-  setShowSettings,
-  setAlertTime,
-  setNewAlertTime,
-  handleMenuClose,
-}) => {
+const SettingsDialog: React.FC<SettingsDialogProps> = ({ showSettings, setShowSettings, handleMenuClose }) => {
+  const alertTime = useAppStore((state) => state.alertTime);
+  const setAlertTime = useAppStore((state) => state.setAlertTime);
+  const [newAlertTime, setNewAlertTime] = useState(alertTime);
   const handleUpdateSettings = () => {
     handleMenuClose();
     setShowSettings(false);

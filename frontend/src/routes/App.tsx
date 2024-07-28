@@ -1,62 +1,56 @@
 import { useEffect, useState } from "react";
 
+import EditOrganizationDialog from "@/components/EditOrganizationDialog";
+import NewOrganizationDialog from "@/components/NewOrganizationDialog";
+import NewProjectDialog from "@/components/NewProjectDialog";
+import SettingsDialog from "@/components/SettingsDialog";
 import { toast } from "react-toastify";
-import SettingsDialog from "../components/SettingsDialog";
-import NewOrganizationDialog from "../components/NewOrganizationDialog";
-import NewProjectDialog from "../components/NewProjectDialog";
-import EditOrganizationDialog from "../components/EditOrganizationDialog";
 
-import { Box, CircularProgress, Divider, Stack, Tooltip, useMediaQuery } from "@mui/material";
+import ModelSelect from "@/components/ModelSelect";
+import WorkTimeListing from "@/components/WorkTimeListing";
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Select,
-  MenuItem,
-  Menu,
-  ListItemIcon,
-  List,
-  ListItem,
-  ListItemText,
-  Grid,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import SettingsIcon from "@mui/icons-material/Settings";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import StarIcon from "@mui/icons-material/Star";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
-import {
-  StopTimer,
-  GetWorkTime,
-  GetWorkTimeByProject,
-  GetOrganizations,
-  SetOrganization,
-  DeleteOrganization,
-  GetProjects,
-  SetProject,
-  DeleteProject,
+  CheckForUpdates,
   ConfirmAction,
+  DeleteOrganization,
+  DeleteProject,
+  GetActiveTimer,
+  GetOrganizations,
+  GetProjects,
+  GetProjWorkTimeByMonth,
+  GetProjWorkTimeByWeek,
+  GetWorkTime,
+  GetWorkTimeByMonth,
+  GetWorkTimeByProject,
+  GetWorkTimeByWeek,
+  SetOrganization,
+  SetProject,
+  StopTimer,
   ToggleFavoriteOrganization,
   ToggleFavoriteProject,
-  GetActiveTimer,
-  CheckForUpdates,
-  GetWorkTimeByWeek,
-  GetWorkTimeByMonth,
-  GetProjWorkTimeByWeek,
-  GetProjWorkTimeByMonth,
 } from "@go/main/App";
-import { getMonth, months, formatTime, dateString, getCurrentWeekOfMonth, handleSort } from "../utils/utils";
+import { main } from "@go/models";
+import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import {
+  AppBar,
+  Box,
+  CircularProgress,
+  Divider,
+  Grid,
+  IconButton,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Toolbar,
+  useMediaQuery,
+} from "@mui/material";
+import { EventsOn } from "@runtime/runtime";
+import ActiveSession from "../components/ActiveSession";
 import EditProjectDialog from "../components/EditProjectDialog";
 import NavBar from "../components/NavBar";
 import { useAppStore } from "../stores/main";
 import { useTimerStore } from "../stores/timer";
-import ActiveSession from "../components/ActiveSession";
-import { EventsOn } from "@runtime/runtime";
-import { main } from "@go/models";
-import ModelSelect from "@/components/ModelSelect";
-import WorkTimeListing from "@/components/WorkTimeListing";
+import { dateString, getCurrentWeekOfMonth, getMonth, handleSort, months } from "../utils/utils";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -76,9 +70,6 @@ function App() {
   const setWorkTime = useAppStore((state) => state.setWorkTime);
   const currProjectWorkTime = useAppStore((state) => state.projectWorkTime);
   const setCurrProjectWorkTime = useAppStore((state) => state.setProjectWorkTime);
-
-  const [alertTime, setAlertTime] = useAppStore((state) => [state.alertTime, state.setAlertTime]);
-  const [newAlertTime, setNewAlertTime] = useState(alertTime);
 
   // Variables for handling work time totals
   const orgWeekTotal = useAppStore((state) => state.orgWeekTotal);
@@ -528,15 +519,7 @@ function App() {
       </div>
 
       {/* Handle settings dialog */}
-      <SettingsDialog
-        showSettings={showSettings}
-        alertTime={alertTime}
-        newAlertTime={newAlertTime}
-        setShowSettings={setShowSettings}
-        setAlertTime={setAlertTime}
-        setNewAlertTime={setNewAlertTime}
-        handleMenuClose={handleMenuClose}
-      />
+      <SettingsDialog showSettings={showSettings} setShowSettings={setShowSettings} handleMenuClose={handleMenuClose} />
 
       {/* Handle creating a new organization */}
       <NewOrganizationDialog openNewOrg={openNewOrg} setOpenNewOrg={setOpenNewOrg} />
