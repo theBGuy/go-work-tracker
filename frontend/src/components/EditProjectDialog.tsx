@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
-import { RenameProject } from "../../wailsjs/go/main/App";
+import { RenameProject } from "@go/main/App";
 import { useAppStore } from "../stores/main";
 
 interface EditProjectDialogProps {
@@ -14,13 +14,11 @@ type Inputs = {
 };
 
 const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, setOpenEditProj }) => {
-  const [projects, setProjects, organization, project, setSelectedProject] = useAppStore((state) => [
-    state.projects,
-    state.setProjects,
-    state.selectedOrganization,
-    state.selectedProject,
-    state.setSelectedProject,
-  ]);
+  const projects = useAppStore((state) => state.projects);
+  const setProjects = useAppStore((state) => state.setProjects);
+  const organization = useAppStore((state) => state.activeOrg);
+  const project = useAppStore((state) => state.activeProj);
+  const setSelectedProject = useAppStore((state) => state.setActiveProject);
   const {
     register,
     handleSubmit,
@@ -30,15 +28,16 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, set
   } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    if (data.project && data.project !== project) {
-      console.debug(`renaming project for ${organization} from ${project} to ${data.project}`);
-      await RenameProject(organization, project, data.project);
-      const index = projects.findIndex((el) => el.name === project);
+    if (data.project && data.project !== project?.name) {
+      if (!project) return;
+      console.debug(`renaming project for ${organization?.name} from ${project?.name} to ${data.project}`);
+      const newProj = await RenameProject(project?.id, data.project);
+      const index = projects.findIndex((el) => el.id === project.id);
       if (index > -1) {
         projects[index].name = data.project;
         setProjects([...projects]);
       }
-      setSelectedProject(data.project);
+      setSelectedProject(newProj);
     }
     reset();
     setOpenEditProj(false);
@@ -46,7 +45,7 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, set
 
   return (
     <Dialog open={openEditProj} onClose={() => setOpenEditProj(false)}>
-      <DialogTitle>Edit Project ({project})</DialogTitle>
+      <DialogTitle>Edit Project ({project?.name})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <TextField

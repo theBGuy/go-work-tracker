@@ -1,8 +1,7 @@
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
-import { NewOrganization, SetOrganization } from "../../wailsjs/go/main/App";
+import { NewOrganization, SetOrganization } from "@go/main/App";
 import { useAppStore } from "../stores/main";
-import { main } from "../../wailsjs/go/models";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
@@ -10,20 +9,16 @@ interface NewOrganizationDialogProps {
 }
 
 type Inputs = {
-  organization: string;
-  project: string;
+  orgName: string;
+  projName: string;
 };
 
 const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOrg, setOpenNewOrg }) => {
-  const [organizations, addOrganization, addProject, setSelectedOrganization, setSelectedProject] = useAppStore(
-    (state) => [
-      state.organizations,
-      state.addOrganization,
-      state.addProject,
-      state.setSelectedOrganization,
-      state.setSelectedProject,
-    ]
-  );
+  const organizations = useAppStore((state) => state.organizations);
+  const addOrganization = useAppStore((state) => state.addOrganization);
+  const addProject = useAppStore((state) => state.addProject);
+  const setSelectedOrganization = useAppStore((state) => state.setActiveOrganization);
+  const setSelectedProject = useAppStore((state) => state.setActiveProject);
   const {
     register,
     handleSubmit,
@@ -31,16 +26,14 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOr
     reset,
     formState: { errors },
   } = useForm<Inputs>();
-  const newOrg = watch("organization");
-  const newProj = watch("project");
+  const newOrg = watch("orgName");
+  const newProj = watch("projName");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    const { organization, project } = data;
-    await NewOrganization(organization, project);
-    await SetOrganization(organization, project);
-    addOrganization(
-      new main.Organization({ name: organization, favorite: false, updated_at: new Date().toISOString() })
-    );
-    addProject(new main.Project({ name: project, favorite: false, updated_at: new Date().toISOString() }));
+    const { orgName, projName } = data;
+    const { organization, project } = await NewOrganization(orgName, projName);
+    await SetOrganization(orgName, projName);
+    addOrganization(organization);
+    addProject(project);
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);
@@ -62,7 +55,7 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOr
             fullWidth
             error={organizations.some((el) => el.name === newOrg)}
             helperText={organizations.some((el) => el.name === newOrg) ? "Project name already exists" : ""}
-            {...register("organization", { required: true })}
+            {...register("orgName", { required: true })}
           />
           <br />
           <DialogContentText>Please enter the name of the new project.</DialogContentText>
@@ -72,8 +65,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOr
             label="Project Name"
             type="text"
             fullWidth
-            helperText={errors.project ? "This field is required" : ""}
-            {...register("project", { required: true })}
+            helperText={errors.projName ? "This field is required" : ""}
+            {...register("projName", { required: true })}
           />
         </DialogContent>
         <DialogActions>

@@ -1,13 +1,11 @@
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
-import { NewProject, SetProject } from "../../wailsjs/go/main/App";
-import { getMonth, Model } from "../utils/utils";
-import { main } from "../../wailsjs/go/models";
+import { NewProject, SetProject } from "@go/main/App";
 import { useAppStore } from "../stores/main";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
-  setMonthlyWorkTimes: React.Dispatch<React.SetStateAction<Record<number, Record<string, number>>>>;
+  setMonthWorkTimes: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   setOpenNewProj: (value: boolean) => void;
 }
 
@@ -15,13 +13,11 @@ type Inputs = {
   project: string;
 };
 
-const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMonthlyWorkTimes, setOpenNewProj }) => {
-  const [projects, addProject, organization, setSelectedProject] = useAppStore((state) => [
-    state.projects,
-    state.addProject,
-    state.selectedOrganization,
-    state.setSelectedProject,
-  ]);
+const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMonthWorkTimes, setOpenNewProj }) => {
+  const projects = useAppStore((state) => state.projects);
+  const addProject = useAppStore((state) => state.addProject);
+  const organization = useAppStore((state) => state.activeOrg);
+  const setSelectedProject = useAppStore((state) => state.setActiveProject);
   const {
     register,
     handleSubmit,
@@ -31,23 +27,26 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMon
   } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    const { project } = data;
-    await NewProject(organization, project);
-    await SetProject(project);
-    addProject(new main.Project({ name: project, favorite: false, updated_at: new Date().toISOString() }));
-    setSelectedProject(project);
-    setMonthlyWorkTimes((prev) => {
-      prev[getMonth()][project] = 0;
-      return { ...prev };
-    });
-    setOpenNewProj(false);
-    reset();
+    try {
+      const project = await NewProject(organization?.name || "", data.project);
+      await SetProject(project);
+      addProject(project);
+      setSelectedProject(project);
+      setMonthWorkTimes((prev) => {
+        prev[project.name] = 0;
+        return { ...prev };
+      });
+      setOpenNewProj(false);
+      reset();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
     <Dialog disableEscapeKeyDown open={openNewProj} onClose={() => setOpenNewProj(false)}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogTitle>Add New Project for {organization}</DialogTitle>
+        <DialogTitle>Add New Project for {organization?.name}</DialogTitle>
         <DialogContent>
           <DialogContentText>Please enter the name of the new project.</DialogContentText>
           <TextField

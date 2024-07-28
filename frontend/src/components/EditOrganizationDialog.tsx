@@ -3,7 +3,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 
-import { RenameOrganization } from "../../wailsjs/go/main/App";
+import { RenameOrganization } from "@go/main/App";
 import { useAppStore } from "../stores/main";
 
 interface EditOrganizationDialogProps {
@@ -16,12 +16,10 @@ type Inputs = {
 };
 
 const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEditOrg, setOpenEditOrg }) => {
-  const [organizations, setOrganizations, organization, setSelectedOrganization] = useAppStore((state) => [
-    state.organizations,
-    state.setOrganizations,
-    state.selectedOrganization,
-    state.setSelectedOrganization,
-  ]);
+  const organizations = useAppStore((state) => state.organizations);
+  const setOrganizations = useAppStore((state) => state.setOrganizations);
+  const organization = useAppStore((state) => state.activeOrg);
+  const setSelectedOrganization = useAppStore((state) => state.setActiveOrganization);
   const {
     register,
     handleSubmit,
@@ -31,14 +29,15 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEdi
   } = useForm<Inputs>();
   const inputs = watch();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    if (data.organization && data.organization !== organization) {
-      await RenameOrganization(organization, data.organization);
-      const index = organizations.findIndex((el) => el.name === organization);
+    if (!organization) return;
+    if (data.organization && data.organization !== organization.name) {
+      const newOrg = await RenameOrganization(organization.id, data.organization);
+      const index = organizations.findIndex((el) => el.id === organization.id);
       if (index > -1) {
         organizations[index].name = data.organization;
         setOrganizations([...organizations]);
       }
-      setSelectedOrganization(data.organization);
+      setSelectedOrganization(newOrg);
     }
     reset();
     setOpenEditOrg(false);
@@ -46,7 +45,7 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEdi
 
   return (
     <Dialog open={openEditOrg} onClose={() => setOpenEditOrg(false)}>
-      <DialogTitle>Edit Organization ({organization})</DialogTitle>
+      <DialogTitle>Edit Organization ({organization?.name})</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <TextField

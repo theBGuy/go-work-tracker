@@ -3,8 +3,8 @@ import NavBar from "../components/NavBar";
 import { useEffect, useState } from "react";
 import { formatTime, getMonth, months } from "../utils/utils";
 import { useAppStore } from "../stores/main";
-import { main } from "../../wailsjs/go/models";
-import { GetDailyWorkTimeByMonth, GetProjects } from "../../wailsjs/go/main/App";
+import { main } from "@go/models";
+import { GetDailyWorkTimeByMonth, GetProjects } from "@go/main/App";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useTimerStore } from "../stores/timer";
 
@@ -18,8 +18,8 @@ function Charts() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1999 }, (_, i) => 2000 + i);
   const organizations = useAppStore((state) => state.organizations);
-  const [selectedOrganization, setSelectedOrganization] = useState("");
-  const [projects, setProjects] = useState<main.Project[]>([]);
+  const [selectedOrganization, setSelectedOrganization] = useState(useAppStore.getState().activeOrg);
+  const [projects, setProjects] = useState<main.Project[]>(useAppStore.getState().getProjects());
   const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
@@ -38,35 +38,29 @@ function Charts() {
   ];
 
   useEffect(() => {
-    const store = useAppStore.getState();
-    // deep clone to avoid mutating the original objects we just want the initial states
-    setProjects(store.getProjects());
-    setSelectedOrganization(store.getSelectedOrganization());
-  }, []);
-
-  useEffect(() => {
     const timerSubscription = useTimerStore.subscribe(
       (state) => state.running,
       (curr, prev) => {
         // timer was running and not it's stopped
         if (!curr && prev) {
-          const activeOrg = useAppStore.getState().selectedOrganization;
-          const activeProj = useAppStore.getState().selectedProject;
+          const activeOrg = useAppStore.getState().activeOrg;
+          const activeProj = useAppStore.getState().activeProj;
+          if (!activeOrg || !activeProj) return;
           // updating it's necessary as it's now the visible data we are working with
-          if (activeOrg !== selectedOrganization) return;
+          if (activeOrg?.id !== selectedOrganization?.id) return;
           setDailyWorkTimes((prevData) => {
             const today = new Date().toISOString().split("T")[0];
             const index = prevData.findIndex((el) => el.day.toISOString().split("T")[0] === today);
             const workTime = useTimerStore.getState().elapsedTime;
             if (index > -1) {
-              if (!prevData[index][activeProj]) {
-                prevData[index][activeProj] = 0;
+              if (!prevData[index][activeProj.name]) {
+                prevData[index][activeProj.name] = 0;
               }
-              console.log("updating work time", prevData[index][activeProj], workTime);
-              prevData[index][activeProj] += workTime;
+              console.log("updating work time", prevData[index][activeProj.name], workTime);
+              prevData[index][activeProj.name] += workTime;
             } else {
               // @ts-ignore
-              const newData: GraphData = { day: new Date(today), [activeProj]: workTime };
+              const newData: GraphData = { day: new Date(today), [activeProj.name]: workTime };
               return [...prevData, newData];
             }
             return [...prevData];
@@ -82,14 +76,14 @@ function Charts() {
 
   useEffect(() => {
     if (!selectedOrganization) return;
-    GetProjects(selectedOrganization).then((projs) => {
+    GetProjects(selectedOrganization.id).then((projs) => {
       setProjects(projs);
     });
   }, [selectedOrganization]);
 
   useEffect(() => {
     if (!selectedOrganization) return;
-    GetDailyWorkTimeByMonth(selectedYear, selectedMonth, selectedOrganization).then((data) => {
+    GetDailyWorkTimeByMonth(selectedYear, selectedMonth, selectedOrganization.id).then((data) => {
       console.log("daily work times", data);
       const graphData: GraphData[] = [];
       for (const [day, projs] of Object.entries(data)) {
@@ -141,13 +135,14 @@ function Charts() {
             <FormControl fullWidth margin="normal">
               <InputLabel>Organization</InputLabel>
               <Select
-                value={selectedOrganization}
+                value={selectedOrganization?.name}
                 onChange={(event) => {
                   const foundOrg = organizations.find((org) => org.name === event.target.value);
                   if (foundOrg) {
-                    setSelectedOrganization(foundOrg.name);
+                    setSelectedOrganization(foundOrg);
                   }
                 }}
+                renderValue={(selected) => <div>{selected}</div>}
               >
                 {organizations.map((org) => (
                   <MenuItem key={org.id} value={org.name}>

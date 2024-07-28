@@ -14,8 +14,8 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
   const startTimer = useTimerStore((state) => state.startTimer);
   const elapsedTime = useTimerStore((state) => state.elapsedTime);
   const timerRunning = useTimerStore((state) => state.running);
-  const org = useAppStore((state) => state.selectedOrganization);
-  const proj = useAppStore((state) => state.selectedProject);
+  const org = useAppStore((state) => state.activeOrg);
+  const proj = useAppStore((state) => state.activeProj);
 
   return (
     <>
@@ -55,7 +55,7 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
         >
           <Stack>
             <Typography variant="caption">
-              {org} - {proj}
+              {org?.name} - {proj?.name}
             </Typography>
             <Stack direction="row" alignItems="center" flex={1} justifyContent="space-between">
               <Typography variant="body1">{timerRunning ? formatTime(elapsedTime) : "00h 00m 00s"}</Typography>

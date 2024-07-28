@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { subscribeWithSelector } from "zustand/middleware";
-import { main } from "../../wailsjs/go/models";
+import { main } from "@go/models";
 
 interface Store {
   organizations: main.Organization[];
@@ -9,17 +9,17 @@ interface Store {
   addOrganization: (organization: main.Organization) => void;
   removeOrganization: (organization: main.Organization) => void;
   setOrganizations: (organizations: main.Organization[]) => void;
-  selectedOrganization: string;
-  getSelectedOrganization: () => string;
-  setSelectedOrganization: (organization: string) => void;
+  activeOrg: main.Organization | null;
+  getActiveOrganization: () => main.Organization | null;
+  setActiveOrganization: (organization: main.Organization) => void;
   projects: main.Project[];
   getProjects: () => main.Project[];
   addProject: (project: main.Project) => void;
   removeProject: (project: main.Project) => void;
   setProjects: (projects: main.Project[]) => void;
-  selectedProject: string;
-  getSelectedProject: () => string;
-  setSelectedProject: (project: string) => void;
+  activeProj: main.Project | null;
+  getActiveProject: () => main.Project | null;
+  setActiveProject: (project: main.Project) => void;
   alertTime: number;
   setAlertTime: (time: number) => void;
   workTime: number;
@@ -36,6 +36,12 @@ interface Store {
   updateOrgMonthTotal: (value: number) => void;
   currentWeek: number;
   setCurrentWeek: (week: number) => void;
+  projWeekTotal: number;
+  setProjWeekTotal: (value: number) => void;
+  updateProjWeekTotal: (value: number) => void;
+  projMonthTotal: number;
+  setProjMonthTotal: (value: number) => void;
+  updateProjMonthTotal: (value: number) => void;
 }
 
 export const useAppStore = create(
@@ -52,10 +58,10 @@ export const useAppStore = create(
       setOrganizations: (organizations: main.Organization[]) => {
         set({ organizations });
       },
-      selectedOrganization: "",
-      getSelectedOrganization: () => get().selectedOrganization,
-      setSelectedOrganization: (organization: string) => {
-        set({ selectedOrganization: organization });
+      activeOrg: null,
+      getActiveOrganization: () => get().activeOrg,
+      setActiveOrganization: (organization: main.Organization) => {
+        set({ activeOrg: organization });
       },
       projects: [],
       getProjects: () => JSON.parse(JSON.stringify(get().projects)),
@@ -68,10 +74,10 @@ export const useAppStore = create(
       setProjects: (projects: main.Project[]) => {
         set({ projects });
       },
-      selectedProject: "",
-      getSelectedProject: () => get().selectedProject,
-      setSelectedProject: (project: string) => {
-        set({ selectedProject: project });
+      activeProj: null,
+      getActiveProject: () => get().activeProj as main.Project,
+      setActiveProject: (project: main.Project) => {
+        set({ activeProj: project });
       },
       alertTime: 30,
       setAlertTime: (time: number) => {
@@ -91,6 +97,12 @@ export const useAppStore = create(
       updateOrgMonthTotal: (value: number) => set((state) => ({ orgMonthTotal: state.orgMonthTotal + value })),
       currentWeek: 1,
       setCurrentWeek: (week: number) => set({ currentWeek: week }),
+      projWeekTotal: 0,
+      setProjWeekTotal: (value: number) => set({ projWeekTotal: value }),
+      updateProjWeekTotal: (value: number) => set((state) => ({ projWeekTotal: state.projWeekTotal + value })),
+      projMonthTotal: 0,
+      setProjMonthTotal: (value: number) => set({ projMonthTotal: value }),
+      updateProjMonthTotal: (value: number) => set((state) => ({ projMonthTotal: state.projMonthTotal + value })),
     })),
     {
       name: "store",

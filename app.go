@@ -20,8 +20,8 @@ type App struct {
 	startTime          time.Time
 	lastSave           time.Time
 	isRunning          bool
-	organization       string
-	project            string
+	organization       Organization
+	project            Project
 	version            string
 	environment        string
 	newVersonAvailable bool
@@ -82,10 +82,10 @@ func (a *App) UpdateAvailable() bool {
 }
 
 type ActiveTimer struct {
-	Organization string `json:"organization"`
-	Project      string `json:"project"`
-	IsRunning    bool   `json:"isRunning"`
-	TimeElapsed  int    `json:"timeElapsed"`
+	Organization Organization `json:"organization"`
+	Project      Project      `json:"project"`
+	IsRunning    bool         `json:"isRunning"`
+	TimeElapsed  int          `json:"timeElapsed"`
 }
 
 func (a *App) GetActiveTimer() ActiveTimer {
@@ -109,7 +109,7 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(ctx context.Context) {
 	fmt.Println("Shutting down...")
 	if a.isRunning {
-		a.StopTimer(a.organization, a.project)
+		a.StopTimer()
 	}
 }
 
@@ -118,7 +118,7 @@ func (a *App) monitorTime() {
 	go func() {
 		for range ticker.C {
 			if a.isRunning && time.Now().Format("2006-01-02") != a.startTime.Format("2006-01-02") {
-				a.StopTimer(a.organization, a.project)
+				a.StopTimer()
 				a.StartTimer(a.organization, a.project)
 				runtime.EventsEmit(a.ctx, "new-day")
 			}
@@ -163,7 +163,7 @@ func (a *App) TimerRunning() bool {
 	return a.isRunning
 }
 
-func (a *App) StartTimer(organization string, project string) {
+func (a *App) StartTimer(organization Organization, project Project) {
 	a.startTime = time.Now()
 	a.organization = organization
 	a.project = project
@@ -175,7 +175,7 @@ func (a *App) StartTimer(organization string, project string) {
 		for {
 			select {
 			case <-time.After(1 * time.Minute):
-				a.saveTimer(a.organization, a.project)
+				a.saveTimer(a.project.ID)
 			case <-ctx.Done():
 				return
 			}
@@ -183,11 +183,11 @@ func (a *App) StartTimer(organization string, project string) {
 	}()
 }
 
-func (a *App) StopTimer(organization string, project string) {
+func (a *App) StopTimer() {
 	if !a.isRunning {
 		return
 	}
-	a.saveTimer(organization, project)
+	a.saveTimer(a.project.ID)
 	cancel()
 	a.isRunning = false
 	a.lastSave = time.Time{}
@@ -220,10 +220,10 @@ func (a *App) ConfirmAction(title string, message string) bool {
 	return selection == "Yes"
 }
 
-func (a *App) SetProject(project string) {
+func (a *App) SetProject(project Project) {
 	if a.isRunning {
-		a.StopTimer(a.organization, a.project)
+		a.StopTimer()
 	}
-	fmt.Println("Project set to:", project, "for Organization:", a.organization)
+	fmt.Println("Project set to:", project.Name, "for Organization:", a.organization.Name)
 	a.project = project
 }

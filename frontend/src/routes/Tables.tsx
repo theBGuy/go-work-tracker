@@ -3,31 +3,23 @@ import NavBar from "../components/NavBar";
 import WorkTimeAccordion from "../components/WorkTimeAccordian";
 import { useAppStore } from "../stores/main";
 import { useEffect, useState } from "react";
-import { GetProjects } from "../../wailsjs/go/main/App";
-import { main } from "../../wailsjs/go/models";
+import { GetProjects } from "@go/main/App";
+import { main } from "@go/models";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { handleSort } from "../utils/utils";
 
 function Tables() {
-  const [selectedOrganization, setSelectedOrganization] = useState("");
-  const [organizations, setOrganizations] = useState<main.Organization[]>([]);
-  const [projects, setProjects] = useState<main.Project[]>([]);
+  const [activeOrganization, setActiveOrganization] = useState(useAppStore.getState().getActiveOrganization());
+  const [organizations, setOrganizations] = useState<main.Organization[]>(useAppStore.getState().getOrganizations());
+  const [projects, setProjects] = useState<main.Project[]>(useAppStore.getState().getProjects());
 
   useEffect(() => {
-    const store = useAppStore.getState();
-    // deep clone to avoid mutating the original objects we just want the initial states
-    setOrganizations(store.getOrganizations());
-    setProjects(store.getProjects());
-    setSelectedOrganization(store.getSelectedOrganization());
-  }, []);
-
-  useEffect(() => {
-    if (!selectedOrganization) return;
-    GetProjects(selectedOrganization).then((projs) => {
+    if (!activeOrganization) return;
+    GetProjects(activeOrganization.id).then((projs) => {
       setProjects(projs);
     });
-  }, [selectedOrganization]);
+  }, [activeOrganization]);
 
   return (
     <div id="app">
@@ -44,8 +36,13 @@ function Tables() {
               label="Organization"
               labelId="organization-select-label"
               variant="standard"
-              value={selectedOrganization}
-              onChange={(event) => setSelectedOrganization(event.target.value as string)}
+              value={activeOrganization?.name}
+              onChange={(event) => {
+                const foundOrg = organizations.find((org) => org.name === event.target.value);
+                if (foundOrg) {
+                  setActiveOrganization(foundOrg);
+                }
+              }}
               renderValue={(selected) => <div>{selected}</div>}
             >
               {organizations.sort(handleSort).map((org, idx) => (
@@ -61,7 +58,9 @@ function Tables() {
         </Toolbar>
       </AppBar>
       <h2>Yearly Work Time</h2>
-      <WorkTimeAccordion selectedOrganization={selectedOrganization} projects={projects.map((proj) => proj.name)} />
+      {activeOrganization && (
+        <WorkTimeAccordion activeOrganization={activeOrganization} projects={projects.map((proj) => proj.name)} />
+      )}
     </div>
   );
 }

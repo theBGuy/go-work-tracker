@@ -39,7 +39,9 @@ const alertTime = useAppStore.getState().alertTime;
 const updateWorkTime = useAppStore.getState().updateWorkTime;
 const updateProjWorktime = useAppStore.getState().updateProjectWorkTime;
 const updateOrgWeekTotal = useAppStore.getState().updateOrgWeekTotal;
+const updateProjWeekTotal = useAppStore.getState().updateProjWeekTotal;
 const updateOrgMonthTotal = useAppStore.getState().updateOrgMonthTotal;
+const updateProjMonthTotal = useAppStore.getState().updateProjMonthTotal;
 /**
  * Update the work time (elapsed time) every second if the timer is running
  * This is a global effect that will run for the entire lifecycle of the app
@@ -70,7 +72,9 @@ const timerSubscription = useTimerStore.subscribe(
       // Update the weekly and monthly totals
       const elapsedTime = useTimerStore.getState().elapsedTime;
       updateOrgWeekTotal(elapsedTime);
+      updateProjWeekTotal(elapsedTime);
       updateOrgMonthTotal(elapsedTime);
+      updateProjMonthTotal(elapsedTime);
     }
   }
 );

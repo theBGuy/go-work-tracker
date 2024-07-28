@@ -23,10 +23,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GetAppIcon from "@mui/icons-material/GetApp";
 import { styled } from "@mui/system";
 import MuiAccordion from "@mui/material/Accordion";
-import { GetYearlyWorkTime, GetMonthlyWorkTime, ExportByYear, ExportByMonth } from "../../wailsjs/go/main/App";
+import { GetYearlyWorkTime, GetMonthlyWorkTime, ExportByYear, ExportByMonth } from "@go/main/App";
 
 import { months, formatTime, getMonth } from "../utils/utils";
 import { useTimerStore } from "../stores/timer";
+import { main } from "@go/models";
 
 enum ExportType {
   CSV = "csv",
@@ -53,11 +54,11 @@ const DownloadButton: React.FC<{ type: ExportType; onClick: () => void }> = ({ t
 );
 
 interface WorkTimeAccordionProps {
-  selectedOrganization: string;
+  activeOrganization: main.Organization;
   projects: string[];
 }
 
-const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ selectedOrganization, projects }) => {
+const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ activeOrganization, projects }) => {
   const timerRunning = useTimerStore((state) => state.running);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
@@ -72,12 +73,12 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ selectedOrganizat
    * It updates if the user switches organizations or current display year
    */
   useEffect(() => {
-    GetYearlyWorkTime(selectedYear, selectedOrganization).then(setYearlyWorkTime);
-    GetMonthlyWorkTime(selectedYear, selectedOrganization).then(setMonthlyWorkTimes);
-  }, [selectedYear, selectedOrganization, timerRunning, projects]);
+    GetYearlyWorkTime(selectedYear, activeOrganization.id).then(setYearlyWorkTime);
+    GetMonthlyWorkTime(selectedYear, activeOrganization.id).then(setMonthlyWorkTimes);
+  }, [selectedYear, activeOrganization, timerRunning, projects]);
 
   const exportYearly = (type: ExportType) => {
-    ExportByYear(type, selectedOrganization, selectedYear)
+    ExportByYear(type, activeOrganization.name, selectedYear)
       .then((path) => {
         toast.success(
           <div>
@@ -98,7 +99,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ selectedOrganizat
   };
 
   const exportMonthly = (type: ExportType, month: number) => {
-    ExportByMonth(type, selectedOrganization, selectedYear, month)
+    ExportByMonth(type, activeOrganization.name, selectedYear, month)
       .then((path) => {
         toast.success(
           <div>
