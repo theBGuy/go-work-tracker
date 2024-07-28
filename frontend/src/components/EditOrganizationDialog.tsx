@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 
@@ -8,6 +8,7 @@ import { useAppStore } from "../stores/main";
 
 interface EditOrganizationDialogProps {
   openEditOrg: boolean;
+  orgID: number;
   setOpenEditOrg: (value: boolean) => void;
 }
 
@@ -15,10 +16,11 @@ type Inputs = {
   organization: string;
 };
 
-const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEditOrg, setOpenEditOrg }) => {
+const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEditOrg, setOpenEditOrg, orgID }) => {
   const organizations = useAppStore((state) => state.organizations);
   const setOrganizations = useAppStore((state) => state.setOrganizations);
-  const organization = useAppStore((state) => state.activeOrg);
+  const activeOrg = useAppStore((state) => state.activeOrg);
+  const organization = organizations.find((el) => el.id === orgID);
   const setSelectedOrganization = useAppStore((state) => state.setActiveOrganization);
   const {
     register,
@@ -31,13 +33,15 @@ const EditOrganizationDialog: React.FC<EditOrganizationDialogProps> = ({ openEdi
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (!organization) return;
     if (data.organization && data.organization !== organization.name) {
-      const newOrg = await RenameOrganization(organization.id, data.organization);
-      const index = organizations.findIndex((el) => el.id === organization.id);
+      const newOrg = await RenameOrganization(orgID, data.organization);
+      const index = organizations.findIndex((el) => el.id === orgID);
       if (index > -1) {
         organizations[index].name = data.organization;
         setOrganizations([...organizations]);
       }
-      setSelectedOrganization(newOrg);
+      if (activeOrg?.id === orgID) {
+        setSelectedOrganization(newOrg);
+      }
     }
     reset();
     setOpenEditOrg(false);

@@ -6,8 +6,14 @@ import NewProjectDialog from "@/components/NewProjectDialog";
 import SettingsDialog from "@/components/SettingsDialog";
 import { toast } from "react-toastify";
 
+import ActiveSession from "@/components/ActiveSession";
+import EditProjectDialog from "@/components/EditProjectDialog";
 import ModelSelect from "@/components/ModelSelect";
+import NavBar from "@/components/NavBar";
 import WorkTimeListing from "@/components/WorkTimeListing";
+import { useAppStore } from "@/stores/main";
+import { useTimerStore } from "@/stores/timer";
+import { dateString, getCurrentWeekOfMonth, getMonth, handleSort, months } from "@/utils/utils";
 import {
   CheckForUpdates,
   ConfirmAction,
@@ -45,12 +51,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
-import ActiveSession from "../components/ActiveSession";
-import EditProjectDialog from "../components/EditProjectDialog";
-import NavBar from "../components/NavBar";
-import { useAppStore } from "../stores/main";
-import { useTimerStore } from "../stores/timer";
-import { dateString, getCurrentWeekOfMonth, getMonth, handleSort, months } from "../utils/utils";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -100,8 +100,8 @@ function App() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Editables
-  const [editOrg, setEditOrg] = useState("");
-  const [editProj, setEditProj] = useState("");
+  const [editOrg, setEditOrg] = useState(0);
+  const [editProj, setEditProj] = useState(0);
 
   EventsOn("new-day", () => {
     console.debug("New day event received");
@@ -184,7 +184,7 @@ function App() {
       return;
     }
     setAnchorEl(null);
-    // setEditOrg(organization);
+    setEditOrg(organizationID);
     setOpenEditOrg(true);
   };
 
@@ -193,7 +193,7 @@ function App() {
       return;
     }
     setAnchorEl(null);
-    // setEditProj(project);
+    setEditProj(projectID);
     setOpenEditProj(true);
   };
 
@@ -221,32 +221,34 @@ function App() {
     if (!organizationID) return;
     const organization = organizations.find((org) => org.id === organizationID);
     if (!organization) return;
-    ConfirmAction(`Delete ${organization}`, "Are you sure you want to delete this organization?").then((confirmed) => {
-      if (confirmed === false) {
-        return;
-      }
-      handleMenuClose();
-      if (organizations.length === 1) {
-        toast.error("You cannot delete the last organization");
-        return;
-      }
-      DeleteOrganization(organizationID).then(() => {
-        const newOrgs = organizations.filter((org) => org.id !== organizationID);
-        setOrganizations(newOrgs);
-
-        if (organizationID === activeOrg?.id) {
-          const newSelectedOrganization = organizations.sort(handleSort)[0];
-          setSelectedOrganization(newSelectedOrganization);
-
-          GetProjects(newSelectedOrganization.id).then(async (projs) => {
-            setProjects(projs);
-            const newSelectedProject = projs.sort(handleSort)[0];
-            setSelectedProject(newSelectedProject);
-            await SetOrganization(newSelectedOrganization.name, newSelectedProject.name);
-          });
+    ConfirmAction(`Delete ${organization.name}`, "Are you sure you want to delete this organization?").then(
+      (confirmed) => {
+        if (confirmed === false) {
+          return;
         }
-      });
-    });
+        handleMenuClose();
+        if (organizations.length === 1) {
+          toast.error("You cannot delete the last organization");
+          return;
+        }
+        DeleteOrganization(organizationID).then(() => {
+          const newOrgs = organizations.filter((org) => org.id !== organizationID);
+          setOrganizations(newOrgs);
+
+          if (organizationID === activeOrg?.id) {
+            const newSelectedOrganization = organizations.sort(handleSort)[0];
+            setSelectedOrganization(newSelectedOrganization);
+
+            GetProjects(newSelectedOrganization.id).then(async (projs) => {
+              setProjects(projs);
+              const newSelectedProject = projs.sort(handleSort)[0];
+              setSelectedProject(newSelectedProject);
+              await SetOrganization(newSelectedOrganization.name, newSelectedProject.name);
+            });
+          }
+        });
+      }
+    );
   };
 
   const handleDeleteProject = (projectID: number) => {
@@ -254,7 +256,7 @@ function App() {
     if (!project) {
       return;
     }
-    ConfirmAction(`Delete ${project}`, "Are you sure you want to delete this project?").then((confirmed) => {
+    ConfirmAction(`Delete ${project.name}`, "Are you sure you want to delete this project?").then((confirmed) => {
       if (confirmed === false) {
         return;
       }
@@ -532,10 +534,10 @@ function App() {
       />
 
       {/* Handle editing current organization */}
-      <EditOrganizationDialog openEditOrg={openEditOrg} setOpenEditOrg={setOpenEditOrg} />
+      <EditOrganizationDialog orgID={editOrg} openEditOrg={openEditOrg} setOpenEditOrg={setOpenEditOrg} />
 
       {/* Handle editing a project from the current organization */}
-      <EditProjectDialog openEditProj={openEditProj} setOpenEditProj={setOpenEditProj} />
+      <EditProjectDialog projID={editProj} openEditProj={openEditProj} setOpenEditProj={setOpenEditProj} />
     </div>
   );
 }

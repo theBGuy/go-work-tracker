@@ -1,11 +1,12 @@
-import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { RenameProject } from "@go/main/App";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import React from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { useAppStore } from "../stores/main";
 
 interface EditProjectDialogProps {
   openEditProj: boolean;
+  projID: number;
   setOpenEditProj: (value: boolean) => void;
 }
 
@@ -13,11 +14,12 @@ type Inputs = {
   project: string;
 };
 
-const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, setOpenEditProj }) => {
+const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, setOpenEditProj, projID }) => {
   const projects = useAppStore((state) => state.projects);
   const setProjects = useAppStore((state) => state.setProjects);
   const organization = useAppStore((state) => state.activeOrg);
-  const project = useAppStore((state) => state.activeProj);
+  const activeProj = useAppStore((state) => state.activeProj);
+  const project = projects.find((el) => el.id === projID);
   const setSelectedProject = useAppStore((state) => state.setActiveProject);
   const {
     register,
@@ -28,16 +30,19 @@ const EditProjectDialog: React.FC<EditProjectDialogProps> = ({ openEditProj, set
   } = useForm<Inputs>();
   const newProj = watch("project");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    if (!project) return;
     if (data.project && data.project !== project?.name) {
       if (!project) return;
       console.debug(`renaming project for ${organization?.name} from ${project?.name} to ${data.project}`);
-      const newProj = await RenameProject(project?.id, data.project);
-      const index = projects.findIndex((el) => el.id === project.id);
+      const newProj = await RenameProject(projID, data.project);
+      const index = projects.findIndex((el) => el.id === projID);
       if (index > -1) {
         projects[index].name = data.project;
         setProjects([...projects]);
       }
-      setSelectedProject(newProj);
+      if (activeProj?.id === projID) {
+        setSelectedProject(newProj);
+      }
     }
     reset();
     setOpenEditProj(false);
