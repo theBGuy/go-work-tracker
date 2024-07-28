@@ -21,13 +21,13 @@ import {
   DeleteProject,
   GetActiveTimer,
   GetOrganizations,
+  GetOrgWorkTimeByMonth,
+  GetOrgWorkTimeByWeek,
   GetProjects,
   GetProjWorkTimeByMonth,
   GetProjWorkTimeByWeek,
   GetWorkTime,
-  GetWorkTimeByMonth,
   GetWorkTimeByProject,
-  GetWorkTimeByWeek,
   SetOrganization,
   SetProject,
   StopTimer,
@@ -52,16 +52,16 @@ import {
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
 
-// TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
+  const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
+  const currentYear = new Date().getFullYear();
+  const currentMonth = getMonth();
+
   const projects = useAppStore((state) => state.projects);
   const setProjects = useAppStore((state) => state.setProjects);
   const organizations = useAppStore((state) => state.organizations);
   const setOrganizations = useAppStore((state) => state.setOrganizations);
   const setShowMiniTimer = useTimerStore((state) => state.setShowMiniTimer);
-  const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
-  const currentYear = new Date().getFullYear();
-  const currentMonth = getMonth();
 
   // Variables for timer
   const resetTimer = useTimerStore((state) => state.resetTimer);
@@ -80,8 +80,6 @@ function App() {
   const setProjWeekTotal = useAppStore((state) => state.setProjWeekTotal);
   const projMonthTotal = useAppStore((state) => state.projMonthTotal);
   const setProjMonthTotal = useAppStore((state) => state.setProjMonthTotal);
-  const [weekWorkTimes, setWeekWorkTimes] = useState<Record<string, number>>({});
-  const [monthWorkTimes, setMonthWorkTimes] = useState<Record<string, number>>({});
   const [currentWeek, setCurrentWeek] = useAppStore((state) => [state.currentWeek, state.setCurrentWeek]);
 
   // Variables for handling organizations
@@ -350,15 +348,13 @@ function App() {
       console.debug(`Work time for ${activeOrg.name}`, data);
       setWorkTime(data);
     });
-    GetWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeOrg.id).then((times) => {
-      console.debug("Week work times", times);
-      setOrgWeekTotal(Object.values(times).reduce((acc, curr) => acc + curr, 0));
-      setWeekWorkTimes(times);
+    GetOrgWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeOrg.id).then((time) => {
+      console.debug(`Work time for ${activeOrg?.name} for week ${currentWeek} - ${time}`);
+      setOrgWeekTotal(time);
     });
-    GetWorkTimeByMonth(currentYear, currentMonth, activeOrg.id).then((times) => {
-      console.debug("Month work times", times);
-      setOrgMonthTotal(Object.values(times).reduce((acc, curr) => acc + curr, 0));
-      setMonthWorkTimes(times);
+    GetOrgWorkTimeByMonth(currentYear, currentMonth, activeOrg.id).then((time) => {
+      console.debug(`Work time for ${activeOrg?.name} for month ${currentMonth} - ${time}`);
+      setOrgMonthTotal(time);
     });
   }, [activeOrg, currentWeek, projects]);
 
@@ -523,11 +519,7 @@ function App() {
       <NewOrganizationDialog openNewOrg={openNewOrg} setOpenNewOrg={setOpenNewOrg} />
 
       {/* Handle creating a new project for current selected organization */}
-      <NewProjectDialog
-        openNewProj={openNewProj}
-        setMonthWorkTimes={setMonthWorkTimes}
-        setOpenNewProj={setOpenNewProj}
-      />
+      <NewProjectDialog openNewProj={openNewProj} setOpenNewProj={setOpenNewProj} />
 
       {/* Handle editing current organization */}
       <EditOrganizationDialog orgID={editOrg} openEditOrg={openEditOrg} setOpenEditOrg={setOpenEditOrg} />

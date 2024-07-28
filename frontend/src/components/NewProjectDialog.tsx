@@ -1,11 +1,10 @@
-import { useForm, SubmitHandler } from "react-hook-form";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
+import { useAppStore } from "@/stores/main";
 import { NewProject, SetProject } from "@go/main/App";
-import { useAppStore } from "../stores/main";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 interface NewProjectDialogProps {
   openNewProj: boolean;
-  setMonthWorkTimes: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   setOpenNewProj: (value: boolean) => void;
 }
 
@@ -13,7 +12,7 @@ type Inputs = {
   project: string;
 };
 
-const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMonthWorkTimes, setOpenNewProj }) => {
+const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setOpenNewProj }) => {
   const projects = useAppStore((state) => state.projects);
   const addProject = useAppStore((state) => state.addProject);
   const organization = useAppStore((state) => state.activeOrg);
@@ -32,10 +31,6 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setMon
       await SetProject(project);
       addProject(project);
       setSelectedProject(project);
-      setMonthWorkTimes((prev) => {
-        prev[project.name] = 0;
-        return { ...prev };
-      });
       setOpenNewProj(false);
       reset();
     } catch (e) {
