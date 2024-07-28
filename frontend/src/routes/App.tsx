@@ -341,7 +341,9 @@ function App() {
     GetProjects(activeOrg.id).then((projs) => {
       setProjects(projs);
       projs.sort(handleSort);
-      setSelectedProject(projs[0]);
+      const proj = projs[0];
+      if (proj.id === activeProj?.id) return;
+      setSelectedProject(proj);
     });
   }, [activeOrg]);
 
@@ -351,7 +353,7 @@ function App() {
   useEffect(() => {
     if (!activeOrg) return;
     GetWorkTime(dateString(), activeOrg.id).then((data) => {
-      console.debug(`Work time for ${activeOrg}`, data);
+      console.debug(`Work time for ${activeOrg.name}`, data);
       setWorkTime(data);
     });
     GetWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeOrg.id).then((times) => {
