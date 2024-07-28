@@ -1,6 +1,6 @@
-import { useForm, SubmitHandler } from "react-hook-form";
+import { NewOrganization, SetOrganization, SetProject } from "@go/main/App";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
-import { NewOrganization, SetOrganization } from "@go/main/App";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { useAppStore } from "../stores/main";
 
 interface NewOrganizationDialogProps {
@@ -31,7 +31,8 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOr
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     const { orgName, projName } = data;
     const { organization, project } = await NewOrganization(orgName, projName);
-    await SetOrganization(orgName, projName);
+    await SetOrganization(organization.id);
+    await SetProject(project.id);
     addOrganization(organization);
     addProject(project);
     setSelectedOrganization(organization);

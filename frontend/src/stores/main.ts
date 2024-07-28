@@ -19,6 +19,7 @@ interface Store {
   activeProj: main.Project | null;
   getActiveProject: () => main.Project | null;
   setActiveProject: (project: main.Project) => void;
+  setActiveInfo: (organization: main.Organization, project: main.Project) => void;
   alertTime: number;
   setAlertTime: (time: number) => void;
   workTime: number;
@@ -57,11 +58,22 @@ export const useAppStore = create(
         set((state) => ({ organizations: state.organizations.filter((org) => org.name !== organization.name) }));
       },
       setOrganizations: (organizations: main.Organization[]) => {
+        const current = get().organizations;
+        const hasChanged =
+          current.length !== organizations.length ||
+          current.some(
+            (o, i) =>
+              o.name !== organizations[i].name ||
+              o.id !== organizations[i].id ||
+              o.favorite !== organizations[i].favorite
+          );
+        if (!hasChanged) return;
         set({ organizations });
       },
       activeOrg: null,
       getActiveOrganization: () => get().activeOrg,
       setActiveOrganization: (organization: main.Organization) => {
+        if (organization === get().activeOrg) return;
         set({ activeOrg: organization });
       },
       projects: [],
@@ -73,38 +85,78 @@ export const useAppStore = create(
         set((state) => ({ projects: state.projects.filter((proj) => proj.name !== project.name) }));
       },
       setProjects: (projects: main.Project[]) => {
+        const current = get().projects;
+        const hasChanged =
+          current.length !== projects.length ||
+          current.some(
+            (p, i) => p.name !== projects[i].name || p.id !== projects[i].id || p.favorite !== projects[i].favorite
+          );
+        if (!hasChanged) return;
         set({ projects });
       },
       activeProj: null,
       getActiveProject: () => get().activeProj as main.Project,
       setActiveProject: (project: main.Project) => {
+        if (project === get().activeProj) return;
         set({ activeProj: project });
+      },
+      setActiveInfo: (organization: main.Organization, project: main.Project) => {
+        set(() => ({
+          activeOrg: organization,
+          activeProj: project,
+        }));
       },
       alertTime: 30,
       setAlertTime: (time: number) => {
+        if (time === get().alertTime) return;
         set({ alertTime: time });
       },
       workTime: 0,
-      setWorkTime: (value: number) => set({ workTime: value }),
+      setWorkTime: (value: number) => {
+        if (value === get().workTime) return;
+        set({ workTime: value });
+      },
       updateWorkTime: (value: number) => set((state) => ({ workTime: state.workTime + value })),
       projectWorkTime: 0,
-      setProjectWorkTime: (value: number) => set({ projectWorkTime: value }),
+      setProjectWorkTime: (value: number) => {
+        if (value === get().projectWorkTime) return;
+        set({ projectWorkTime: value });
+      },
       updateProjectWorkTime: (value: number) => set((state) => ({ projectWorkTime: state.projectWorkTime + value })),
       orgWeekTotal: 0,
-      setOrgWeekTotal: (value: number) => set({ orgWeekTotal: value }),
+      setOrgWeekTotal: (value: number) => {
+        if (value === get().orgWeekTotal) return;
+        set({ orgWeekTotal: value });
+      },
       updateOrgWeekTotal: (value: number) => set((state) => ({ orgWeekTotal: state.orgWeekTotal + value })),
       orgMonthTotal: 0,
-      setOrgMonthTotal: (value: number) => set({ orgMonthTotal: value }),
+      setOrgMonthTotal: (value: number) => {
+        if (value === get().orgMonthTotal) return;
+        set({ orgMonthTotal: value });
+      },
       updateOrgMonthTotal: (value: number) => set((state) => ({ orgMonthTotal: state.orgMonthTotal + value })),
       currentWeek: 1,
-      setCurrentWeek: (week: number) => set({ currentWeek: week }),
+      setCurrentWeek: (week: number) => {
+        if (week === get().currentWeek) return;
+        set({ currentWeek: week });
+      },
       projWeekTotal: 0,
-      setProjWeekTotal: (value: number) => set({ projWeekTotal: value }),
+      setProjWeekTotal: (value: number) => {
+        if (value === get().projWeekTotal) return;
+        set({ projWeekTotal: value });
+      },
       updateProjWeekTotal: (value: number) => set((state) => ({ projWeekTotal: state.projWeekTotal + value })),
       projMonthTotal: 0,
-      setProjMonthTotal: (value: number) => set({ projMonthTotal: value }),
+      setProjMonthTotal: (value: number) => {
+        if (value === get().projMonthTotal) return;
+        set({ projMonthTotal: value });
+      },
       updateProjMonthTotal: (value: number) => set((state) => ({ projMonthTotal: state.projMonthTotal + value })),
       setProjWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
+        const currDay = get().projectWorkTime;
+        const currWeek = get().projWeekTotal;
+        const currMonth = get().projMonthTotal;
+        if (dayTime === currDay && weekTime === currWeek && monthTime === currMonth) return;
         set(() => ({
           projectWorkTime: dayTime,
           projWeekTotal: weekTime,
@@ -112,6 +164,10 @@ export const useAppStore = create(
         }));
       },
       setOrgWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
+        const currDay = get().workTime;
+        const currWeek = get().orgWeekTotal;
+        const currMonth = get().orgMonthTotal;
+        if (dayTime === currDay && weekTime === currWeek && monthTime === currMonth) return;
         set(() => ({
           workTime: dayTime,
           orgWeekTotal: weekTime,

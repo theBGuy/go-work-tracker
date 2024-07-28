@@ -1,17 +1,17 @@
+import { ShowWindow, TimeElapsed } from "@go/main/App";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "./style.css";
+import { createHashRouter, RouterProvider } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
+import AppFooter from "./components/AppFooter";
 import App from "./routes/App";
 import Charts from "./routes/Charts";
 import Tables from "./routes/Tables";
-import { createHashRouter, RouterProvider } from "react-router-dom";
-import AppFooter from "./components/AppFooter";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useTimerStore } from "./stores/timer";
-import { ShowWindow, TimeElapsed } from "@go/main/App";
-import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
 import { useAppStore } from "./stores/main";
+import { useTimerStore } from "./stores/timer";
+import "./style.css";
 
 const router = createHashRouter([
   {
@@ -96,6 +96,13 @@ const alertTimeSubscription = useAppStore.subscribe(
       console.log("Clearing confirmation interval");
       clearInterval(confirmationInterval);
     }
+  }
+);
+
+const activeOrgSubscription = useAppStore.subscribe(
+  (state) => state.activeOrg,
+  (curr, prev) => {
+    console.log(`Active organization switched from ${prev?.name} to ${curr?.name}`);
   }
 );
 

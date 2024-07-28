@@ -1,7 +1,6 @@
-import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
-import { createJSONStorage, persist } from "zustand/middleware";
 import { StartTimer, StopTimer } from "@go/main/App";
+import { create } from "zustand";
+import { createJSONStorage, persist, subscribeWithSelector } from "zustand/middleware";
 import { useAppStore } from "./main";
 
 interface TimerStore {
@@ -22,9 +21,15 @@ export const useTimerStore = create(
   persist(
     subscribeWithSelector<TimerStore>((set, get) => ({
       running: false,
-      setRunning: (value: boolean) => set({ running: value }),
+      setRunning: (value: boolean) => {
+        if (value === get().running) return;
+        set({ running: value });
+      },
       elapsedTime: 0,
-      setElapsedTime: (value: number) => set({ elapsedTime: value }),
+      setElapsedTime: (value: number) => {
+        if (value === get().elapsedTime) return;
+        set({ elapsedTime: value });
+      },
       openConfirm: false,
       setOpenConfirm: (value: boolean) => set({ openConfirm: value }),
       startTimer: () => {
@@ -45,7 +50,10 @@ export const useTimerStore = create(
         set({ running: false, openConfirm: false });
       },
       showMiniTimer: false,
-      setShowMiniTimer: (value: boolean) => set({ showMiniTimer: value }),
+      setShowMiniTimer: (value: boolean) => {
+        if (value === get().showMiniTimer) return;
+        set({ showMiniTimer: value });
+      },
     })),
     {
       name: "timer-store",

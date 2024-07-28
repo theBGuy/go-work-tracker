@@ -1,14 +1,14 @@
-import type React from "react";
-import { MenuItem, Select, type SelectChangeEvent, Typography, Stack, IconButton, Tooltip } from "@mui/material";
 import { type Model, handleSort } from "@/utils/utils";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import { IconButton, MenuItem, Select, type SelectChangeEvent, Stack, Tooltip, Typography } from "@mui/material";
+import type React from "react";
 
 interface ModelSelectProps {
   label: string;
-  value?: string;
+  value: string;
   onChange: (event: SelectChangeEvent<string>, child: React.ReactNode) => void;
   items: Model[];
   showFavorite?: boolean;

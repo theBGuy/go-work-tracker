@@ -28,7 +28,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ openNewProj, setOpe
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       const project = await NewProject(organization?.name || "", data.project);
-      await SetProject(project);
+      await SetProject(project.id);
       addProject(project);
       setSelectedProject(project);
       setOpenNewProj(false);

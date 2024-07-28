@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import EditOrganizationDialog from "@/components/EditOrganizationDialog";
 import NewOrganizationDialog from "@/components/NewOrganizationDialog";
@@ -53,6 +53,9 @@ import {
 import { EventsOn } from "@runtime/runtime";
 
 function App() {
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log("App rendered", renderCount.current);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
@@ -73,18 +76,15 @@ function App() {
 
   // Variables for handling work time totals
   const orgWeekTotal = useAppStore((state) => state.orgWeekTotal);
-  const setOrgWeekTotal = useAppStore((state) => state.setOrgWeekTotal);
   const orgMonthTotal = useAppStore((state) => state.orgMonthTotal);
-  const setOrgMonthTotal = useAppStore((state) => state.setOrgMonthTotal);
   const projWeekTotal = useAppStore((state) => state.projWeekTotal);
-  const setProjWeekTotal = useAppStore((state) => state.setProjWeekTotal);
   const projMonthTotal = useAppStore((state) => state.projMonthTotal);
-  const setProjMonthTotal = useAppStore((state) => state.setProjMonthTotal);
   const setProjWorkTotals = useAppStore((state) => state.setProjWorkTimeTotals);
   const setOrgWorkTotals = useAppStore((state) => state.setOrgWorkTimeTotals);
   const [currentWeek, setCurrentWeek] = useAppStore((state) => [state.currentWeek, state.setCurrentWeek]);
 
   // Variables for handling organizations
+  const setActiveInfo = useAppStore((state) => state.setActiveInfo);
   const activeOrg = useAppStore((state) => state.activeOrg);
   const setSelectedOrganization = useAppStore((state) => state.setActiveOrganization);
   const activeProj = useAppStore((state) => state.activeProj);
@@ -143,24 +143,23 @@ function App() {
     if (timerRunning) {
       await stopTimer();
     }
+    console.debug("Setting organization", org);
     const projs = await GetProjects(org.id);
     projs.sort(handleSort);
     const project = projs[0];
-
-    SetOrganization(org.name, project.name).then(() => {
-      setSelectedOrganization(org);
-      setSelectedProject(project);
-      setProjects(projs);
-    });
+    await SetOrganization(org.id);
+    await SetProject(project.id);
+    setActiveInfo(org, project);
+    setProjects(projs);
   };
 
-  const setProject = async (newProject: main.Project) => {
-    if (!newProject) return;
+  const setProject = async (project: main.Project) => {
+    if (!project) return;
     if (timerRunning) {
       await stopTimer();
     }
-    SetProject(newProject).then(() => {
-      setSelectedProject(newProject);
+    SetProject(project.id).then(() => {
+      setSelectedProject(project);
     });
   };
 
@@ -243,7 +242,8 @@ function App() {
               setProjects(projs);
               const newSelectedProject = projs.sort(handleSort)[0];
               setSelectedProject(newSelectedProject);
-              await SetOrganization(newSelectedOrganization.name, newSelectedProject.name);
+              await SetOrganization(newSelectedOrganization.id);
+              await SetProject(newSelectedProject.id);
             });
           }
         });
@@ -273,7 +273,7 @@ function App() {
           const newSelectedProject = projects.sort(handleSort)[0];
           setSelectedProject(newSelectedProject);
 
-          SetProject(newSelectedProject).then(() => {
+          SetProject(newSelectedProject.id).then(() => {
             GetWorkTimeByProject(newSelectedProject.id, dateString()).then(setCurrProjectWorkTime);
           });
         }
@@ -293,18 +293,22 @@ function App() {
       if (orgs.length === 0) {
         setOpenNewOrg(true);
       } else {
+        const active = await GetActiveTimer();
         orgs.sort(handleSort);
         setOrganizations(orgs);
-        const active = await GetActiveTimer();
-        if (
-          active.organization &&
-          active.organization.id === activeOrg?.id &&
-          active.project &&
-          active.project.id === activeProj?.id
-        ) {
+        if (active.organization && active.organization.id) {
+          if (activeOrg?.id !== active.organization.id) {
+            setSelectedOrganization(active.organization);
+          }
+          if (active.project && active.project.id) {
+            if (activeProj?.id !== active.project.id) {
+              setSelectedProject(active.project);
+            }
+          }
+
           GetProjects(active.organization.id).then((projs) => {
-            setProjects(projs);
             projs.sort(handleSort);
+            setProjects(projs);
           });
           useTimerStore.getState().setRunning(active.isRunning);
           useTimerStore.getState().setElapsedTime(active.timeElapsed);
@@ -312,18 +316,19 @@ function App() {
         }
         console.debug("No active timer found");
         const organization = orgs[0];
-        setSelectedOrganization(organization);
         const projs = await GetProjects(organization.id);
         projs.sort(handleSort);
         const project = projs[0];
+        await SetOrganization(organization.id);
+        await SetProject(project.id);
+        setActiveInfo(organization, project);
         setProjects(projs);
-        setSelectedProject(project);
-        await SetOrganization(organization.name, project.name);
       }
     });
 
     return () => {
       setShowMiniTimer(true);
+      renderCount.current = 0;
     };
   }, []);
 
@@ -425,7 +430,7 @@ function App() {
           <Box sx={{ marginRight: 5 }}>
             <ModelSelect
               label="Organization"
-              value={activeOrg?.name}
+              value={activeOrg?.name || ""}
               onChange={(event) => {
                 const foundOrg = organizations.find((org) => org.name === event.target.value);
                 if (foundOrg) {
@@ -446,7 +451,7 @@ function App() {
           <Box>
             <ModelSelect
               label="Project"
-              value={activeProj?.name}
+              value={activeProj?.name || ""}
               onChange={(event) => {
                 const foundProject = projects.find((proj) => proj.name === event.target.value);
                 if (foundProject) {
