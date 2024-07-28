@@ -1,12 +1,12 @@
-import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
-import NavBar from "../components/NavBar";
-import { useEffect, useState } from "react";
-import { formatTime, getMonth, months } from "../utils/utils";
-import { useAppStore } from "../stores/main";
-import { main } from "@go/models";
+import NavBar from "@/components/NavBar";
+import { useAppStore } from "@/stores/main";
+import { useTimerStore } from "@/stores/timer";
+import { formatTime, getMonth, months } from "@/utils/utils";
 import { GetDailyWorkTimeByMonth, GetProjects } from "@go/main/App";
+import { main } from "@go/models";
+import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { useTimerStore } from "../stores/timer";
+import { useEffect, useState } from "react";
 
 interface GraphData {
   // @ts-ignore
@@ -23,6 +23,7 @@ function Charts() {
   const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
+  // need a better color scheme
   const colors = [
     "lightgray",
     "lightgreen",
@@ -56,7 +57,7 @@ function Charts() {
               if (!prevData[index][activeProj.name]) {
                 prevData[index][activeProj.name] = 0;
               }
-              console.log("updating work time", prevData[index][activeProj.name], workTime);
+              console.debug("updating work time", prevData[index][activeProj.name], workTime);
               prevData[index][activeProj.name] += workTime;
             } else {
               // @ts-ignore
@@ -84,7 +85,6 @@ function Charts() {
   useEffect(() => {
     if (!selectedOrganization) return;
     GetDailyWorkTimeByMonth(selectedYear, selectedMonth, selectedOrganization.id).then((data) => {
-      console.log("daily work times", data);
       const graphData: GraphData[] = [];
       for (const [day, projs] of Object.entries(data)) {
         // @ts-ignore
@@ -97,7 +97,6 @@ function Charts() {
           }
         });
       });
-      console.log("graph data", graphData);
       setDailyWorkTimes(graphData);
     });
   }, [selectedYear, selectedOrganization, selectedMonth]);
@@ -166,11 +165,18 @@ function Charts() {
             ]}
             yAxis={[
               {
-                label: "Total Work Time (s)",
                 scaleType: "linear",
                 min: 0,
               },
             ]}
+            leftAxis={{
+              label: "Total Work Time (s)",
+              labelStyle: {
+                transform: "rotate(-90deg) translate(-173px, -238px)",
+                padding: 10,
+              },
+            }}
+            margin={{ right: 10 }}
             series={projects.map((project, index) => ({
               dataKey: project.name,
               label: project.name,

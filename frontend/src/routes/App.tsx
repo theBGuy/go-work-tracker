@@ -143,7 +143,6 @@ function App() {
     if (timerRunning) {
       await stopTimer();
     }
-    console.debug("Setting organization", org);
     const projs = await GetProjects(org.id);
     projs.sort(handleSort);
     const project = projs[0];
