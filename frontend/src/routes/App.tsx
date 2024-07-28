@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import EditOrganizationDialog from "@/components/EditOrganizationDialog";
 import NewOrganizationDialog from "@/components/NewOrganizationDialog";
@@ -53,9 +53,9 @@ import {
 import { EventsOn } from "@runtime/runtime";
 
 function App() {
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  console.log("App rendered", renderCount.current);
+  // const renderCount = useRef(0);
+  // renderCount.current += 1;
+  // console.log("App rendered", renderCount.current);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
@@ -327,7 +327,7 @@ function App() {
 
     return () => {
       setShowMiniTimer(true);
-      renderCount.current = 0;
+      // renderCount.current = 0;
     };
   }, []);
 
@@ -336,11 +336,13 @@ function App() {
    */
   useEffect(() => {
     if (!activeOrg) return;
-    GetProjects(activeOrg.id).then((projs) => {
+    GetProjects(activeOrg.id).then(async (projs) => {
       setProjects(projs);
       projs.sort(handleSort);
       const proj = projs[0];
       if (proj.id === activeProj?.id) return;
+      const { project } = await GetActiveTimer();
+      if (project && project.id === activeProj?.id) return;
       setSelectedProject(proj);
     });
   }, [activeOrg]);

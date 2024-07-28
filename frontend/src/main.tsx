@@ -97,13 +97,6 @@ const alertTimeSubscription = useAppStore.subscribe(
   }
 );
 
-const activeOrgSubscription = useAppStore.subscribe(
-  (state) => state.activeOrg,
-  (curr, prev) => {
-    console.log(`Active organization switched from ${prev?.name} to ${curr?.name}`);
-  }
-);
-
 const container = document.getElementById("root");
 const root = createRoot(container!);
 
