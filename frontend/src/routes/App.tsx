@@ -56,6 +56,7 @@ import ActiveSession from "../components/ActiveSession";
 import { EventsOn } from "@runtime/runtime";
 import { main } from "@go/models";
 import ModelSelect from "@/components/ModelSelect";
+import WorkTimeListing from "@/components/WorkTimeListing";
 
 // TODO: This has become large and messy. Need to break it up into smaller components ~in progress
 function App() {
@@ -494,57 +495,30 @@ function App() {
             }}
           >
             <Grid item xs={12} sm={4} md={4}>
-              <Typography
-                variant="h6"
-                component="h2"
-                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
-              >
-                Today's Work Total
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(workTime)}`} />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary={`Project (${activeProj?.name}): ${formatTime(currProjectWorkTime)}`} />
-                </ListItem>
-              </List>
+              <WorkTimeListing
+                title="Today's Work Total"
+                orgTotal={workTime}
+                projName={activeProj?.name || ""}
+                projTotal={currProjectWorkTime}
+              />
             </Grid>
 
             <Grid item xs={12} sm={4} md={4}>
-              <Typography
-                variant="h6"
-                component="h2"
-                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
-              >
-                Weekly Work Total
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(orgWeekTotal)}`} />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary={`Project (${activeProj?.name}): ${formatTime(projWeekTotal)}`} />
-                </ListItem>
-              </List>
+              <WorkTimeListing
+                title="Weekly Work Total"
+                orgTotal={orgWeekTotal}
+                projName={activeProj?.name || ""}
+                projTotal={projWeekTotal}
+              />
             </Grid>
 
             <Grid item xs={12} sm={4} md={4}>
-              <Typography
-                variant="h6"
-                component="h2"
-                sx={{ textAlign: "left", marginLeft: (theme) => theme.spacing(2) }}
-              >
-                {months[currentMonth]}'s work totals
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText primary={`Organization: ${formatTime(orgMonthTotal)}`} />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary={`Project (${activeProj?.name}): ${formatTime(projMonthTotal)}`} />
-                </ListItem>
-              </List>
+              <WorkTimeListing
+                title={`${months[currentMonth]}'s Work Total`}
+                orgTotal={orgMonthTotal}
+                projName={activeProj?.name || ""}
+                projTotal={projMonthTotal}
+              />
             </Grid>
           </Grid>
         )}
