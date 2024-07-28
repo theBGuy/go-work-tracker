@@ -1,5 +1,5 @@
-import { GetWeekOfMonth } from "../../wailsjs/go/main/App";
-import { main } from "../../wailsjs/go/models";
+import { GetWeekOfMonth } from "@go/main/App";
+import { main } from "@go/models";
 
 export const months: Record<number, string> = {
   1: "January",
