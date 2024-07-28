@@ -80,6 +80,8 @@ function App() {
   const setProjWeekTotal = useAppStore((state) => state.setProjWeekTotal);
   const projMonthTotal = useAppStore((state) => state.projMonthTotal);
   const setProjMonthTotal = useAppStore((state) => state.setProjMonthTotal);
+  const setProjWorkTotals = useAppStore((state) => state.setProjWorkTimeTotals);
+  const setOrgWorkTotals = useAppStore((state) => state.setOrgWorkTimeTotals);
   const [currentWeek, setCurrentWeek] = useAppStore((state) => [state.currentWeek, state.setCurrentWeek]);
 
   // Variables for handling organizations
@@ -344,17 +346,16 @@ function App() {
    */
   useEffect(() => {
     if (!activeOrg) return;
-    GetWorkTime(dateString(), activeOrg.id).then((data) => {
-      console.debug(`Work time for ${activeOrg.name}`, data);
-      setWorkTime(data);
-    });
-    GetOrgWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeOrg.id).then((time) => {
-      console.debug(`Work time for ${activeOrg?.name} for week ${currentWeek} - ${time}`);
-      setOrgWeekTotal(time);
-    });
-    GetOrgWorkTimeByMonth(currentYear, currentMonth, activeOrg.id).then((time) => {
-      console.debug(`Work time for ${activeOrg?.name} for month ${currentMonth} - ${time}`);
-      setOrgMonthTotal(time);
+    Promise.all([
+      GetWorkTime(dateString(), activeOrg.id),
+      GetOrgWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeOrg.id),
+      GetOrgWorkTimeByMonth(currentYear, currentMonth, activeOrg.id),
+    ]).then(([dayTotal, weekTotal, monthTotal]) => {
+      console.debug(`Work time for ${activeOrg.name}`, dayTotal);
+      console.debug(`Work time for ${activeOrg?.name} for week ${currentWeek} - ${weekTotal}`);
+      console.debug(`Work time for ${activeOrg?.name} for month ${currentMonth} - ${monthTotal}`);
+
+      setOrgWorkTotals(dayTotal, weekTotal, monthTotal);
     });
   }, [activeOrg, currentWeek, projects]);
 
@@ -363,17 +364,16 @@ function App() {
    */
   useEffect(() => {
     if (!activeProj) return;
-    GetWorkTimeByProject(activeProj.id, dateString()).then((time) => {
-      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name}`, time);
-      return setCurrProjectWorkTime(time);
-    });
-    GetProjWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeProj.id).then((time) => {
-      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name} for week ${currentWeek} - ${time}`);
-      setProjWeekTotal(time);
-    });
-    GetProjWorkTimeByMonth(currentYear, currentMonth, activeProj.id).then((time) => {
-      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name} for month ${currentMonth} - ${time}`);
-      setProjMonthTotal(time);
+    Promise.all([
+      GetWorkTimeByProject(activeProj.id, dateString()),
+      GetProjWorkTimeByWeek(currentYear, currentMonth, currentWeek, activeProj.id),
+      GetProjWorkTimeByMonth(currentYear, currentMonth, activeProj.id),
+    ]).then(([dayTotal, weekTotal, monthTotal]) => {
+      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name}`, dayTotal);
+      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name} for week ${currentWeek} - ${weekTotal}`);
+      console.debug(`Work time for ${activeOrg?.name}/${activeProj.name} for month ${currentMonth} - ${monthTotal}`);
+
+      setProjWorkTotals(dayTotal, weekTotal, monthTotal);
     });
   }, [activeProj, projects]);
 

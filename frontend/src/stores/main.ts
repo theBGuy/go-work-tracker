@@ -1,7 +1,6 @@
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import { subscribeWithSelector } from "zustand/middleware";
 import { main } from "@go/models";
+import { create } from "zustand";
+import { createJSONStorage, persist, subscribeWithSelector } from "zustand/middleware";
 
 interface Store {
   organizations: main.Organization[];
@@ -42,6 +41,8 @@ interface Store {
   projMonthTotal: number;
   setProjMonthTotal: (value: number) => void;
   updateProjMonthTotal: (value: number) => void;
+  setProjWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => void;
+  setOrgWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => void;
 }
 
 export const useAppStore = create(
@@ -103,6 +104,20 @@ export const useAppStore = create(
       projMonthTotal: 0,
       setProjMonthTotal: (value: number) => set({ projMonthTotal: value }),
       updateProjMonthTotal: (value: number) => set((state) => ({ projMonthTotal: state.projMonthTotal + value })),
+      setProjWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
+        set(() => ({
+          projectWorkTime: dayTime,
+          projWeekTotal: weekTime,
+          projMonthTotal: monthTime,
+        }));
+      },
+      setOrgWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
+        set(() => ({
+          workTime: dayTime,
+          orgWeekTotal: weekTime,
+          orgMonthTotal: monthTime,
+        }));
+      },
     })),
     {
       name: "store",
