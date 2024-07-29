@@ -54,6 +54,34 @@ func handleDBError(err error) {
 	}
 }
 
+func (a *App) cleanupSoftDeletedRecords() {
+	query := "deleted_at IS NOT NULL AND deleted_at <= datetime('now', '-30 days')"
+
+	// Delete soft deleted records for WorkHours
+	result := a.db.Unscoped().Where(query).Delete(&WorkHours{})
+	if err := result.Error; err != nil {
+		log.Printf("Error deleting WorkHours records: %v", err)
+	} else {
+		log.Printf("Deleted %d WorkHours records", result.RowsAffected)
+	}
+
+	// Delete soft deleted records for Project
+	result = a.db.Unscoped().Where(query).Delete(&Project{})
+	if err := result.Error; err != nil {
+		log.Printf("Error deleting Project records: %v", err)
+	} else {
+		log.Printf("Deleted %d Project records", result.RowsAffected)
+	}
+
+	// Delete soft deleted records for Organization
+	result = a.db.Unscoped().Where(query).Delete(&Organization{})
+	if err := result.Error; err != nil {
+		log.Printf("Error deleting Organization records: %v", err)
+	} else {
+		log.Printf("Deleted %d Organization records", result.RowsAffected)
+	}
+}
+
 func NewDb(dbDir string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(filepath.Join(dbDir, "worktracker.sqlite")), &gorm.Config{})
 	handleDBError(err)
