@@ -18,10 +18,14 @@ var WailsConfigFile []byte
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
+	appTitle := "Go Work Tracker"
+	if app.environment == "development" {
+		appTitle = appTitle + " (DEV)"
+	}
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "go-work-tracker",
+		Title:  appTitle,
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
