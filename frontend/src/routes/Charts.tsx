@@ -23,6 +23,7 @@ function Charts() {
   const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
+  const [formatType, setFormatType] = useState<"seconds" | "minutes" | "hours">("seconds");
   // need a better color scheme
   const colors = [
     "lightgray",
@@ -37,6 +38,20 @@ function Charts() {
     "yellow",
     "black",
   ];
+  const formattedDisplay = {
+    seconds: {
+      label: "Total Work Time (s)",
+      valueFormatter: (value: number) => value.toString(),
+    },
+    minutes: {
+      label: "Total Work Time (m)",
+      valueFormatter: (value: number) => Math.floor(value / 60).toString(),
+    },
+    hours: {
+      label: "Total Work Time (h)",
+      valueFormatter: (value: number) => Math.floor(value / 3600).toString(),
+    },
+  };
 
   useEffect(() => {
     const timerSubscription = useTimerStore.subscribe(
@@ -85,8 +100,14 @@ function Charts() {
   useEffect(() => {
     if (!selectedOrganization) return;
     GetDailyWorkTimeByMonth(selectedYear, selectedMonth, selectedOrganization.id).then((data) => {
+      let max = 0;
       const graphData: GraphData[] = [];
       for (const [day, projs] of Object.entries(data)) {
+        Object.values(projs).forEach((value) => {
+          if (value > max) {
+            max = value;
+          }
+        });
         // @ts-ignore
         graphData.push({ day: new Date(day), ...projs });
       }
@@ -97,6 +118,15 @@ function Charts() {
           }
         });
       });
+
+      if (max > 60 * 60) {
+        setFormatType("hours");
+      } else if (max > 60) {
+        setFormatType("minutes");
+      } else {
+        setFormatType("seconds");
+      }
+
       setDailyWorkTimes(graphData);
     });
   }, [selectedYear, selectedOrganization, selectedMonth]);
@@ -167,16 +197,15 @@ function Charts() {
               {
                 scaleType: "linear",
                 min: 0,
+                label: formattedDisplay[formatType].label,
+                valueFormatter: formattedDisplay[formatType].valueFormatter,
               },
             ]}
             leftAxis={{
-              label: "Total Work Time (s)",
               labelStyle: {
-                // transform: "rotate(-90deg) translate(-173px, -238px)",
-                // padding: 10,
+                // transform: "rotate(-90deg) translate(-173px, -230px)",
               },
             }}
-            // margin={{ right: 10 }}
             series={projects.map((project, index) => ({
               dataKey: project.name,
               label: project.name,
