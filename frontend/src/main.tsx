@@ -33,9 +33,7 @@ let workTimeInterval: NodeJS.Timeout;
 let confirmationInterval: NodeJS.Timeout;
 const timerRunning = useTimerStore.getState().running;
 const setElapsedTime = useTimerStore.getState().setElapsedTime;
-const openConfirm = useTimerStore.getState().openConfirm;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
-const alertTime = useAppStore.getState().alertTime;
 const updateDayWorkTotals = useAppStore.getState().updateDayWorkTotals;
 const updateOrgWeekTotal = useAppStore.getState().updateOrgWeekTotal;
 const updateProjWeekTotal = useAppStore.getState().updateProjWeekTotal;
@@ -56,7 +54,10 @@ const timerSubscription = useTimerStore.subscribe(
           updateDayWorkTotals(1);
         });
       }, 1000);
+      const alertTime = useAppStore.getState().alertTime;
+      const openConfirm = useTimerStore.getState().openConfirm;
       if (!openConfirm && alertTime > 0) {
+        console.debug(`Setting confirmation interval for ${alertTime} minutes`);
         confirmationInterval = setInterval(() => {
           ShowWindow().then(() => {
             setOpenConfirm(true);
@@ -84,6 +85,7 @@ const alertTimeSubscription = useAppStore.subscribe(
   (curr, prev) => {
     console.log(`Alert time switched from ${prev} to ${curr}`);
     if (!timerRunning) return;
+    clearInterval(confirmationInterval);
     if (curr > 0) {
       confirmationInterval = setInterval(() => {
         ShowWindow().then(() => {
@@ -91,7 +93,7 @@ const alertTimeSubscription = useAppStore.subscribe(
         });
       }, 1000 * 60 * curr); // Show the alert every x minutes
     } else {
-      console.log("Clearing confirmation interval");
+      console.debug("Clearing confirmation interval");
       clearInterval(confirmationInterval);
     }
   }
