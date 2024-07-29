@@ -66,12 +66,12 @@ func NewDb(dbDir string) *gorm.DB {
 	return db
 }
 
-func (a *App) getOrganization(organizationName string) (Organization, error) {
+func (a *App) getOrganization(organizationID uint) (Organization, error) {
 	var organization Organization
 
 	err := a.db.
 		Where("organizations.deleted_at IS NULL"). // Ignore deleted organizations
-		Where(&Organization{Name: organizationName}).
+		Where(&Organization{ID: organizationID}).
 		First(&organization).Error
 
 	if err != nil {
@@ -81,11 +81,11 @@ func (a *App) getOrganization(organizationName string) (Organization, error) {
 	return organization, nil
 }
 
-func (a *App) getProject(organizationID uint, projectName string) (Project, error) {
+func (a *App) getProject(projectID uint) (Project, error) {
 	var project Project
 	err := a.db.
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
-		Where("name = ? AND organization_id = ?", projectName, organizationID).
+		Where(&Project{ID: projectID}).
 		First(&project).Error
 	if err != nil {
 		Logger.Println(err)
@@ -94,9 +94,14 @@ func (a *App) getProject(organizationID uint, projectName string) (Project, erro
 	return project, nil
 }
 
-func (a *App) NewOrganization(organizationName string, projectName string) {
+type NewOrgRet struct {
+	Organization Organization `json:"organization"`
+	Project      Project      `json:"project"`
+}
+
+func (a *App) NewOrganization(organizationName string, projectName string) (NewOrgRet, error) {
 	if organizationName == "" || projectName == "" {
-		return
+		return NewOrgRet{}, errors.New("organization name or project name is empty")
 	}
 
 	// Check if organization exists, if not create it
@@ -105,12 +110,10 @@ func (a *App) NewOrganization(organizationName string, projectName string) {
 		if err == gorm.ErrRecordNotFound {
 			organization = Organization{Name: organizationName}
 			if err := a.db.Create(&organization).Error; err != nil {
-				handleDBError(err)
-				return
+				return NewOrgRet{}, err
 			}
 		} else {
-			handleDBError(err)
-			return
+			return NewOrgRet{}, err
 		}
 	}
 
@@ -120,12 +123,10 @@ func (a *App) NewOrganization(organizationName string, projectName string) {
 		if err == gorm.ErrRecordNotFound {
 			project = Project{Name: projectName, OrganizationID: organization.ID}
 			if err := a.db.Create(&project).Error; err != nil {
-				handleDBError(err)
-				return
+				return NewOrgRet{}, err
 			}
 		} else {
-			handleDBError(err)
-			return
+			return NewOrgRet{}, err
 		}
 	}
 
@@ -139,49 +140,28 @@ func (a *App) NewOrganization(organizationName string, projectName string) {
 	if err := a.db.Create(&workHours).Error; err != nil {
 		handleDBError(err)
 	}
+	return NewOrgRet{Organization: organization, Project: project}, nil
 }
 
-func (a *App) SetOrganization(organizationName string, projectName string) {
-	if a.isRunning {
-		a.StopTimer(a.organization, a.project)
-	}
-
-	// Check if the organization exists
-	var organization Organization
-	if err := a.db.Where(&Organization{Name: organizationName}).First(&organization).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// No entry for the given organization
-			a.NewOrganization(organizationName, projectName)
-		} else {
-			handleDBError(err)
-			return
-		}
-	}
-
-	// Check if the project exists within the organization
-	var project Project
-	if err := a.db.Where(&Project{Name: projectName, OrganizationID: organization.ID}).First(&project).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// No entry for the given project within the organization
-			a.NewOrganization(organizationName, projectName)
-		} else {
-			handleDBError(err)
-			return
-		}
-	}
-
-	a.organization = organizationName
-	a.project = projectName
-}
-
-func (a *App) RenameOrganization(oldName string, newName string) {
-	if newName == "" {
-		return
-	}
-
-	organization, err := a.getOrganization(oldName)
+func (a *App) SetOrganization(organizationID uint) error {
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
-		handleDBError(err)
+		return err
+	}
+	fmt.Println("Organization set to:", organization.Name)
+	a.organization = organization
+
+	return nil
+}
+
+func (a *App) RenameOrganization(organizationID uint, newName string) (Organization, error) {
+	if newName == "" {
+		return Organization{}, errors.New("organization name is empty")
+	}
+
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return Organization{}, err
 	}
 
 	// Update the organization's name
@@ -189,10 +169,11 @@ func (a *App) RenameOrganization(oldName string, newName string) {
 	if err := a.db.Save(&organization).Error; err != nil {
 		handleDBError(err)
 	}
+	return organization, nil
 }
 
-func (a *App) ToggleFavoriteOrganization(organizationName string) {
-	organization, err := a.getOrganization(organizationName)
+func (a *App) ToggleFavoriteOrganization(organizationID uint) {
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		handleDBError(err)
 	}
@@ -204,9 +185,9 @@ func (a *App) ToggleFavoriteOrganization(organizationName string) {
 }
 
 // Create a new project for the specified organization
-func (a *App) NewProject(organizationName string, projectName string) {
+func (a *App) NewProject(organizationName string, projectName string) (Project, error) {
 	if projectName == "" || organizationName == "" {
-		return
+		return Project{}, errors.New("project name or organization name is empty")
 	}
 
 	// Check if the organization exists, if not create it
@@ -215,12 +196,10 @@ func (a *App) NewProject(organizationName string, projectName string) {
 		if err == gorm.ErrRecordNotFound {
 			organization = Organization{Name: organizationName}
 			if err := a.db.Create(&organization).Error; err != nil {
-				handleDBError(err)
-				return
+				return Project{}, err
 			}
 		} else {
-			handleDBError(err)
-			return
+			return Project{}, err
 		}
 	}
 
@@ -247,21 +226,32 @@ func (a *App) NewProject(organizationName string, projectName string) {
 	if err := a.db.Create(&workHours).Error; err != nil {
 		handleDBError(err)
 	}
+	return project, nil
 }
 
-func (a *App) RenameProject(organizationName string, oldName string, newName string) {
-	if newName == "" || organizationName == "" {
-		return
+func (a *App) SetProject(projectID uint) error {
+	if a.isRunning {
+		a.StopTimer()
 	}
-	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+
+	project, err := a.getProject(projectID)
 	if err != nil {
-		handleDBError(err)
+		return err
+	}
+	fmt.Println("Project set to:", project.Name, "for Organization:", a.organization.Name)
+	a.project = project
+
+	return nil
+}
+
+func (a *App) RenameProject(projectID uint, newName string) (Project, error) {
+	if newName == "" || projectID == 0 {
+		return Project{}, errors.New("project name is empty or project ID is 0")
 	}
 
 	// Find the project within the organization
 	var project Project
-	if err := a.db.Where(&Project{Name: oldName, OrganizationID: organization.ID}).First(&project).Error; err != nil {
+	if err := a.db.Where(&Project{ID: projectID}).First(&project).Error; err != nil {
 		handleDBError(err)
 	}
 
@@ -270,22 +260,16 @@ func (a *App) RenameProject(organizationName string, oldName string, newName str
 	if err := a.db.Save(&project).Error; err != nil {
 		handleDBError(err)
 	}
+	return project, nil
 }
 
-func (a *App) DeleteProject(organizationName string, projectName string) {
-	if projectName == "" || organizationName == "" {
+func (a *App) DeleteProject(projectID uint) {
+	if projectID == 0 {
 		return
 	}
 
-	// Find the organization
-	organization, err := a.getOrganization(organizationName)
-	if err != nil {
-		handleDBError(err)
-	}
-
-	// Find the project within the organization
 	var project Project
-	if err := a.db.Where(&Project{Name: projectName, OrganizationID: organization.ID}).First(&project).Error; err != nil {
+	if err := a.db.Where(&Project{ID: projectID}).First(&project).Error; err != nil {
 		handleDBError(err)
 	}
 
@@ -300,19 +284,12 @@ func (a *App) DeleteProject(organizationName string, projectName string) {
 	}
 }
 
-func (a *App) ToggleFavoriteProject(organizationName string, projectName string) {
-	if projectName == "" || organizationName == "" {
+func (a *App) ToggleFavoriteProject(projectID uint) {
+	if projectID == 0 {
 		return
 	}
 
-	// Find the organization
-	organization, err := a.getOrganization(organizationName)
-	if err != nil {
-		handleDBError(err)
-	}
-
-	// Find the project within the organization
-	project, err := a.getProject(organization.ID, projectName)
+	project, err := a.getProject(projectID)
 	if err != nil {
 		handleDBError(err)
 	}
@@ -324,9 +301,9 @@ func (a *App) ToggleFavoriteProject(organizationName string, projectName string)
 }
 
 // GetProjects returns the list of projects for the specified organization
-func (a *App) GetProjects(organizationName string) (projects []Project, err error) {
+func (a *App) GetProjects(organizationID uint) (projects []Project, err error) {
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -343,13 +320,9 @@ func (a *App) GetProjects(organizationName string) (projects []Project, err erro
 	return projects, nil
 }
 
-func (a *App) DeleteOrganization(organizationName string) {
-	if organizationName == "" {
-		return
-	}
-
+func (a *App) DeleteOrganization(organizationID uint) {
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		handleDBError(err)
 	}
@@ -387,7 +360,7 @@ func (a *App) GetOrganizations() (organizations []Organization, err error) {
 	return organizations, nil
 }
 
-func (a *App) saveTimer(organizationName string, projectName string) {
+func (a *App) saveTimer(projectID uint) {
 	endTime := time.Now()
 	secsWorked := 0
 	if !a.lastSave.IsZero() {
@@ -399,14 +372,8 @@ func (a *App) saveTimer(organizationName string, projectName string) {
 	}
 	date := a.startTime.Format("2006-01-02")
 
-	// Find the organization
-	organization, err := a.getOrganization(organizationName)
-	if err != nil {
-		handleDBError(err)
-	}
-
 	// Find the project within the organization
-	project, err := a.getProject(organization.ID, projectName)
+	project, err := a.getProject(projectID)
 	if err != nil {
 		handleDBError(err)
 	}
@@ -426,13 +393,13 @@ func (a *App) saveTimer(organizationName string, projectName string) {
 }
 
 // GetWorkTime returns the total seconds worked on the specified date
-func (a *App) GetWorkTime(date string, organizationName string) (seconds int, err error) {
-	if date == "" || organizationName == "" {
+func (a *App) GetWorkTime(date string, organizationID uint) (seconds int, err error) {
+	if date == "" || organizationID == 0 {
 		return 0, nil
 	}
 
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		Logger.Println(err)
 		return 0, err
@@ -454,23 +421,101 @@ func (a *App) GetWorkTime(date string, organizationName string) (seconds int, er
 	return totalSeconds, nil
 }
 
+// GetDailyWorkTime returns the total seconds worked for each day for the specified organization
+// func (a *App) GetDailyWorkTime(organizationName string) (dailyWorkTime map[string]int, err error) {
+// 	dailyWorkTime = make(map[string]int)
+// 	// Find the organization
+// 	organization, err := a.getOrganization(organizationName)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	rows, err := a.db.Table("work_hours").
+// 		Select("date, COALESCE(SUM(seconds), 0)").
+// 		Joins("JOIN projects ON projects.id = work_hours.project_id").
+// 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+// 		Where("projects.organization_id = ?", organization.ID).
+// 		Group("date").
+// 		Rows()
+// 	if err != nil {
+// 		Logger.Println(err)
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	for rows.Next() {
+// 		var date string
+// 		var seconds int
+// 		if err := rows.Scan(&date, &seconds); err != nil {
+// 			Logger.Println(err)
+// 			return nil, err
+// 		}
+// 		dailyWorkTime[date] = seconds
+// 	}
+
+// 	if err := rows.Err(); err != nil {
+// 		Logger.Println(err)
+// 		return nil, err
+// 	}
+
+// 	return dailyWorkTime, nil
+// }
+
+// GetDailyWorkTimeByMonth returns the total seconds worked for each day for each project of the specified organization for a specific month
+func (a *App) GetDailyWorkTimeByMonth(year int, month time.Month, organizationID uint) (dailyWorkTime map[string]map[string]int, err error) {
+	dailyWorkTime = make(map[string]map[string]int)
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("date, projects.name, COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Group("date, projects.name").
+		Rows()
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var date string
+		var project string
+		var seconds int
+		if err := rows.Scan(&date, &project, &seconds); err != nil {
+			Logger.Println(err)
+			return nil, err
+		}
+		if _, ok := dailyWorkTime[date]; !ok {
+			dailyWorkTime[date] = make(map[string]int)
+		}
+		dailyWorkTime[date][project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+
+	return dailyWorkTime, nil
+}
+
 // GetWorkTimeByProject returns the total seconds worked for the specified project on specific date
-func (a *App) GetWorkTimeByProject(organizationName string, projectName string, date string) (seconds int, err error) {
-	if projectName == "" || organizationName == "" {
+func (a *App) GetWorkTimeByProject(projectID uint, date string) (seconds int, err error) {
+	if projectID == 0 {
 		return 0, nil
 	}
+
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
 	}
 
-	// Find the organization
-	organization, err := a.getOrganization(organizationName)
-	if err != nil {
-		return 0, err
-	}
-
-	// Find the project within the organization
-	project, err := a.getProject(organization.ID, projectName)
+	project, err := a.getProject(projectID)
 	if err != nil {
 		return 0, err
 	}
@@ -494,10 +539,10 @@ func (a *App) GetWorkTimeByProject(organizationName string, projectName string, 
 }
 
 // GetWeeklyWorkTime returns the total seconds worked for each week of the specified month
-func (a *App) GetWeeklyWorkTime(year int, month time.Month, organizationName string) (weeklyWorkTimes map[int]map[string]int, err error) {
+func (a *App) GetWeeklyWorkTime(year int, month time.Month, organizationID uint) (weeklyWorkTimes map[int]map[string]int, err error) {
 	weeklyWorkTimes = make(map[int]map[string]int)
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -523,10 +568,11 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organizationName str
 			Logger.Println(err)
 			return nil, err
 		}
-		if _, ok := weeklyWorkTimes[week]; !ok {
-			weeklyWorkTimes[week] = make(map[string]int)
+		adjustedWeek := week + 1
+		if _, ok := weeklyWorkTimes[adjustedWeek]; !ok {
+			weeklyWorkTimes[adjustedWeek] = make(map[string]int)
 		}
-		weeklyWorkTimes[week][project] = seconds
+		weeklyWorkTimes[adjustedWeek][project] = seconds
 	}
 
 	if err := rows.Err(); err != nil {
@@ -536,10 +582,100 @@ func (a *App) GetWeeklyWorkTime(year int, month time.Month, organizationName str
 	return weeklyWorkTimes, nil
 }
 
-// GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
-func (a *App) GetMonthlyWorkTime(year int, organizationName string) (monthlyWorkTimes map[int]map[string]int, err error) {
+// GetWorkTimeByWeek returns the total seconds worked for each project of a week of the specified month
+func (a *App) GetWorkTimeByWeek(year int, month time.Month, week int, organizationID uint) (workTime map[string]int, err error) {
+	workTime = make(map[string]int)
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("projects.name, COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
+		Group("projects.name").
+		Rows()
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		var seconds int
+		if err := rows.Scan(&project, &seconds); err != nil {
+			Logger.Println(err)
+			return nil, err
+		}
+		workTime[project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return workTime, nil
+}
+
+// GetOrgWorkTimeByWeek returns the total seconds worked an organization a week of the specified month
+func (a *App) GetOrgWorkTimeByWeek(year int, month time.Month, week int, organizationID uint) (workTime int, err error) {
+	workTime = 0
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
+// GetProjWorkTimeByWeek returns the total seconds worked a project of a week of the specified month
+func (a *App) GetProjWorkTimeByWeek(year int, month time.Month, week int, projectID uint) (workTime int, err error) {
+	workTime = 0
+	project, err := a.getProject(projectID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ?", fmt.Sprintf("%04d-%02d", year, month)).
+		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
+		Where("projects.id = ?", project.ID).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
+// GetMonthlyWorkTime returns the total seconds worked for each month of the specified year
+func (a *App) GetMonthlyWorkTime(year int, organizationID uint) (monthlyWorkTimes map[int]map[string]int, err error) {
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -578,10 +714,96 @@ func (a *App) GetMonthlyWorkTime(year int, organizationName string) (monthlyWork
 	return monthlyWorkTimes, nil
 }
 
-// GetYearlyWorkTime returns the total seconds worked for the specified year
-func (a *App) GetYearlyWorkTime(year int, organizationName string) (yearlyWorkTime int, err error) {
+// GetProjWorkTimeByMonth returns the total seconds worked for a project of a month of the specified year
+func (a *App) GetProjWorkTimeByMonth(year int, month time.Month, projectID uint) (workTime int, err error) {
+	project, err := a.getProject(projectID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ?", fmt.Sprintf("%04d-%02d", year, month)).
+		Where("projects.id = ?", project.ID).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
+// GetOrgWorkTimeByMonth returns the total seconds worked for a organization of a month of the specified year
+func (a *App) GetOrgWorkTimeByMonth(year int, month time.Month, organizationID uint) (workTime int, err error) {
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.db.Table("work_hours").
+		Select("COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Row().Scan(&workTime)
+
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	return workTime, nil
+}
+
+// GetWorkTimeByMonth returns the total seconds worked for each project of a month of the specified year
+func (a *App) GetWorkTimeByMonth(year int, month time.Month, organizationID uint) (workTime map[string]int, err error) {
+	workTime = make(map[string]int)
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.db.Table("work_hours").
+		Select("projects.name, COALESCE(SUM(work_hours.seconds), 0)").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
+		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
+		Group("projects.name").
+		Rows()
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project string
+		var seconds int
+		if err := rows.Scan(&project, &seconds); err != nil {
+			Logger.Println(err)
+			return nil, err
+		}
+		workTime[project] = seconds
+	}
+
+	if err := rows.Err(); err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+
+	return workTime, nil
+}
+
+// GetYearlyWorkTime returns the total seconds worked for the specified year
+func (a *App) GetYearlyWorkTime(year int, organizationID uint) (yearlyWorkTime int, err error) {
+	// Find the organization
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		return 0, err
 	}
@@ -607,10 +829,10 @@ func (a *App) GetYearlyWorkTime(year int, organizationName string) (yearlyWorkTi
 }
 
 // GetYearlyWorkTimeByProject returns the total seconds worked for each project for the specified year
-func (a *App) GetYearlyWorkTimeByProject(year int, organizationName string) (yearlyWorkTimes map[string]int, err error) {
+func (a *App) GetYearlyWorkTimeByProject(year int, organizationID uint) (yearlyWorkTimes map[string]int, err error) {
 	yearlyWorkTimes = make(map[string]int)
 	// Find the organization
-	organization, err := a.getOrganization(organizationName)
+	organization, err := a.getOrganization(organizationID)
 	if err != nil {
 		return nil, err
 	}

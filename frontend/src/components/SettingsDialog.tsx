@@ -1,3 +1,4 @@
+import { useAppStore } from "@/stores/main";
 import {
   Button,
   Dialog,
@@ -8,30 +9,22 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
-  Select
-} from '@mui/material';
+  Select,
+} from "@mui/material";
+import { useState } from "react";
 
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 interface SettingsDialogProps {
   showSettings: boolean;
-  alertTime: number;
-  newAlertTime: number;
   setShowSettings: (show: boolean) => void;
-  setAlertTime: (time: number) => void;
-  setNewAlertTime: (time: number) => void;
   handleMenuClose: () => void;
 }
 
-const SettingsDialog: React.FC<SettingsDialogProps> = ({
-  showSettings,
-  alertTime,
-  newAlertTime,
-  setShowSettings,
-  setAlertTime,
-  setNewAlertTime,
-  handleMenuClose
-}) => {
+const SettingsDialog: React.FC<SettingsDialogProps> = ({ showSettings, setShowSettings, handleMenuClose }) => {
+  const alertTime = useAppStore((state) => state.alertTime);
+  const setAlertTime = useAppStore((state) => state.setAlertTime);
+  const [newAlertTime, setNewAlertTime] = useState(alertTime);
   const handleUpdateSettings = () => {
     handleMenuClose();
     setShowSettings(false);
@@ -54,18 +47,12 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
       }
     }
   };
-  
+
   return (
-    <Dialog
-      disableEscapeKeyDown
-      open={showSettings}
-      onClose={() => setShowSettings(false)}
-    >
+    <Dialog disableEscapeKeyDown open={showSettings} onClose={() => setShowSettings(false)}>
       <DialogTitle>Settings</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Set the time interval for the `Are you still working?` notification.
-        </DialogContentText>
+        <DialogContentText>Set the time interval for the `Are you still working?` notification.</DialogContentText>
 
         <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="alert-time-select">Confirmation Popup Interval (minutes)</InputLabel>
@@ -86,7 +73,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleUpdateSettings}>Save</Button>
-        <Button onClick={handleMenuClose} color='error'>Close</Button>
+        <Button onClick={handleMenuClose} color="error">
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

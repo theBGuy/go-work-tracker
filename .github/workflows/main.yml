@@ -3,8 +3,8 @@ name: Build & Publish
 on:
   push:
     tags:
-    # Match any new tag
-      - 'v*'
+      # Match any new tag
+      - "v*"
 
 env:
   APP_ENV: production
@@ -17,11 +17,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [
-          {name: go-work-tracker.exe, platform: windows/amd64, os: windows-latest, nsis: true},
-          {name: go-work-tracker, platform: linux/amd64, os: ubuntu-latest, nsis: true},
-          {name: go-work-tracker, platform: darwin/universal, os: macos-latest, nsis: true}
-        ]
+        build:
+          [
+            {
+              name: go-work-tracker.exe,
+              platform: windows/amd64,
+              os: windows-latest,
+              nsis: true,
+            },
+            {
+              name: go-work-tracker,
+              platform: linux/amd64,
+              os: ubuntu-latest,
+              nsis: true,
+            },
+            {
+              name: go-work-tracker,
+              platform: darwin/universal,
+              os: macos-latest,
+              nsis: true,
+            },
+          ]
     runs-on: ${{ matrix.build.os }}
     steps:
       - name: Checkout
@@ -40,8 +56,8 @@ jobs:
         with:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
-          go-version: '1.21'
-          node-version: '20'
+          go-version: "1.22"
+          node-version: "20"
           nsis: ${{ matrix.build.nsis }}
           package: false
         env:

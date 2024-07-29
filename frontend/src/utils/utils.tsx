@@ -1,4 +1,5 @@
-import { GetWeekOfMonth } from '../../wailsjs/go/main/App';
+import { GetWeekOfMonth } from "@go/main/App";
+import { main } from "@go/models";
 
 export const months: Record<number, string> = {
   1: "January",
@@ -12,13 +13,13 @@ export const months: Record<number, string> = {
   9: "September",
   10: "October",
   11: "November",
-  12: "December"
+  12: "December",
 };
 
 export const formatTime = (timeInSeconds: number) => {
-  let hours = String(Math.floor(timeInSeconds / 3600)).padStart(2, '0');
-  let minutes = String(Math.floor((timeInSeconds % 3600) / 60)).padStart(2, '0');
-  let seconds = String(Math.floor(timeInSeconds % 60)).padStart(2, '0');
+  let hours = String(Math.floor(timeInSeconds / 3600)).padStart(2, "0");
+  let minutes = String(Math.floor((timeInSeconds % 3600) / 60)).padStart(2, "0");
+  let seconds = String(Math.floor(timeInSeconds % 60)).padStart(2, "0");
 
   return `${hours}h ${minutes}m ${seconds}s`;
 };
@@ -35,8 +36,8 @@ export const getMonth = (d = new Date()): number => {
 export const dateString = () => {
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const dateString = `${year}-${month}-${day}`;
   return dateString;
 };
@@ -47,11 +48,17 @@ export async function getCurrentWeekOfMonth() {
   const month = getMonth();
   const day = current.getDate();
   const week = await GetWeekOfMonth(year, month, day);
-  return week
-};
+  return week;
+}
 
-export type Model = {
-  name: string;
-  favorite: boolean;
-  updated_at: string;
+export type Model = main.Organization | main.Project;
+
+export const handleSort = (a: Model, b: Model) => {
+  if (a.favorite === b.favorite) {
+    // If both projects have the same Favorite status, sort by UpdatedAt
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+  } else {
+    // Otherwise, sort by Favorite
+    return Number(b.favorite) - Number(a.favorite);
+  }
 };

@@ -1,59 +1,52 @@
-import { useForm, SubmitHandler } from "react-hook-form"
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
-import { NewOrganization, SetOrganization } from '../../wailsjs/go/main/App';
-import { Model } from "../utils/utils";
+import { NewOrganization, SetOrganization, SetProject } from "@go/main/App";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useAppStore } from "../stores/main";
 
 interface NewOrganizationDialogProps {
   openNewOrg: boolean;
-  organizations: Model[];
-  setSelectedOrganization: (org: string) => void;
-  setSelectedProject: (proj: string) => void;
-  setOrganizations: React.Dispatch<React.SetStateAction<Model[]>>;
-  setProjects: React.Dispatch<React.SetStateAction<Model[]>>;
   setOpenNewOrg: (value: boolean) => void;
 }
 
 type Inputs = {
-  organization: string;
-  project: string;
+  orgName: string;
+  projName: string;
 };
 
-const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
-  openNewOrg,
-  organizations,
-  setSelectedOrganization,
-  setSelectedProject,
-  setOrganizations,
-  setProjects,
-  setOpenNewOrg,
-}) => {
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Inputs>();
-  const newOrg = watch("organization");
-  const newProj = watch("project");
+const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({ openNewOrg, setOpenNewOrg }) => {
+  const organizations = useAppStore((state) => state.organizations);
+  const addOrganization = useAppStore((state) => state.addOrganization);
+  const addProject = useAppStore((state) => state.addProject);
+  const setSelectedOrganization = useAppStore((state) => state.setActiveOrganization);
+  const setSelectedProject = useAppStore((state) => state.setActiveProject);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<Inputs>();
+  const newOrg = watch("orgName");
+  const newProj = watch("projName");
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    const { organization, project } = data;
-    await NewOrganization(organization, project);
-    await SetOrganization(organization, project);
-    setOrganizations(orgs => [...orgs, { name: organization, favorite: false, updated_at: new Date().toISOString() }]);
-    setProjects(projs => [...projs, { name: project, favorite: false, updated_at: new Date().toISOString() }]);
+    const { orgName, projName } = data;
+    const { organization, project } = await NewOrganization(orgName, projName);
+    await SetOrganization(organization.id);
+    await SetProject(project.id);
+    addOrganization(organization);
+    addProject(project);
     setSelectedOrganization(organization);
     setSelectedProject(project);
     setOpenNewOrg(false);
     reset();
   };
-  
+
   return (
-    <Dialog
-      disableEscapeKeyDown
-      open={openNewOrg}
-      onClose={() => setOpenNewOrg(false)}
-    >
+    <Dialog disableEscapeKeyDown open={openNewOrg} onClose={() => setOpenNewOrg(false)}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogTitle>Add New Organization</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Please enter the name of the new organization.
-          </DialogContentText>
+          <DialogContentText>Please enter the name of the new organization.</DialogContentText>
           <TextField
             autoFocus
             margin="dense"
@@ -62,37 +55,29 @@ const NewOrganizationDialog: React.FC<NewOrganizationDialogProps> = ({
             type="text"
             fullWidth
             error={organizations.some((el) => el.name === newOrg)}
-            helperText={organizations.some((el) => el.name === newOrg) ? 'Project name already exists' : ''}
-            {...register("organization", { required: true })}
+            helperText={organizations.some((el) => el.name === newOrg) ? "Project name already exists" : ""}
+            {...register("orgName", { required: true })}
           />
           <br />
-          <DialogContentText>
-            Please enter the name of the new project.
-          </DialogContentText>
+          <DialogContentText>Please enter the name of the new project.</DialogContentText>
           <TextField
             margin="dense"
             id="project"
             label="Project Name"
             type="text"
             fullWidth
-            helperText={errors.project ? 'This field is required' : ''}
-            {...register("project", { required: true })}
+            helperText={errors.projName ? "This field is required" : ""}
+            {...register("projName", { required: true })}
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            type="submit"
-            disabled={
-              !newOrg
-              || !newProj
-              || organizations.some((el) => el.name === newOrg)
-            }>
+          <Button type="submit" disabled={!newOrg || !newProj || organizations.some((el) => el.name === newOrg)}>
             Confirm
           </Button>
           {organizations.length >= 1 && (
-            <Button
-              onClick={() => setOpenNewOrg(false)}
-              color='error'>Close</Button>
+            <Button onClick={() => setOpenNewOrg(false)} color="error">
+              Close
+            </Button>
           )}
         </DialogActions>
       </form>

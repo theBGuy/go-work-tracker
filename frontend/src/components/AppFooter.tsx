@@ -1,22 +1,25 @@
-// AppFooter.tsx
-import React, { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Typography, Tooltip, IconButton, Badge } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import React, { useState, useEffect } from "react";
+import { AppBar, Toolbar, Typography, Tooltip, IconButton, Badge } from "@mui/material";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 
-import { GetVersion, UpdateAvailable } from '../../wailsjs/go/main/App';
-import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
+import { GetVersion, UpdateAvailable } from "../../wailsjs/go/main/App";
+import { EventsEmit, EventsOn } from "../../wailsjs/runtime/runtime";
+import ActiveSession from "./ActiveSession";
+import { useTimerStore } from "../stores/timer";
 
 const AppFooter: React.FC<{}> = () => {
-  const [version, setVersion] = useState('');
+  const [version, setVersion] = useState("");
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const stopTimer = useTimerStore((state) => state.stopTimer);
+  const showMiniTimer = useTimerStore((state) => state.showMiniTimer);
 
-  EventsOn('update-available', () => {
+  EventsOn("update-available", () => {
     setUpdateAvailable(true);
   });
 
   const handleUpdate = () => {
-    EventsEmit('do-update');
+    EventsEmit("do-update");
   };
 
   useEffect(() => {
@@ -25,7 +28,7 @@ const AppFooter: React.FC<{}> = () => {
   }, []);
 
   return (
-    <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+    <AppBar position="fixed" color="primary" sx={{ top: "auto", bottom: 0 }}>
       <Toolbar>
         {updateAvailable && (
           <Tooltip title="Update available. Click to restart and apply." placement="top-end">
@@ -44,6 +47,7 @@ const AppFooter: React.FC<{}> = () => {
           </IconButton>
           theBGuy
         </Typography>
+        {showMiniTimer && <ActiveSession stopTimer={stopTimer} mode="mini" />}
         <Typography variant="h6" component="div">
           v{version}
         </Typography>
