@@ -1,5 +1,5 @@
+import { Stack, Typography } from "@mui/material";
 import { NavLink } from "react-router-dom";
-import { Typography, Box, Stack } from "@mui/material";
 
 const NavBar = () => {
   const linkStyle = {
@@ -13,7 +13,6 @@ const NavBar = () => {
   };
 
   return (
-    // <Box sx={{ display: 'flex', alignItems: 'center', backgroundColor: '#333', padding: '10px' }}>
     <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
       <NavLink to="/" style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}>
         <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
@@ -31,7 +30,6 @@ const NavBar = () => {
         </Typography>
       </NavLink>
     </Stack>
-    // </Box>
   );
 };
 
