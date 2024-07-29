@@ -14,7 +14,7 @@
     "productName": "go-work-tracker",
     "description": "A simple work tracker written in Go and Wails",
     "license": "MIT",
-    "productVersion": "0.7.1",
+    "productVersion": "0.8.0",
     "environment": "development"
   }
 }

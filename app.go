@@ -103,6 +103,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.monitorTime()
 	a.monitorUpdates()
+	a.cleanupRoutine()
 }
 
 // shutdown is called at termination
@@ -146,6 +147,18 @@ func (a *App) monitorUpdates() {
 					runtime.EventsEmit(a.ctx, "update-available")
 				}
 			}
+		}
+	}()
+}
+
+func (a *App) cleanupRoutine() {
+	// Run on startup then every 24 hours
+	a.cleanupSoftDeletedRecords()
+	ticker := time.NewTicker(24 * time.Hour)
+
+	go func() {
+		for range ticker.C {
+			a.cleanupSoftDeletedRecords()
 		}
 	}()
 }
