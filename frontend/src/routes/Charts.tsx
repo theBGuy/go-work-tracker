@@ -5,6 +5,7 @@ import { formatTime, getMonth, months } from "@/utils/utils";
 import { GetDailyWorkTimeByMonth, GetProjects } from "@go/main/App";
 import { main } from "@go/models";
 import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
+import { type AxisConfig } from "@mui/x-charts";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
 
@@ -13,6 +14,15 @@ interface GraphData {
   day: Date;
   [project: string]: number;
 }
+
+type ChartFormatType = "seconds" | "minutes" | "hours";
+
+const Time = {
+  minutes: (seconds: number) => seconds * 60,
+  toMinutes: (seconds: number) => seconds / 60,
+  hours: (seconds: number) => seconds * 3600,
+  toHours: (seconds: number) => seconds / 3600,
+};
 
 function Charts() {
   const currentYear = new Date().getFullYear();
@@ -23,7 +33,7 @@ function Charts() {
   const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(getMonth());
-  const [formatType, setFormatType] = useState<"seconds" | "minutes" | "hours">("seconds");
+  const [formatType, setFormatType] = useState<ChartFormatType>("seconds");
   // need a better color scheme
   const colors = [
     "lightgray",
@@ -38,18 +48,21 @@ function Charts() {
     "yellow",
     "black",
   ];
-  const formattedDisplay = {
+  const formattedDisplay: Record<ChartFormatType, Partial<AxisConfig>> = {
     seconds: {
       label: "Total Work Time (s)",
       valueFormatter: (value: number) => value.toString(),
     },
     minutes: {
       label: "Total Work Time (m)",
-      valueFormatter: (value: number) => Math.floor(value / 60).toString(),
+      tickMinStep: Time.minutes(1),
+      valueFormatter: (value: number) => Math.trunc(value / 60).toString(),
     },
     hours: {
       label: "Total Work Time (h)",
-      valueFormatter: (value: number) => Math.floor(value / 3600).toString(),
+      min: 0,
+      max: Time.hours(24),
+      valueFormatter: (value: number) => Math.trunc(value / 3600).toString(),
     },
   };
 
@@ -119,9 +132,9 @@ function Charts() {
         });
       });
 
-      if (max > 60 * 60) {
+      if (max > Time.hours(2)) {
         setFormatType("hours");
-      } else if (max > 60) {
+      } else if (max > Time.minutes(10)) {
         setFormatType("minutes");
       } else {
         setFormatType("seconds");
@@ -197,8 +210,8 @@ function Charts() {
               {
                 scaleType: "linear",
                 min: 0,
-                label: formattedDisplay[formatType].label,
-                valueFormatter: formattedDisplay[formatType].valueFormatter,
+                ...formattedDisplay[formatType],
+                position: "left",
               },
             ]}
             leftAxis={{
