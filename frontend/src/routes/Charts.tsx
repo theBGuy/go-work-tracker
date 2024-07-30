@@ -154,9 +154,14 @@ function Charts() {
       <Stack spacing={1} sx={{ padding: 2 }}>
         <Paper sx={{ padding: 2 }}>
           <Stack direction="row" spacing={2}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Year</InputLabel>
-              <Select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value as number)}>
+            <FormControl fullWidth>
+              <InputLabel id="year-label">Year</InputLabel>
+              <Select
+                value={selectedYear}
+                label="Year"
+                labelId="year-label"
+                onChange={(event) => setSelectedYear(event.target.value as number)}
+              >
                 {years.map((year) => (
                   <MenuItem key={year} value={year}>
                     {year}
@@ -166,7 +171,11 @@ function Charts() {
             </FormControl>
             <FormControl fullWidth margin="normal">
               <InputLabel>Month</InputLabel>
-              <Select value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value as number)}>
+              <Select
+                value={selectedMonth}
+                label="Month"
+                onChange={(event) => setSelectedMonth(event.target.value as number)}
+              >
                 {Object.entries(months).map(([monthNumber, monthName]) => (
                   <MenuItem key={Number(monthNumber)} value={Number(monthNumber)}>
                     {monthName}
@@ -178,6 +187,7 @@ function Charts() {
               <InputLabel>Organization</InputLabel>
               <Select
                 value={selectedOrganization?.name}
+                label="Organization"
                 onChange={(event) => {
                   const foundOrg = organizations.find((org) => org.name === event.target.value);
                   if (foundOrg) {
