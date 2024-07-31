@@ -1,3 +1,4 @@
+import { dateString } from "@/utils/utils";
 import { main } from "@go/models";
 import { create } from "zustand";
 import { createJSONStorage, persist, subscribeWithSelector } from "zustand/middleware";
@@ -35,6 +36,8 @@ interface Store {
   orgMonthTotal: number;
   setOrgMonthTotal: (value: number) => void;
   updateOrgMonthTotal: (value: number) => void;
+  dateStr: string;
+  setDateStr: (date: string) => void;
   currentWeek: number;
   setCurrentWeek: (week: number) => void;
   projWeekTotal: number;
@@ -142,6 +145,11 @@ export const useAppStore = create(
         set({ orgMonthTotal: value });
       },
       updateOrgMonthTotal: (value: number) => set((state) => ({ orgMonthTotal: state.orgMonthTotal + value })),
+      dateStr: dateString(),
+      setDateStr: (date: string) => {
+        if (date === get().dateStr) return;
+        set({ dateStr: date });
+      },
       currentWeek: 1,
       setCurrentWeek: (week: number) => {
         if (week === get().currentWeek) return;
