@@ -59,6 +59,8 @@ function App() {
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
+  const dateStr = useAppStore((state) => state.dateStr);
+  const setDateStr = useAppStore((state) => state.setDateStr);
 
   const projects = useAppStore((state) => state.projects);
   const setProjects = useAppStore((state) => state.setProjects);
@@ -105,11 +107,7 @@ function App() {
 
   EventsOn("new-day", () => {
     console.debug("New day event received");
-    getCurrentWeekOfMonth().then(setCurrentWeek);
-    if (!activeOrg) return;
-    GetWorkTime(dateString(), activeOrg.id).then(setWorkTime);
-    if (!activeProj) return;
-    GetWorkTimeByProject(activeProj.id, dateString()).then(setCurrProjectWorkTime);
+    setDateStr(dateString());
   });
 
   const checkForUpdates = async () => {
@@ -325,11 +323,48 @@ function App() {
       }
     });
 
+    const daySubscription = useAppStore.subscribe(
+      (state) => state.dateStr,
+      (curr, prev) => {
+        console.debug("Date changed from", prev, "to", curr);
+        getCurrentWeekOfMonth().then(setCurrentWeek);
+
+        const org = useAppStore.getState().activeOrg;
+        if (!org) return;
+        GetWorkTime(curr, org.id).then((time) => {
+          console.debug(`Work time for ${org.name}`, time);
+          setWorkTime(time);
+        });
+
+        const proj = useAppStore.getState().activeProj;
+        if (!proj) return;
+        GetWorkTimeByProject(proj.id, curr).then((time) => {
+          console.debug(`Work time for ${org.name}/${proj.name}`, time);
+          setCurrProjectWorkTime(time);
+        });
+      }
+    );
+
     return () => {
       setShowMiniTimer(true);
+      daySubscription(); // cleanup
       // renderCount.current = 0;
     };
   }, []);
+
+  /**
+   * Watch for changes in the date
+   */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const today = dateString();
+      if (today !== dateStr) {
+        console.debug("Date changed from", dateStr, "to", today);
+        setDateStr(today);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [dateStr]);
 
   /**
    * Get the projects for the selected organization
