@@ -658,13 +658,14 @@ func (a *App) GetOrgWorkTimeByWeek(year int, month time.Month, week int, organiz
 	if err != nil {
 		return 0, err
 	}
+	startOfWeek, endOfWeek := getWeekRange(year, month, week)
 
 	err = a.db.Table("work_hours").
 		Select("COALESCE(SUM(work_hours.seconds), 0)").
 		Joins("JOIN projects ON projects.id = work_hours.project_id").
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
-		Where("strftime('%Y-%m', date) = ? AND projects.organization_id = ?", fmt.Sprintf("%04d-%02d", year, month), organization.ID).
-		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
+		Where("projects.organization_id = ?", organization.ID).
+		Where("date >= ? AND date <= ?", startOfWeek, endOfWeek).
 		Row().Scan(&workTime)
 
 	if err != nil {
@@ -682,14 +683,14 @@ func (a *App) GetProjWorkTimeByWeek(year int, month time.Month, week int, projec
 	if err != nil {
 		return 0, err
 	}
+	startOfWeek, endOfWeek := getWeekRange(year, month, week)
 
 	err = a.db.Table("work_hours").
 		Select("COALESCE(SUM(work_hours.seconds), 0)").
 		Joins("JOIN projects ON projects.id = work_hours.project_id").
 		Where("projects.deleted_at IS NULL"). // Ignore deleted projects
-		Where("strftime('%Y-%m', date) = ?", fmt.Sprintf("%04d-%02d", year, month)).
-		Where("strftime('%W', date) - strftime('%W', date('now','start of month')) + (strftime('%w', date('now','start of month')) <> '1') = ?", week-1).
 		Where("projects.id = ?", project.ID).
+		Where("date >= ? AND date <= ?", startOfWeek, endOfWeek).
 		Row().Scan(&workTime)
 
 	if err != nil {

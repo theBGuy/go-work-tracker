@@ -243,6 +243,24 @@ func secondsToHours(seconds int) float64 {
 	return math.Round(hours*100) / 100
 }
 
+func getWeekRange(year int, month time.Month, week int) (startOfWeek string, endOfWeek string) {
+	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	currDay := firstOfMonth
+	for w := 1; w <= 5; w++ {
+		startOfWeek = currDay.Format("2006-01-02")
+		for currDay.Weekday() != time.Sunday && currDay.Before(lastOfMonth) {
+			currDay = currDay.AddDate(0, 0, 1)
+		}
+
+		if w == week {
+			endOfWeek = currDay.Format("2006-01-02")
+			return startOfWeek, endOfWeek
+		}
+	}
+	return startOfWeek, endOfWeek
+}
+
 func getWeekRanges(year int, month time.Month) map[int]string {
 	weekRanges := make(map[int]string)
 	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
