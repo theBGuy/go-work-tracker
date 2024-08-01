@@ -215,7 +215,13 @@ func (a *App) TimeElapsed() int {
 }
 
 func (a *App) ShowWindow() {
+	if runtime.WindowIsMinimised(a.ctx) {
+		runtime.WindowUnminimise(a.ctx)
+	} else {
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+	}
 	runtime.WindowShow(a.ctx)
+	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
 
 // Display a confirmation dialog
