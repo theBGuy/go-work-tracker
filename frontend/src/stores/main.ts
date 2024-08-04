@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist, subscribeWithSelector } from "zustand/middleware";
 
 interface Store {
+  appMode: "normal" | "widget";
+  setAppMode: (mode: "normal" | "widget") => void;
   organizations: main.Organization[];
   getOrganizations: () => main.Organization[];
   addOrganization: (organization: main.Organization) => void;
@@ -53,6 +55,11 @@ interface Store {
 export const useAppStore = create(
   persist(
     subscribeWithSelector<Store>((set, get) => ({
+      appMode: "normal",
+      setAppMode: (mode: "normal" | "widget") => {
+        if (mode === get().appMode) return;
+        set({ appMode: mode });
+      },
       organizations: [],
       getOrganizations: () => JSON.parse(JSON.stringify(get().organizations)),
       addOrganization: (organization: main.Organization) => {

@@ -56,6 +56,7 @@ function App() {
   // const renderCount = useRef(0);
   // renderCount.current += 1;
   // console.log("App rendered", renderCount.current);
+  const appMode = useAppStore((state) => state.appMode);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
   const currentMonth = getMonth();
@@ -417,6 +418,10 @@ function App() {
       setProjWorkTotals(dayTotal, weekTotal, monthTotal);
     });
   }, [activeProj, projects]);
+
+  if (appMode === "widget") {
+    return <ActiveSession stopTimer={stopTimer} />;
+  }
 
   return (
     <div id="App">
