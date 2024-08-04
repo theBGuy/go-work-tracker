@@ -51,9 +51,13 @@ export function GetYearlyWorkTime(arg1:number,arg2:number):Promise<number>;
 
 export function GetYearlyWorkTimeByProject(arg1:number,arg2:number):Promise<{[key: string]: number}>;
 
+export function MinimizeWindow():Promise<void>;
+
 export function NewOrganization(arg1:string,arg2:string):Promise<main.NewOrgRet>;
 
 export function NewProject(arg1:string,arg2:string):Promise<main.Project>;
+
+export function NormalizeWindow():Promise<void>;
 
 export function RenameOrganization(arg1:number,arg2:string):Promise<main.Organization>;
 
