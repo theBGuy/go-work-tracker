@@ -242,25 +242,60 @@ func (a *App) ConfirmAction(title string, message string) bool {
 var normalOrgX, normalOrgY int
 var minOrgX, minOrgY int
 
+// type WindowSize struct {
+// 	Width  int `json:"width"`
+// 	Height int `json:"height"`
+// }
+
+// func getScreenSize() (WindowSize, error) {
+// 	if err := glfw.Init(); err != nil {
+// 		fmt.Println("failed to initialize glfw:", err)
+// 		return WindowSize{}, err
+// 	}
+// 	defer glfw.Terminate()
+
+// 	// Get the primary monitor
+// 	monitor := glfw.GetPrimaryMonitor()
+// 	if monitor == nil {
+// 		fmt.Println("failed to get primary monitor")
+// 		return WindowSize{}, errors.New("failed to get primary monitor")
+// 	}
+
+// 	// Get the video mode of the primary monitor
+// 	mode := monitor.GetVideoMode()
+// 	if mode == nil {
+// 		fmt.Println("failed to get video mode")
+// 		return WindowSize{}, errors.New("failed to get video mode")
+// 	}
+
+// 	return WindowSize{Width: mode.Width, Height: mode.Height}, nil
+// }
+
 func (a *App) NormalizeWindow() {
-	minOrgX, minOrgY = runtime.WindowGetPosition(a.ctx)
+	// minOrgX, minOrgY = runtime.WindowGetPosition(a.ctx)
 	runtime.WindowSetMaxSize(a.ctx, 0, 0)
 	runtime.WindowSetMinSize(a.ctx, 0, 0)
-	if normalOrgX != 0 && normalOrgY != 0 {
-		runtime.WindowSetPosition(a.ctx, normalOrgX, normalOrgY)
-	}
+	runtime.WindowCenter(a.ctx)
+	// if normalOrgX != 0 && normalOrgY != 0 {
+	// 	runtime.WindowSetPosition(a.ctx, normalOrgX, normalOrgY)
+	// }
 	runtime.WindowSetSize(a.ctx, WIN_WIDTH, WIN_HEIGHT)
 	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
 
 func (a *App) MinimizeWindow() {
-	normalOrgX, normalOrgY = runtime.WindowGetPosition(a.ctx)
+	// winDim, err := getScreenSize()
+	// if err != nil {
+	// 	return
+	// }
+	// fmt.Println("Screen size: ", winDim)
+	// normalOrgX, normalOrgY = runtime.WindowGetPosition(a.ctx)
 	runtime.WindowSetSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	runtime.WindowSetMaxSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	runtime.WindowSetMinSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	// How do I get the position of the bottom right corner of the screen?
-	if minOrgX != 0 && minOrgY != 0 {
-		runtime.WindowSetPosition(a.ctx, minOrgX, minOrgY)
-	}
+	// if minOrgX != 0 && minOrgY != 0 {
+	// 	runtime.WindowSetPosition(a.ctx, minOrgX, minOrgY)
+	// }
 	runtime.WindowSetAlwaysOnTop(a.ctx, true)
 }
