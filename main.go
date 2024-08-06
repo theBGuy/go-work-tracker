@@ -16,10 +16,12 @@ var assets embed.FS
 var WailsConfigFile []byte
 
 const (
-	WIN_HEIGHT    = 768
-	WIN_WIDTH     = 1024
-	WIDGET_HEIGHT = 100
-	WIDGET_WIDTH  = 300
+	WIN_HEIGHT     = 768
+	WIN_WIDTH      = 1024
+	MIN_WIN_HEIGHT = 560
+	MIN_WIN_WIDTH  = 925
+	WIDGET_HEIGHT  = 100
+	WIDGET_WIDTH   = 300
 )
 
 func main() {
@@ -32,9 +34,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  appTitle,
-		Width:  WIN_WIDTH,
-		Height: WIN_HEIGHT,
+		Title:     appTitle,
+		Width:     WIN_WIDTH,
+		Height:    WIN_HEIGHT,
+		MinHeight: MIN_WIN_HEIGHT,
+		MinWidth:  MIN_WIN_WIDTH,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

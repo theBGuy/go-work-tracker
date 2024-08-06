@@ -273,16 +273,16 @@ var minOrgX, minOrgY int
 
 func (a *App) NormalizeWindow() {
 	runtime.WindowSetMaxSize(a.ctx, 0, 0)
-	runtime.WindowSetMinSize(a.ctx, 0, 0)
 	runtime.WindowCenter(a.ctx)
 	runtime.WindowSetSize(a.ctx, WIN_WIDTH, WIN_HEIGHT)
+	runtime.WindowSetMinSize(a.ctx, MIN_WIN_WIDTH, MIN_WIN_HEIGHT)
 	runtime.WindowCenter(a.ctx)
 	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
 
 func (a *App) MinimizeWindow() {
+	runtime.WindowSetMinSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	runtime.WindowSetSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	runtime.WindowSetMaxSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
-	runtime.WindowSetMinSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
 	runtime.WindowSetAlwaysOnTop(a.ctx, true)
 }
