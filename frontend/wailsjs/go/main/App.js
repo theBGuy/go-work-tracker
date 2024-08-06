@@ -98,12 +98,20 @@ export function GetYearlyWorkTimeByProject(arg1, arg2) {
   return window['go']['main']['App']['GetYearlyWorkTimeByProject'](arg1, arg2);
 }
 
+export function MinimizeWindow() {
+  return window['go']['main']['App']['MinimizeWindow']();
+}
+
 export function NewOrganization(arg1, arg2) {
   return window['go']['main']['App']['NewOrganization'](arg1, arg2);
 }
 
 export function NewProject(arg1, arg2) {
   return window['go']['main']['App']['NewProject'](arg1, arg2);
+}
+
+export function NormalizeWindow() {
+  return window['go']['main']['App']['NormalizeWindow']();
 }
 
 export function RenameOrganization(arg1, arg2) {

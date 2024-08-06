@@ -238,3 +238,51 @@ func (a *App) ConfirmAction(title string, message string) bool {
 	}
 	return selection == "Yes"
 }
+
+var normalOrgX, normalOrgY int
+var minOrgX, minOrgY int
+
+// type WindowSize struct {
+// 	Width  int `json:"width"`
+// 	Height int `json:"height"`
+// }
+
+// func getScreenSize() (WindowSize, error) {
+// 	if err := glfw.Init(); err != nil {
+// 		fmt.Println("failed to initialize glfw:", err)
+// 		return WindowSize{}, err
+// 	}
+// 	defer glfw.Terminate()
+
+// 	// Get the primary monitor
+// 	monitor := glfw.GetPrimaryMonitor()
+// 	if monitor == nil {
+// 		fmt.Println("failed to get primary monitor")
+// 		return WindowSize{}, errors.New("failed to get primary monitor")
+// 	}
+
+// 	// Get the video mode of the primary monitor
+// 	mode := monitor.GetVideoMode()
+// 	if mode == nil {
+// 		fmt.Println("failed to get video mode")
+// 		return WindowSize{}, errors.New("failed to get video mode")
+// 	}
+
+// 	return WindowSize{Width: mode.Width, Height: mode.Height}, nil
+// }
+
+func (a *App) NormalizeWindow() {
+	runtime.WindowSetMaxSize(a.ctx, 0, 0)
+	runtime.WindowCenter(a.ctx)
+	runtime.WindowSetSize(a.ctx, WIN_WIDTH, WIN_HEIGHT)
+	runtime.WindowSetMinSize(a.ctx, MIN_WIN_WIDTH, MIN_WIN_HEIGHT)
+	runtime.WindowCenter(a.ctx)
+	runtime.WindowSetAlwaysOnTop(a.ctx, false)
+}
+
+func (a *App) MinimizeWindow() {
+	runtime.WindowSetMinSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
+	runtime.WindowSetSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
+	runtime.WindowSetMaxSize(a.ctx, WIDGET_WIDTH, WIDGET_HEIGHT)
+	runtime.WindowSetAlwaysOnTop(a.ctx, true)
+}

@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { AppBar, Toolbar, Typography, Tooltip, IconButton, Badge } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import { AppBar, Badge, IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
+import { useAppStore } from "@/stores/main";
 import { GetVersion, UpdateAvailable } from "../../wailsjs/go/main/App";
 import { EventsEmit, EventsOn } from "../../wailsjs/runtime/runtime";
-import ActiveSession from "./ActiveSession";
 import { useTimerStore } from "../stores/timer";
+import ActiveSession from "./ActiveSession";
 
 const AppFooter: React.FC<{}> = () => {
   const [version, setVersion] = useState("");
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const stopTimer = useTimerStore((state) => state.stopTimer);
   const showMiniTimer = useTimerStore((state) => state.showMiniTimer);
+  const appMode = useAppStore((state) => state.appMode);
 
   EventsOn("update-available", () => {
     setUpdateAvailable(true);
@@ -26,6 +28,10 @@ const AppFooter: React.FC<{}> = () => {
     GetVersion().then(setVersion);
     UpdateAvailable().then(setUpdateAvailable);
   }, []);
+
+  if (appMode === "widget") {
+    return null;
+  }
 
   return (
     <AppBar position="fixed" color="primary" sx={{ top: "auto", bottom: 0 }}>

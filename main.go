@@ -15,6 +15,15 @@ var assets embed.FS
 //go:embed wails.json
 var WailsConfigFile []byte
 
+const (
+	WIN_HEIGHT     = 768
+	WIN_WIDTH      = 1024
+	MIN_WIN_HEIGHT = 560
+	MIN_WIN_WIDTH  = 925
+	WIDGET_HEIGHT  = 100
+	WIDGET_WIDTH   = 300
+)
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
@@ -25,9 +34,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  appTitle,
-		Width:  1024,
-		Height: 768,
+		Title:     appTitle,
+		Width:     WIN_WIDTH,
+		Height:    WIN_HEIGHT,
+		MinHeight: MIN_WIN_HEIGHT,
+		MinWidth:  MIN_WIN_WIDTH,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
