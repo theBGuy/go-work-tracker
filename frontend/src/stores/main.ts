@@ -117,9 +117,11 @@ export const useAppStore = create(
           activeProj: project,
         }));
       },
-      alertTime: 30,
+      alertTime: Number(localStorage.getItem("alertTime")) || 30,
       setAlertTime: (time: number) => {
         if (time === get().alertTime) return;
+        // temp fix so this value persists
+        localStorage.setItem("alertTime", time.toString());
         set({ alertTime: time });
       },
       workTime: 0,
