@@ -659,6 +659,7 @@ func (a *App) GetOrgWorkTimeByWeek(year int, month time.Month, week int, organiz
 		return 0, err
 	}
 	startOfWeek, endOfWeek := getWeekRange(year, month, week)
+	fmt.Printf("week %v startOfWeek: %s, endOfWeek: %s\n", week, startOfWeek, endOfWeek)
 
 	err = a.db.Table("work_hours").
 		Select("COALESCE(SUM(work_hours.seconds), 0)").

@@ -257,6 +257,7 @@ func getWeekRange(year int, month time.Month, week int) (startOfWeek string, end
 			endOfWeek = currDay.Format("2006-01-02")
 			return startOfWeek, endOfWeek
 		}
+		currDay = currDay.AddDate(0, 0, 1)
 	}
 	return startOfWeek, endOfWeek
 }
