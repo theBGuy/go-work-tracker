@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { ExportByMonth, ExportByYear, GetMonthlyWorkTime, GetYearlyWorkTime } from "@go/main/App";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import GetAppIcon from "@mui/icons-material/GetApp";
 import {
-  AccordionSummary,
-  Typography,
-  Button,
-  Select,
-  MenuItem,
   AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Collapse,
+  FormControl,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Box,
-  Collapse,
   Tooltip,
-  FormControl,
+  Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import GetAppIcon from "@mui/icons-material/GetApp";
-import { styled } from "@mui/system";
 import MuiAccordion from "@mui/material/Accordion";
-import { GetYearlyWorkTime, GetMonthlyWorkTime, ExportByYear, ExportByMonth } from "@go/main/App";
+import { styled } from "@mui/system";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 
-import { months, formatTime, getMonth } from "../utils/utils";
-import { useTimerStore } from "../stores/timer";
 import { main } from "@go/models";
+import { useTimerStore } from "../stores/timer";
+import { formatTime, getMonth, months } from "../utils/utils";
 
 enum ExportType {
   CSV = "csv",
@@ -66,6 +66,29 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ activeOrganizatio
   const [monthlyWorkTimes, setMonthlyWorkTimes] = useState<Record<number, Record<string, number>>>({});
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1999 }, (_, i) => 2000 + i);
+  const shownYears = useMemo(() => {
+    if (!activeOrganization) return years;
+    const createdAt = new Date(activeOrganization.created_at);
+    const createdYear = createdAt.getFullYear();
+    return Array.from({ length: currentYear - createdYear + 1 }, (_, i) => createdYear + i);
+  }, [activeOrganization]);
+  const shownMonths = useMemo(() => {
+    if (!activeOrganization) return Object.entries(months);
+    const createdAt = new Date(activeOrganization.created_at);
+    const createdYear = createdAt.getFullYear();
+    const createdMonth = createdAt.getMonth() + 1;
+    if (selectedYear === createdYear) {
+      return Object.entries(months).filter(([monthNumber]) => Number(monthNumber) >= createdMonth);
+    }
+    return Object.entries(months);
+  }, [activeOrganization, selectedYear]);
+
+  useEffect(() => {
+    const monthInList = shownMonths.find(([monthNumber]) => Number(monthNumber) === selectedMonth);
+    if (!monthInList) {
+      setSelectedMonth(Number(shownMonths[0][0]));
+    }
+  }, [shownMonths]);
 
   /**
    * Get the yearly and monthly work times when the app loads
@@ -128,7 +151,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ activeOrganizatio
             onChange={(event) => setSelectedYear(event.target.value as number)}
             onClick={(event) => event.stopPropagation()}
           >
-            {years.map((year) => (
+            {shownYears.map((year) => (
               <MenuItem key={year} value={year}>
                 {year}
               </MenuItem>
@@ -157,7 +180,7 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ activeOrganizatio
                       onChange={(event) => setSelectedMonth(event.target.value as number)}
                       onClick={(event) => event.stopPropagation()}
                     >
-                      {Object.entries(months).map(([monthNumber, monthName]) => (
+                      {shownMonths.map(([monthNumber, monthName]) => (
                         <MenuItem key={Number(monthNumber)} value={Number(monthNumber)}>
                           {monthName}
                         </MenuItem>
