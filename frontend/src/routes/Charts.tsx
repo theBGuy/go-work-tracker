@@ -7,7 +7,7 @@ import { main } from "@go/models";
 import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
 import { type AxisConfig } from "@mui/x-charts";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface GraphData {
   // @ts-ignore
@@ -27,13 +27,6 @@ const Time = {
 function Charts() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1999 }, (_, i) => 2000 + i);
-  const organizations = useAppStore((state) => state.organizations);
-  const [selectedOrganization, setSelectedOrganization] = useState(useAppStore.getState().activeOrg);
-  const [projects, setProjects] = useState<main.Project[]>(useAppStore.getState().getProjects());
-  const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(getMonth());
-  const [formatType, setFormatType] = useState<ChartFormatType>("seconds");
   // need a better color scheme
   const colors = [
     "lightgray",
@@ -65,6 +58,37 @@ function Charts() {
       valueFormatter: (value: number) => Math.trunc(value / 3600).toString(),
     },
   };
+  const organizations = useAppStore((state) => state.organizations);
+  const [selectedOrganization, setSelectedOrganization] = useState(useAppStore.getState().activeOrg);
+  const [projects, setProjects] = useState<main.Project[]>(useAppStore.getState().getProjects());
+  const [dailyWorkTimes, setDailyWorkTimes] = useState<GraphData[]>([]);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(getMonth());
+  const [formatType, setFormatType] = useState<ChartFormatType>("seconds");
+
+  const shownYears = useMemo(() => {
+    if (!selectedOrganization) return years;
+    const createdAt = new Date(selectedOrganization.created_at);
+    const createdYear = createdAt.getFullYear();
+    return Array.from({ length: currentYear - createdYear + 1 }, (_, i) => createdYear + i);
+  }, [selectedOrganization]);
+  const shownMonths = useMemo(() => {
+    if (!selectedOrganization) return Object.entries(months);
+    const createdAt = new Date(selectedOrganization.created_at);
+    const createdYear = createdAt.getFullYear();
+    const createdMonth = createdAt.getMonth() + 1;
+    if (selectedYear === createdYear) {
+      return Object.entries(months).filter(([monthNumber]) => Number(monthNumber) >= createdMonth);
+    }
+    return Object.entries(months);
+  }, [selectedOrganization, selectedYear]);
+
+  useEffect(() => {
+    const monthInList = shownMonths.find(([monthNumber]) => Number(monthNumber) === selectedMonth);
+    if (!monthInList) {
+      setSelectedMonth(Number(shownMonths[0][0]));
+    }
+  }, [shownMonths]);
 
   useEffect(() => {
     const timerSubscription = useTimerStore.subscribe(
@@ -162,7 +186,7 @@ function Charts() {
                 labelId="year-label"
                 onChange={(event) => setSelectedYear(event.target.value as number)}
               >
-                {years.map((year) => (
+                {shownYears.map((year) => (
                   <MenuItem key={year} value={year}>
                     {year}
                   </MenuItem>
@@ -176,7 +200,7 @@ function Charts() {
                 label="Month"
                 onChange={(event) => setSelectedMonth(event.target.value as number)}
               >
-                {Object.entries(months).map(([monthNumber, monthName]) => (
+                {shownMonths.map(([monthNumber, monthName]) => (
                   <MenuItem key={Number(monthNumber)} value={Number(monthNumber)}>
                     {monthName}
                   </MenuItem>
