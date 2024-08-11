@@ -51,11 +51,13 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   // const renderCount = useRef(0);
   // renderCount.current += 1;
   // console.log("App rendered", renderCount.current);
+  const navigate = useNavigate();
   const appMode = useAppStore((state) => state.appMode);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
@@ -456,6 +458,7 @@ function App() {
               Check for updates
             </MenuItem>
             <Divider />
+            <MenuItem onClick={() => navigate("/sessions")}>Manage Work Sessions</MenuItem>
             <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
             <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
             <MenuItem onClick={() => handleOpenEditOrg(activeOrg?.id)}>Edit Current Organization</MenuItem>
