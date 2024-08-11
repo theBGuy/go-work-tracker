@@ -44,6 +44,16 @@ type WorkHours struct {
 	ProjectID uint           `json:"project_id"`
 }
 
+type WorkSession struct {
+	ID        uint           `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	Date      string         `json:"date"`
+	Seconds   int            `json:"seconds"`
+	ProjectID uint           `json:"project_id"`
+}
+
 var (
 	Logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 )
@@ -88,7 +98,7 @@ func NewDb(dbDir string) *gorm.DB {
 
 	fixOutdatedDb(db)
 
-	err = db.AutoMigrate(&WorkHours{}, &Project{}, &Organization{})
+	err = db.AutoMigrate(&WorkHours{}, &Project{}, &Organization{}, &WorkSession{})
 	handleDBError(err)
 
 	return db
@@ -257,6 +267,15 @@ func (a *App) NewProject(organizationName string, projectName string) (Project, 
 	return project, nil
 }
 
+// GetProjects returns the list of all projects
+func (a *App) GetAllProjects() (projects []Project, err error) {
+	if err := a.db.Find(&projects).Where("projects.deleted_at IS NULL").Error; err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}
+
 func (a *App) SetProject(projectID uint) error {
 	if a.isRunning {
 		a.StopTimer()
@@ -388,7 +407,7 @@ func (a *App) GetOrganizations() (organizations []Organization, err error) {
 	return organizations, nil
 }
 
-func (a *App) saveTimer(projectID uint) {
+func (a *App) saveTimer(projectID uint) int {
 	endTime := time.Now()
 	secsWorked := 0
 	if !a.lastSave.IsZero() {
@@ -418,6 +437,8 @@ func (a *App) saveTimer(projectID uint) {
 	handleDBError(err)
 
 	a.lastSave = time.Now()
+
+	return secsWorked
 }
 
 // GetWorkTime returns the total seconds worked on the specified date
@@ -896,4 +917,136 @@ func (a *App) GetYearlyWorkTimeByProject(year int, organizationID uint) (yearlyW
 	}
 
 	return yearlyWorkTimes, nil
+}
+
+// NewWorkSession creates a new work session for the specified project
+func (a *App) NewWorkSession(projectID uint, seconds int) (WorkSession, error) {
+	if projectID == 0 {
+		return WorkSession{}, errors.New("project ID is 0")
+	}
+
+	project, err := a.getProject(projectID)
+	if err != nil {
+		return WorkSession{}, err
+	}
+
+	workSession := WorkSession{
+		Date:      time.Now().Format("2006-01-02"),
+		ProjectID: project.ID,
+		Seconds:   seconds,
+	}
+	if err := a.db.Create(&workSession).Error; err != nil {
+		handleDBError(err)
+	}
+	return workSession, nil
+}
+
+// TransferWorkSession transfers the specified work session to the specified project
+func (a *App) TransferWorkSession(workSessionID, projectID uint) error {
+	if workSessionID == 0 || projectID == 0 {
+		return errors.New("work session ID or project ID is 0")
+	}
+
+	// Find the work session
+	var workSession WorkSession
+	if err := a.db.Where(&WorkSession{ID: workSessionID}).First(&workSession).Error; err != nil {
+		return err
+	}
+
+	// Find the project we are transferring to
+	var project Project
+	if err := a.db.Where(&Project{ID: projectID}).First(&project).Error; err != nil {
+		return err
+	}
+
+	// Find or create the project's WorkHours entry
+	workHours := WorkHours{
+		Date:      workSession.Date,
+		ProjectID: project.ID,
+		Seconds:   0,
+	}
+
+	if err := a.db.FirstOrCreate(&workHours, WorkHours{Date: workHours.Date, ProjectID: project.ID}).Error; err != nil {
+		return err
+	}
+
+	// Subtract the seconds from the original project's WorkHours entry
+	var originalWorkHours WorkHours
+	if err := a.db.Where(&WorkHours{ProjectID: workSession.ProjectID, Date: workSession.Date}).First(&originalWorkHours).Error; err != nil {
+		return err
+	}
+
+	if err := a.db.Model(&originalWorkHours).Update("seconds", gorm.Expr("seconds - ?", workSession.Seconds)).Error; err != nil {
+		return err
+	}
+
+	// Add the seconds to the project's WorkHours entry
+	if err := a.db.Model(&workHours).Update("seconds", gorm.Expr("seconds + ?", workSession.Seconds)).Error; err != nil {
+		return err
+	}
+
+	// Update the work session's project ID
+	workSession.ProjectID = project.ID
+	if err := a.db.Save(&workSession).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetWorkSessions returns the list of work sessions
+func (a *App) GetWorkSessions() (workSessions []WorkSession, err error) {
+	err = a.db.Find(&workSessions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return workSessions, nil
+}
+
+// GetWorkSessionsByProject returns the list of work sessions for the specified project
+func (a *App) GetWorkSessionsByProject(projectID uint) (workSessions []WorkSession, err error) {
+	err = a.db.Where(&WorkSession{ProjectID: projectID}).Find(&workSessions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return workSessions, nil
+}
+
+// GetWorkSessionsByDate returns the list of work sessions for the specified date
+func (a *App) GetWorkSessionsByDate(date string) (workSessions []WorkSession, err error) {
+	err = a.db.Where(&WorkSession{Date: date}).Find(&workSessions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return workSessions, nil
+}
+
+// DeleteWorkSession deletes the specified work session
+func (a *App) DeleteWorkSession(workSessionID uint) {
+	if workSessionID == 0 {
+		return
+	}
+
+	var workSession WorkSession
+	if err := a.db.Where(&WorkSession{ID: workSessionID}).First(&workSession).Error; err != nil {
+		handleDBError(err)
+	}
+
+	if err := a.db.Delete(&workSession).Error; err != nil {
+		handleDBError(err)
+	}
+
+	// Update the project's WorkHours entry
+	var workHours WorkHours
+	if err := a.db.Where(&WorkHours{ProjectID: workSession.ProjectID, Date: workSession.Date}).First(&workHours).Error; err != nil {
+		handleDBError(err)
+	}
+
+	// Subtract the seconds from the project's WorkHours entry
+	if err := a.db.Model(&workHours).Update("seconds", gorm.Expr("seconds - ?", workSession.Seconds)).Error; err != nil {
+		handleDBError(err)
+	}
 }

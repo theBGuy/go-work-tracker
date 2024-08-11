@@ -18,6 +18,10 @@ export function DeleteProject(arg1) {
   return window['go']['main']['App']['DeleteProject'](arg1);
 }
 
+export function DeleteWorkSession(arg1) {
+  return window['go']['main']['App']['DeleteWorkSession'](arg1);
+}
+
 export function ExportByMonth(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['ExportByMonth'](arg1, arg2, arg3, arg4);
 }
@@ -28,6 +32,10 @@ export function ExportByYear(arg1, arg2, arg3) {
 
 export function GetActiveTimer() {
   return window['go']['main']['App']['GetActiveTimer']();
+}
+
+export function GetAllProjects() {
+  return window['go']['main']['App']['GetAllProjects']();
 }
 
 export function GetDailyWorkTimeByMonth(arg1, arg2, arg3) {
@@ -74,6 +82,18 @@ export function GetWeeklyWorkTime(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetWeeklyWorkTime'](arg1, arg2, arg3);
 }
 
+export function GetWorkSessions() {
+  return window['go']['main']['App']['GetWorkSessions']();
+}
+
+export function GetWorkSessionsByDate(arg1) {
+  return window['go']['main']['App']['GetWorkSessionsByDate'](arg1);
+}
+
+export function GetWorkSessionsByProject(arg1) {
+  return window['go']['main']['App']['GetWorkSessionsByProject'](arg1);
+}
+
 export function GetWorkTime(arg1, arg2) {
   return window['go']['main']['App']['GetWorkTime'](arg1, arg2);
 }
@@ -108,6 +128,10 @@ export function NewOrganization(arg1, arg2) {
 
 export function NewProject(arg1, arg2) {
   return window['go']['main']['App']['NewProject'](arg1, arg2);
+}
+
+export function NewWorkSession(arg1, arg2) {
+  return window['go']['main']['App']['NewWorkSession'](arg1, arg2);
 }
 
 export function NormalizeWindow() {
@@ -156,6 +180,10 @@ export function ToggleFavoriteOrganization(arg1) {
 
 export function ToggleFavoriteProject(arg1) {
   return window['go']['main']['App']['ToggleFavoriteProject'](arg1);
+}
+
+export function TransferWorkSession(arg1, arg2) {
+  return window['go']['main']['App']['TransferWorkSession'](arg1, arg2);
 }
 
 export function UpdateAvailable() {

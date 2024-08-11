@@ -200,7 +200,8 @@ func (a *App) StopTimer() {
 	if !a.isRunning {
 		return
 	}
-	a.saveTimer(a.project.ID)
+	secsWork := a.saveTimer(a.project.ID)
+	a.NewWorkSession(a.project.ID, secsWork)
 	cancel()
 	a.isRunning = false
 	a.lastSave = time.Time{}
