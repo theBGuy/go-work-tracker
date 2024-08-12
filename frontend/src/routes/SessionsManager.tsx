@@ -1,5 +1,6 @@
 import NavBar from "@/components/NavBar";
-import { DeleteWorkSession, TransferWorkSession } from "@go/main/App";
+import { useTimerStore } from "@/stores/timer";
+import { DeleteWorkSession, GetWorkSessions, TransferWorkSession } from "@go/main/App";
 import { main } from "@go/models";
 import Delete from "@mui/icons-material/Delete";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -19,7 +20,7 @@ import {
   Toolbar,
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridActionsCellItemProps, GridColDef } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 
 type LoaderData = {
@@ -138,6 +139,25 @@ export default function SessionsManager() {
   const { sessions: initalSessions, projectsMap, orgMap } = useLoaderData() as LoaderData;
   const [sessions, setSessions] = useState(initalSessions);
 
+  useEffect(() => {
+    // TODO: We don't really need to fetch the entire list of sessions here just the new one
+    const timerSubscription = useTimerStore.subscribe(
+      (state) => state.running,
+      (curr) => {
+        // Time has been stopped fetch new data
+        if (!curr) {
+          GetWorkSessions().then((sessions) => {
+            setSessions(sessions);
+          });
+        }
+      }
+    );
+
+    return () => {
+      timerSubscription();
+    };
+  }, []);
+
   const handleDelete = async (id: number) => {
     await DeleteWorkSession(id);
     setSessions(sessions.filter((session) => session.id !== id));
@@ -210,7 +230,7 @@ export default function SessionsManager() {
           <NavBar />
         </Toolbar>
       </AppBar>
-      <Box sx={{ height: 400, width: "100%", backgroundColor: "white" }}>
+      <Box sx={{ height: "65vh", width: "100%", backgroundColor: "white" }}>
         <DataGrid
           rows={sessions}
           columns={columns}
