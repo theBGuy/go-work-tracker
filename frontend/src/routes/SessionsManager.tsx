@@ -19,7 +19,7 @@ import {
   Select,
   Toolbar,
 } from "@mui/material";
-import { DataGrid, GridActionsCellItem, GridActionsCellItemProps, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridActionsCellItem, GridActionsCellItemProps, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 
@@ -181,7 +181,7 @@ export default function SessionsManager() {
       field: "project_id",
       headerName: "Project",
       width: 250,
-      valueFormatter: (value) => orgMap.get(value) + "/" + projectsMap.get(value),
+      valueGetter: (value) => value && orgMap.get(value) + "/" + projectsMap.get(value),
     },
     {
       field: "date",
@@ -241,6 +241,8 @@ export default function SessionsManager() {
               },
             },
           }}
+          slots={{ toolbar: GridToolbar }}
+          slotProps={{ toolbar: { showQuickFilter: true } }}
           pageSizeOptions={[5]}
           checkboxSelection={false}
           disableRowSelectionOnClick
