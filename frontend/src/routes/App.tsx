@@ -35,6 +35,7 @@ import {
   ToggleFavoriteProject,
 } from "@go/main/App";
 import { main } from "@go/models";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -48,6 +49,7 @@ import {
   Menu,
   MenuItem,
   Toolbar,
+  Tooltip,
   useMediaQuery,
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
@@ -459,8 +461,6 @@ function App() {
             </MenuItem>
             <Divider />
             <MenuItem onClick={() => navigate("/sessions")}>Manage Work Sessions</MenuItem>
-            <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
-            <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
             <MenuItem onClick={() => handleOpenEditOrg(activeOrg?.id)}>Edit Current Organization</MenuItem>
             <MenuItem onClick={() => handleDeleteOrganization(activeOrg?.id)}>Delete Current Organization</MenuItem>
           </Menu>
@@ -489,6 +489,11 @@ function App() {
               showDelete={true}
               deleteOnClick={handleDeleteOrganization}
             />
+            <Tooltip title="Add new organization" placement="bottom">
+              <IconButton onClick={handleOpenNewOrg}>
+                <AddCircleIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* Dropdown to select project */}
@@ -510,6 +515,11 @@ function App() {
               showDelete={true}
               deleteOnClick={handleDeleteProject}
             />
+            <Tooltip title="Add new project" placement="bottom">
+              <IconButton onClick={handleOpenNewProj}>
+                <AddCircleIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
