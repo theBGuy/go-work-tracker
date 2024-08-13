@@ -5,6 +5,7 @@ on:
     tags:
       # Match any new tag
       - "v*"
+  workflow_dispatch:
 
 env:
   APP_ENV: production
