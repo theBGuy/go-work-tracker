@@ -18,6 +18,10 @@ const router = createHashRouter([
   {
     path: "/",
     element: <App />,
+    // loader: async () => {
+    //   const orgs = await GetOrganizations();
+    //   return { orgs };
+    // },
   },
   {
     path: "/charts",
@@ -52,7 +56,6 @@ const router = createHashRouter([
 // Track active timer outside of the component to avoid it stopping when we change pages
 let workTimeInterval: NodeJS.Timeout;
 let confirmationInterval: NodeJS.Timeout;
-const timerRunning = useTimerStore.getState().running;
 const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
 const updateDayWorkTotals = useAppStore.getState().updateDayWorkTotals;
@@ -105,7 +108,7 @@ const alertTimeSubscription = useAppStore.subscribe(
   (state) => state.alertTime,
   (curr, prev) => {
     console.log(`Alert time switched from ${prev} to ${curr}`);
-    if (!timerRunning) return;
+    if (!useTimerStore.getState().running) return;
     clearInterval(confirmationInterval);
     if (curr > 0) {
       confirmationInterval = setInterval(() => {

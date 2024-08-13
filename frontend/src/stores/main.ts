@@ -70,13 +70,12 @@ export const useAppStore = create(
       },
       setOrganizations: (organizations: main.Organization[]) => {
         const current = get().organizations;
+        const sortedCurrent = current.toSorted((a, b) => a.id - b.id);
+        const sortedNew = organizations.toSorted((a, b) => a.id - b.id);
         const hasChanged =
-          current.length !== organizations.length ||
-          current.some(
-            (o, i) =>
-              o.name !== organizations[i].name ||
-              o.id !== organizations[i].id ||
-              o.favorite !== organizations[i].favorite
+          sortedCurrent.length !== sortedNew.length ||
+          sortedCurrent.some(
+            (o, i) => o.name !== sortedNew[i].name || o.id !== sortedNew[i].id || o.favorite !== sortedNew[i].favorite
           );
         if (!hasChanged) return;
         set({ organizations });
@@ -85,6 +84,7 @@ export const useAppStore = create(
       getActiveOrganization: () => get().activeOrg,
       setActiveOrganization: (organization: main.Organization) => {
         if (organization === get().activeOrg) return;
+        localStorage.setItem("activeOrg", organization.id.toString());
         set({ activeOrg: organization });
       },
       projects: [],
@@ -97,10 +97,12 @@ export const useAppStore = create(
       },
       setProjects: (projects: main.Project[]) => {
         const current = get().projects;
+        const sortedCurrent = current.toSorted((a, b) => a.id - b.id);
+        const sortedNew = projects.toSorted((a, b) => a.id - b.id);
         const hasChanged =
-          current.length !== projects.length ||
-          current.some(
-            (p, i) => p.name !== projects[i].name || p.id !== projects[i].id || p.favorite !== projects[i].favorite
+          sortedCurrent.length !== sortedNew.length ||
+          sortedCurrent.some(
+            (p, i) => p.name !== sortedNew[i].name || p.id !== sortedNew[i].id || p.favorite !== sortedNew[i].favorite
           );
         if (!hasChanged) return;
         set({ projects });
@@ -109,9 +111,12 @@ export const useAppStore = create(
       getActiveProject: () => get().activeProj as main.Project,
       setActiveProject: (project: main.Project) => {
         if (project === get().activeProj) return;
+        localStorage.setItem("activeProj", project.id.toString());
         set({ activeProj: project });
       },
       setActiveInfo: (organization: main.Organization, project: main.Project) => {
+        localStorage.setItem("activeOrg", organization.id.toString());
+        localStorage.setItem("activeProj", project.id.toString());
         set(() => ({
           activeOrg: organization,
           activeProj: project,

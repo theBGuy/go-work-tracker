@@ -55,6 +55,10 @@ import {
 import { EventsOn } from "@runtime/runtime";
 import { useNavigate } from "react-router-dom";
 
+// type LoaderData = {
+//   orgs: main.Organization[];
+// };
+
 function App() {
   // const renderCount = useRef(0);
   // renderCount.current += 1;
@@ -200,21 +204,19 @@ function App() {
 
   const toggleFavoriteOrg = (organizationID: number) => {
     ToggleFavoriteOrganization(organizationID).then(() => {
-      const org = organizations.find((org) => org.id === organizationID);
-      if (org) {
-        org.favorite = !org.favorite;
-        setOrganizations([...organizations]);
-      }
+      const newOrgs = organizations.map((org) =>
+        org.id === organizationID ? ({ ...org, favorite: !org.favorite } as main.Organization) : org
+      );
+      setOrganizations(newOrgs);
     });
   };
 
   const toggleFavoriteProject = (projectID: number) => {
     ToggleFavoriteProject(projectID).then(() => {
-      const proj = projects.find((p) => p.id === projectID);
-      if (proj) {
-        proj.favorite = !proj.favorite;
-        setProjects([...projects]);
-      }
+      const newProjs = projects.map((proj) =>
+        proj.id === projectID ? ({ ...proj, favorite: !proj.favorite } as main.Project) : proj
+      );
+      setProjects(newProjs);
     });
   };
 
@@ -315,6 +317,29 @@ function App() {
           useTimerStore.getState().setRunning(active.isRunning);
           useTimerStore.getState().setElapsedTime(active.timeElapsed);
           return;
+        }
+
+        try {
+          const localOrgId = parseInt(localStorage.getItem("activeOrg") || "0");
+          const localProjId = parseInt(localStorage.getItem("activeProj") || "0");
+
+          if (localOrgId && localProjId) {
+            const org = orgs.find((org) => org.id === localOrgId);
+            if (org) {
+              const proj = await GetProjects(org.id);
+              proj.sort(handleSort);
+              const project = proj.find((p) => p.id === localProjId);
+              if (project) {
+                await SetOrganization(org.id);
+                await SetProject(project.id);
+                setActiveInfo(org, project);
+                setProjects(proj);
+                return;
+              }
+            }
+          }
+        } catch {
+          console.error("Error parsing active organization and project from local storage");
         }
         console.debug("No active timer found");
         const organization = orgs[0];
