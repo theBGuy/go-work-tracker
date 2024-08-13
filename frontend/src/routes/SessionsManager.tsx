@@ -92,7 +92,6 @@ function TransferSessionActionItem({
       >
         <DialogTitle id="alert-dialog-title">Transfer this session?</DialogTitle>
         <DialogContent>
-          {/* <DialogContentText id="alert-dialog-description">This action cannot be undone.</DialogContentText> */}
           <DialogContentText id="alert-dialog-description">
             Select the project to transfer this session to.
           </DialogContentText>
@@ -121,7 +120,6 @@ function TransferSessionActionItem({
             disabled={project === 0}
             onClick={async () => {
               setOpen(false);
-              // await TransferWorkSession(sessionID, project);
               transferSession(sessionID, project);
             }}
             color="warning"
