@@ -185,7 +185,7 @@ export default function SessionsManager() {
     },
     {
       field: "date",
-      headerName: "Start Time",
+      headerName: "Date",
       width: 200,
       type: "date",
       valueGetter: (value) => value && new Date(value),
