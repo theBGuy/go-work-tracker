@@ -11,11 +11,15 @@ export function DeleteOrganization(arg1:number):Promise<void>;
 
 export function DeleteProject(arg1:number):Promise<void>;
 
+export function DeleteWorkSession(arg1:number):Promise<void>;
+
 export function ExportByMonth(arg1:main.ExportType,arg2:string,arg3:number,arg4:time.Month):Promise<string>;
 
 export function ExportByYear(arg1:main.ExportType,arg2:string,arg3:number):Promise<string>;
 
 export function GetActiveTimer():Promise<main.ActiveTimer>;
+
+export function GetAllProjects():Promise<Array<main.Project>>;
 
 export function GetDailyWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):Promise<{[key: string]: {[key: string]: number}}>;
 
@@ -39,6 +43,12 @@ export function GetWeekOfMonth(arg1:number,arg2:time.Month,arg3:number):Promise<
 
 export function GetWeeklyWorkTime(arg1:number,arg2:time.Month,arg3:number):Promise<{[key: number]: {[key: string]: number}}>;
 
+export function GetWorkSessions():Promise<Array<main.WorkSession>>;
+
+export function GetWorkSessionsByDate(arg1:string):Promise<Array<main.WorkSession>>;
+
+export function GetWorkSessionsByProject(arg1:number):Promise<Array<main.WorkSession>>;
+
 export function GetWorkTime(arg1:string,arg2:number):Promise<number>;
 
 export function GetWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):Promise<{[key: string]: number}>;
@@ -56,6 +66,8 @@ export function MinimizeWindow():Promise<void>;
 export function NewOrganization(arg1:string,arg2:string):Promise<main.NewOrgRet>;
 
 export function NewProject(arg1:string,arg2:string):Promise<main.Project>;
+
+export function NewWorkSession(arg1:number,arg2:number):Promise<main.WorkSession>;
 
 export function NormalizeWindow():Promise<void>;
 
@@ -80,5 +92,7 @@ export function TimerRunning():Promise<boolean>;
 export function ToggleFavoriteOrganization(arg1:number):Promise<void>;
 
 export function ToggleFavoriteProject(arg1:number):Promise<void>;
+
+export function TransferWorkSession(arg1:number,arg2:number):Promise<void>;
 
 export function UpdateAvailable():Promise<boolean>;

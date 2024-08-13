@@ -1,4 +1,4 @@
-import { ShowWindow, TimeElapsed } from "@go/main/App";
+import { GetAllProjects, GetWorkSessions, ShowWindow, TimeElapsed } from "@go/main/App";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
@@ -8,6 +8,7 @@ import ActiveConfirmationDialog from "./components/ActiveConfirmationDialog";
 import AppFooter from "./components/AppFooter";
 import App from "./routes/App";
 import Charts from "./routes/Charts";
+import SessionsManager from "./routes/SessionsManager";
 import Tables from "./routes/Tables";
 import { useAppStore } from "./stores/main";
 import { useTimerStore } from "./stores/timer";
@@ -17,6 +18,10 @@ const router = createHashRouter([
   {
     path: "/",
     element: <App />,
+    // loader: async () => {
+    //   const orgs = await GetOrganizations();
+    //   return { orgs };
+    // },
   },
   {
     path: "/charts",
@@ -26,12 +31,31 @@ const router = createHashRouter([
     path: "/tables",
     element: <Tables />,
   },
+  {
+    path: "/sessions",
+    element: <SessionsManager />,
+    loader: async () => {
+      console.log("Loading sessions");
+      const sessions = await GetWorkSessions();
+      const projects = await GetAllProjects();
+      const orgNames = new Map<number, string>();
+      const orgMap = new Map<number, string>();
+      useAppStore.getState().organizations.forEach((org) => {
+        orgNames.set(org.id, org.name);
+      });
+      const projectsMap = new Map<number, string>();
+      projects.forEach((proj) => {
+        projectsMap.set(proj.id, proj.name);
+        orgMap.set(proj.id, orgNames.get(proj.organization_id)!);
+      });
+      return { sessions, projectsMap, orgMap };
+    },
+  },
 ]);
 
 // Track active timer outside of the component to avoid it stopping when we change pages
 let workTimeInterval: NodeJS.Timeout;
 let confirmationInterval: NodeJS.Timeout;
-const timerRunning = useTimerStore.getState().running;
 const setElapsedTime = useTimerStore.getState().setElapsedTime;
 const setOpenConfirm = useTimerStore.getState().setOpenConfirm;
 const updateDayWorkTotals = useAppStore.getState().updateDayWorkTotals;
@@ -84,7 +108,7 @@ const alertTimeSubscription = useAppStore.subscribe(
   (state) => state.alertTime,
   (curr, prev) => {
     console.log(`Alert time switched from ${prev} to ${curr}`);
-    if (!timerRunning) return;
+    if (!useTimerStore.getState().running) return;
     clearInterval(confirmationInterval);
     if (curr > 0) {
       confirmationInterval = setInterval(() => {

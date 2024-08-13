@@ -35,6 +35,7 @@ import {
   ToggleFavoriteProject,
 } from "@go/main/App";
 import { main } from "@go/models";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -48,14 +49,21 @@ import {
   Menu,
   MenuItem,
   Toolbar,
+  Tooltip,
   useMediaQuery,
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
+import { useNavigate } from "react-router-dom";
+
+// type LoaderData = {
+//   orgs: main.Organization[];
+// };
 
 function App() {
   // const renderCount = useRef(0);
   // renderCount.current += 1;
   // console.log("App rendered", renderCount.current);
+  const navigate = useNavigate();
   const appMode = useAppStore((state) => state.appMode);
   const isScreenHeightLessThan510px = useMediaQuery("(max-height:510px)");
   const currentYear = new Date().getFullYear();
@@ -196,21 +204,19 @@ function App() {
 
   const toggleFavoriteOrg = (organizationID: number) => {
     ToggleFavoriteOrganization(organizationID).then(() => {
-      const org = organizations.find((org) => org.id === organizationID);
-      if (org) {
-        org.favorite = !org.favorite;
-        setOrganizations([...organizations]);
-      }
+      const newOrgs = organizations.map((org) =>
+        org.id === organizationID ? ({ ...org, favorite: !org.favorite } as main.Organization) : org
+      );
+      setOrganizations(newOrgs);
     });
   };
 
   const toggleFavoriteProject = (projectID: number) => {
     ToggleFavoriteProject(projectID).then(() => {
-      const proj = projects.find((p) => p.id === projectID);
-      if (proj) {
-        proj.favorite = !proj.favorite;
-        setProjects([...projects]);
-      }
+      const newProjs = projects.map((proj) =>
+        proj.id === projectID ? ({ ...proj, favorite: !proj.favorite } as main.Project) : proj
+      );
+      setProjects(newProjs);
     });
   };
 
@@ -311,6 +317,29 @@ function App() {
           useTimerStore.getState().setRunning(active.isRunning);
           useTimerStore.getState().setElapsedTime(active.timeElapsed);
           return;
+        }
+
+        try {
+          const localOrgId = parseInt(localStorage.getItem("activeOrg") || "0");
+          const localProjId = parseInt(localStorage.getItem("activeProj") || "0");
+
+          if (localOrgId && localProjId) {
+            const org = orgs.find((org) => org.id === localOrgId);
+            if (org) {
+              const proj = await GetProjects(org.id);
+              proj.sort(handleSort);
+              const project = proj.find((p) => p.id === localProjId);
+              if (project) {
+                await SetOrganization(org.id);
+                await SetProject(project.id);
+                setActiveInfo(org, project);
+                setProjects(proj);
+                return;
+              }
+            }
+          }
+        } catch {
+          console.error("Error parsing active organization and project from local storage");
         }
         console.debug("No active timer found");
         const organization = orgs[0];
@@ -456,8 +485,7 @@ function App() {
               Check for updates
             </MenuItem>
             <Divider />
-            <MenuItem onClick={handleOpenNewOrg}>Add New Organization</MenuItem>
-            <MenuItem onClick={handleOpenNewProj}>Add New Project</MenuItem>
+            <MenuItem onClick={() => navigate("/sessions")}>Manage Work Sessions</MenuItem>
             <MenuItem onClick={() => handleOpenEditOrg(activeOrg?.id)}>Edit Current Organization</MenuItem>
             <MenuItem onClick={() => handleDeleteOrganization(activeOrg?.id)}>Delete Current Organization</MenuItem>
           </Menu>
@@ -486,6 +514,11 @@ function App() {
               showDelete={true}
               deleteOnClick={handleDeleteOrganization}
             />
+            <Tooltip title="Add new organization" placement="bottom">
+              <IconButton onClick={handleOpenNewOrg}>
+                <AddCircleIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* Dropdown to select project */}
@@ -507,6 +540,11 @@ function App() {
               showDelete={true}
               deleteOnClick={handleDeleteProject}
             />
+            <Tooltip title="Add new project" placement="bottom">
+              <IconButton onClick={handleOpenNewProj}>
+                <AddCircleIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
