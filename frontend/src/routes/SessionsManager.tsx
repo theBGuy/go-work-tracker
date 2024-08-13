@@ -238,6 +238,9 @@ export default function SessionsManager() {
                 pageSize: 5,
               },
             },
+            sorting: {
+              sortModel: [{ field: "date", sort: "desc" }],
+            },
           }}
           slots={{ toolbar: GridToolbar }}
           slotProps={{ toolbar: { showQuickFilter: true } }}

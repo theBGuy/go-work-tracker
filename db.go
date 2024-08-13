@@ -438,7 +438,7 @@ func (a *App) saveTimer(projectID uint) int {
 
 	a.lastSave = time.Now()
 
-	return secsWorked
+	return int(endTime.Sub(a.startTime).Seconds())
 }
 
 // GetWorkTime returns the total seconds worked on the specified date
