@@ -49,6 +49,7 @@ jobs:
       - name: Set default version for manual trigger
         if: github.event_name == 'workflow_dispatch'
         id: get_latest_tag
+        shell: bash
         run: |
           latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
           echo "version=$latest_tag" >> $GITHUB_ENV
