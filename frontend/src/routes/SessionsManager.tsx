@@ -1,5 +1,6 @@
 import NavBar from "@/components/NavBar";
 import { useTimerStore } from "@/stores/timer";
+import { formatTime } from "@/utils/utils";
 import { DeleteWorkSession, GetWorkSessions, TransferWorkSession } from "@go/main/App";
 import { main } from "@go/models";
 import Delete from "@mui/icons-material/Delete";
@@ -182,13 +183,14 @@ export default function SessionsManager() {
       valueGetter: (value) => value && orgMap.get(value) + "/" + projectsMap.get(value),
     },
     {
-      field: "date",
+      field: "created_at",
       headerName: "Date",
       width: 200,
-      type: "date",
+      type: "dateTime",
       valueGetter: (value) => value && new Date(value),
+      // valueFormatter: (value) => dateString(value as Date),
     },
-    { field: "seconds", headerName: "Duration", width: 150 },
+    { field: "seconds", headerName: "Duration", width: 150, valueFormatter: (value) => formatTime(value) },
     {
       field: "actions",
       type: "actions",
@@ -239,12 +241,17 @@ export default function SessionsManager() {
               },
             },
             sorting: {
-              sortModel: [{ field: "date", sort: "desc" }],
+              sortModel: [{ field: "created_at", sort: "desc" }],
+            },
+            columns: {
+              columnVisibilityModel: {
+                id: false,
+              },
             },
           }}
           slots={{ toolbar: GridToolbar }}
           slotProps={{ toolbar: { showQuickFilter: true } }}
-          pageSizeOptions={[5]}
+          autoPageSize={true}
           checkboxSelection={false}
           disableRowSelectionOnClick
           sx={{
