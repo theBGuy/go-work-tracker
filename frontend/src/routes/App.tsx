@@ -80,10 +80,10 @@ function App() {
   // Variables for timer
   const resetTimer = useTimerStore((state) => state.resetTimer);
   const timerRunning = useTimerStore((state) => state.running);
-  const workTime = useAppStore((state) => state.workTime);
-  const setWorkTime = useAppStore((state) => state.setWorkTime);
-  const currProjectWorkTime = useAppStore((state) => state.projectWorkTime);
-  const setCurrProjectWorkTime = useAppStore((state) => state.setProjectWorkTime);
+  const orgDayTotal = useAppStore((state) => state.orgDayTotal);
+  const setOrgDayTotal = useAppStore((state) => state.setOrgDayTotal);
+  const projDayTotal = useAppStore((state) => state.projDayTotal);
+  const setProjDayTotal = useAppStore((state) => state.setProjDayTotal);
 
   // Variables for handling work time totals
   const orgWeekTotal = useAppStore((state) => state.orgWeekTotal);
@@ -273,7 +273,7 @@ function App() {
           setSelectedProject(newSelectedProject);
 
           SetProject(newSelectedProject.id).then(() => {
-            GetWorkTimeByProject(newSelectedProject.id, dateString()).then(setCurrProjectWorkTime);
+            GetWorkTimeByProject(newSelectedProject.id, dateString()).then(setProjDayTotal);
           });
         }
       });
@@ -363,14 +363,14 @@ function App() {
         if (!org) return;
         GetWorkTime(curr, org.id).then((time) => {
           console.debug(`Work time for ${org.name}`, time);
-          setWorkTime(time);
+          setOrgDayTotal(time);
         });
 
         const proj = useAppStore.getState().activeProj;
         if (!proj) return;
         GetWorkTimeByProject(proj.id, curr).then((time) => {
           console.debug(`Work time for ${org.name}/${proj.name}`, time);
-          setCurrProjectWorkTime(time);
+          setProjDayTotal(time);
         });
       }
     );
@@ -567,9 +567,9 @@ function App() {
             <Grid item xs={12} sm={4} md={4}>
               <WorkTimeListing
                 title="Today's Work Total"
-                orgTotal={workTime}
+                orgTotal={orgDayTotal}
                 projName={activeProj?.name || ""}
-                projTotal={currProjectWorkTime}
+                projTotal={projDayTotal}
               />
             </Grid>
 

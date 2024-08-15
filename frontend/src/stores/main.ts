@@ -25,11 +25,11 @@ interface Store {
   setActiveInfo: (organization: main.Organization, project: main.Project) => void;
   alertTime: number;
   setAlertTime: (time: number) => void;
-  workTime: number;
-  setWorkTime: (value: number) => void;
+  orgDayTotal: number;
+  setOrgDayTotal: (value: number) => void;
   updateWorkTime: (value: number) => void;
-  projectWorkTime: number;
-  setProjectWorkTime: (value: number) => void;
+  projDayTotal: number;
+  setProjDayTotal: (value: number) => void;
   updateProjectWorkTime: (value: number) => void;
   updateDayWorkTotals: (value: number) => void;
   orgWeekTotal: number;
@@ -129,22 +129,22 @@ export const useAppStore = create(
         localStorage.setItem("alertTime", time.toString());
         set({ alertTime: time });
       },
-      workTime: 0,
-      setWorkTime: (value: number) => {
-        if (value === get().workTime) return;
-        set({ workTime: value });
+      orgDayTotal: 0,
+      setOrgDayTotal: (value: number) => {
+        if (value === get().orgDayTotal) return;
+        set({ orgDayTotal: value });
       },
-      updateWorkTime: (value: number) => set((state) => ({ workTime: state.workTime + value })),
-      projectWorkTime: 0,
-      setProjectWorkTime: (value: number) => {
-        if (value === get().projectWorkTime) return;
-        set({ projectWorkTime: value });
+      updateWorkTime: (value: number) => set((state) => ({ orgDayTotal: state.orgDayTotal + value })),
+      projDayTotal: 0,
+      setProjDayTotal: (value: number) => {
+        if (value === get().projDayTotal) return;
+        set({ projDayTotal: value });
       },
-      updateProjectWorkTime: (value: number) => set((state) => ({ projectWorkTime: state.projectWorkTime + value })),
+      updateProjectWorkTime: (value: number) => set((state) => ({ projDayTotal: state.projDayTotal + value })),
       updateDayWorkTotals: (value: number) => {
         set((state) => ({
-          workTime: state.workTime + value,
-          projectWorkTime: state.projectWorkTime + value,
+          orgDayTotal: state.orgDayTotal + value,
+          projDayTotal: state.projDayTotal + value,
         }));
       },
       orgWeekTotal: 0,
@@ -182,23 +182,23 @@ export const useAppStore = create(
       },
       updateProjMonthTotal: (value: number) => set((state) => ({ projMonthTotal: state.projMonthTotal + value })),
       setProjWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
-        const currDay = get().projectWorkTime;
+        const currDay = get().projDayTotal;
         const currWeek = get().projWeekTotal;
         const currMonth = get().projMonthTotal;
         if (dayTime === currDay && weekTime === currWeek && monthTime === currMonth) return;
         set(() => ({
-          projectWorkTime: dayTime,
+          projDayTotal: dayTime,
           projWeekTotal: weekTime,
           projMonthTotal: monthTime,
         }));
       },
       setOrgWorkTimeTotals: (dayTime: number, weekTime: number, monthTime: number) => {
-        const currDay = get().workTime;
+        const currDay = get().orgDayTotal;
         const currWeek = get().orgWeekTotal;
         const currMonth = get().orgMonthTotal;
         if (dayTime === currDay && weekTime === currWeek && monthTime === currMonth) return;
         set(() => ({
-          workTime: dayTime,
+          orgDayTotal: dayTime,
           orgWeekTotal: weekTime,
           orgMonthTotal: monthTime,
         }));
