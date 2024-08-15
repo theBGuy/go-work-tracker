@@ -73,8 +73,8 @@ const timerSubscription = useTimerStore.subscribe(
   (curr, prev) => {
     console.log(`Time state switched from ${prev} to ${curr}`);
     if (curr) {
-      const orgTotal = useAppStore.getState().orgWeekTotal;
-      const projTotal = useAppStore.getState().projWeekTotal;
+      const orgTotal = useAppStore.getState().orgDayTotal;
+      const projTotal = useAppStore.getState().projDayTotal;
       workTimeInterval = setInterval(() => {
         TimeElapsed().then((currentElapsedTime) => {
           setElapsedTime(currentElapsedTime);
