@@ -18,7 +18,7 @@ Work Tracker is a time tracking application that allows you to record and total 
 
 - `Wails CLI v^2.9.1` [Install Wails](https://wails.io/docs/gettingstarted/installation)
 - `Go v^1.22.0` [Install Go](https://go.dev/doc/install)
-- `Node v^18.20.4` [Install Node](https://nodejs.org/en/download/current)
+- `Node v^20.16.0` [Install Node](https://nodejs.org/en/download/current)
 
 ### Dependencies
 
@@ -29,7 +29,7 @@ Work Tracker is a time tracking application that allows you to record and total 
 - **SQLite**: A C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.
 - **Wails v2**: A framework for building desktop applications using Go & Web Technologies.
 - **Vite v3**: A fast and modern build tool that leverages native ES modules and provides a lightning-fast development server with hot module replacement (HMR).
-- **TypeScript v4**: A strongly typed programming language that builds on JavaScript, giving you better tooling at any scale.
+- **TypeScript v5**: A strongly typed programming language that builds on JavaScript, giving you better tooling at any scale.
 
 ### Live Development
 
@@ -42,8 +42,11 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-![main-page](https://github.com/user-attachments/assets/2bb0c460-264a-415b-9929-25585e6b362e)
+![main-page](https://github.com/user-attachments/assets/0b8910b1-c009-4d8d-97d7-c155eb7b8a00)
 ![yearly-table](https://github.com/user-attachments/assets/54e07ba9-5706-467e-9d05-d2f816479d81)
+![charts](https://github.com/user-attachments/assets/cd383963-821a-446e-9dce-f39f0dc99831)
+![image](https://github.com/user-attachments/assets/2db0375b-2f68-4fd7-83af-7e8df090d86f)
+
 
 ## Contributing
 
