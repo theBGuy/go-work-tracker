@@ -16,10 +16,6 @@ const AppFooter: React.FC<{}> = () => {
   const showMiniTimer = useTimerStore((state) => state.showMiniTimer);
   const appMode = useAppStore((state) => state.appMode);
 
-  EventsOn("update-available", () => {
-    setUpdateAvailable(true);
-  });
-
   const handleUpdate = () => {
     EventsEmit("do-update");
   };
@@ -27,6 +23,14 @@ const AppFooter: React.FC<{}> = () => {
   useEffect(() => {
     GetVersion().then(setVersion);
     UpdateAvailable().then(setUpdateAvailable);
+
+    const updateEvent = EventsOn("update-available", () => {
+      setUpdateAvailable(true);
+    });
+
+    return () => {
+      updateEvent();
+    };
   }, []);
 
   if (appMode === "widget") {
