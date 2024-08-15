@@ -114,11 +114,6 @@ function App() {
   const [editOrg, setEditOrg] = useState(0);
   const [editProj, setEditProj] = useState(0);
 
-  EventsOn("new-day", () => {
-    console.debug("New day event received");
-    setDateStr(dateString());
-  });
-
   const checkForUpdates = async () => {
     setShowSpinner(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -353,6 +348,11 @@ function App() {
       }
     });
 
+    const newDayEvent = EventsOn("new-day", () => {
+      console.debug("New day event received");
+      setDateStr(dateString());
+    });
+
     const daySubscription = useAppStore.subscribe(
       (state) => state.dateStr,
       (curr, prev) => {
@@ -378,6 +378,7 @@ function App() {
     return () => {
       setShowMiniTimer(true);
       daySubscription(); // cleanup
+      newDayEvent(); // cleanup
       // renderCount.current = 0;
     };
   }, []);
