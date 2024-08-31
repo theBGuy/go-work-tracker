@@ -1,4 +1,6 @@
 import { GetAllProjects, GetWorkSessions, ShowWindow, TimeElapsed } from "@go/main/App";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
@@ -13,6 +15,12 @@ import Tables from "./routes/Tables";
 import { useAppStore } from "./stores/main";
 import { useTimerStore } from "./stores/timer";
 import "./style.css";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+});
 
 const router = createHashRouter([
   {
@@ -132,11 +140,14 @@ const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
-    {/* Notifcation container */}
-    <ToastContainer />
-    {/* Handle confirming user still active */}
-    <ActiveConfirmationDialog />
-    <RouterProvider router={router} />
-    <AppFooter />
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      {/* Notifcation container */}
+      <ToastContainer />
+      {/* Handle confirming user still active */}
+      <ActiveConfirmationDialog />
+      <RouterProvider router={router} />
+      <AppFooter />
+    </ThemeProvider>
   </React.StrictMode>
 );
