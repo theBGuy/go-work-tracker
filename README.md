@@ -42,13 +42,13 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-![image](https://github.com/user-attachments/assets/62dcff1f-fa0d-4b08-b493-388dedfe3b99)
+![image](https://github.com/user-attachments/assets/7dee1a67-c021-4189-9d85-b3273fd2166a)
 
-![image](https://github.com/user-attachments/assets/37fd7b5b-aa49-4b19-b655-f0a04c4513e9)
+![image](https://github.com/user-attachments/assets/0c281416-7169-460c-8400-723b1bc39110)
 
-![image](https://github.com/user-attachments/assets/76bd87ee-e823-4faf-9e3d-33e2cb5f8910)
+![image](https://github.com/user-attachments/assets/f4aff877-8052-4e63-9121-6e9ac1e349f1)
 
-![image](https://github.com/user-attachments/assets/c4c30f1c-f16a-4ee7-96c7-a044b43820ab)
+![image](https://github.com/user-attachments/assets/2124f1bf-9973-4a90-a547-937b2f481948)
 
 ## Contributing
 
