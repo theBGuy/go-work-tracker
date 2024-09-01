@@ -230,7 +230,7 @@ export default function SessionsManager() {
           <NavBar />
         </Toolbar>
       </AppBar>
-      <Box sx={{ height: "65vh", width: "100%", backgroundColor: "white" }}>
+      <Box sx={{ height: "65vh", width: "100%" }}>
         <DataGrid
           rows={sessions}
           columns={columns}

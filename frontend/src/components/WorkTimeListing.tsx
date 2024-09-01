@@ -1,5 +1,5 @@
 import { formatTime } from "@/utils/utils";
-import { Typography, List, ListItem, ListItemText } from "@mui/material";
+import { List, ListItem, ListItemText, Typography } from "@mui/material";
 
 interface WorkTimeListingProps {
   title: string;
@@ -19,7 +19,7 @@ const WorkTimeListing: React.FC<WorkTimeListingProps> = ({ title, orgTotal, proj
           <ListItemText primary={`Organization: ${formatTime(orgTotal)}`} />
         </ListItem>
         <ListItem>
-          <ListItemText primary={`Project (${projName}): ${formatTime(projTotal)}`} />
+          <ListItemText primary={`Project: ${formatTime(projTotal)}`} />
         </ListItem>
       </List>
     </>

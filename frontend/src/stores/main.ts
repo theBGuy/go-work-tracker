@@ -6,6 +6,9 @@ import { createJSONStorage, persist, subscribeWithSelector } from "zustand/middl
 interface Store {
   appMode: "normal" | "widget";
   setAppMode: (mode: "normal" | "widget") => void;
+  appTheme: "light" | "dark";
+  setAppTheme: (theme: "light" | "dark") => void;
+  toggleAppTheme: () => void;
   organizations: main.Organization[];
   getOrganizations: () => main.Organization[];
   addOrganization: (organization: main.Organization) => void;
@@ -59,6 +62,17 @@ export const useAppStore = create(
       setAppMode: (mode: "normal" | "widget") => {
         if (mode === get().appMode) return;
         set({ appMode: mode });
+      },
+      appTheme: (localStorage.getItem("appTheme") as Store["appTheme"]) ?? "dark",
+      setAppTheme: (theme: "light" | "dark") => {
+        if (theme === get().appTheme) return;
+        localStorage.setItem("appTheme", theme);
+        set({ appTheme: theme });
+      },
+      toggleAppTheme: () => {
+        const theme = get().appTheme === "dark" ? "light" : "dark";
+        localStorage.setItem("appTheme", theme);
+        set({ appTheme: theme });
       },
       organizations: [],
       getOrganizations: () => JSON.parse(JSON.stringify(get().organizations)),

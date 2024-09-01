@@ -1,5 +1,7 @@
 import { GetAllProjects, GetWorkSessions, ShowWindow, TimeElapsed } from "@go/main/App";
-import React from "react";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import React, { useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -13,6 +15,12 @@ import Tables from "./routes/Tables";
 import { useAppStore } from "./stores/main";
 import { useTimerStore } from "./stores/timer";
 import "./style.css";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+});
 
 const router = createHashRouter([
   {
@@ -127,16 +135,42 @@ const alertTimeSubscription = useAppStore.subscribe(
   }
 );
 
+const AppWithTheme = () => {
+  const appTheme = useAppStore((state) => state.appTheme);
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: appTheme === "dark" ? "dark" : "light",
+          ...(appTheme === "light" && {
+            background: {
+              default: "#f0f0f0",
+            },
+          }),
+        },
+      }),
+    [appTheme]
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {/* Notifcation container */}
+      <ToastContainer />
+      {/* Handle confirming user still active */}
+      <ActiveConfirmationDialog />
+      <RouterProvider router={router} />
+      <AppFooter />
+    </ThemeProvider>
+  );
+};
+
 const container = document.getElementById("root");
 const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
-    {/* Notifcation container */}
-    <ToastContainer />
-    {/* Handle confirming user still active */}
-    <ActiveConfirmationDialog />
-    <RouterProvider router={router} />
-    <AppFooter />
+    <AppWithTheme />
   </React.StrictMode>
 );
