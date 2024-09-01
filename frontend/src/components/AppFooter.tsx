@@ -52,7 +52,7 @@ const AppFooter: React.FC<{}> = () => {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           <IconButton color="inherit">
             <a href="https://github.com/theBGuy" target="_blank" rel="noopener noreferrer">
-              <GitHubIcon />
+              <GitHubIcon sx={{ fill: "white" }} />
             </a>
           </IconButton>
           theBGuy
