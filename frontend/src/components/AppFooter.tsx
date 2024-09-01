@@ -4,9 +4,11 @@ import { AppBar, Badge, IconButton, Toolbar, Tooltip, Typography } from "@mui/ma
 import React, { useEffect, useState } from "react";
 
 import { useAppStore } from "@/stores/main";
-import { GetVersion, UpdateAvailable } from "../../wailsjs/go/main/App";
-import { EventsEmit, EventsOn } from "../../wailsjs/runtime/runtime";
-import { useTimerStore } from "../stores/timer";
+import { useTimerStore } from "@/stores/timer";
+import { GetVersion, UpdateAvailable } from "@go/main/App";
+import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeIcon from "@mui/icons-material/LightModeOutlined";
+import { EventsEmit, EventsOn } from "@runtime/runtime";
 import ActiveSession from "./ActiveSession";
 
 const AppFooter: React.FC<{}> = () => {
@@ -15,6 +17,7 @@ const AppFooter: React.FC<{}> = () => {
   const stopTimer = useTimerStore((state) => state.stopTimer);
   const showMiniTimer = useTimerStore((state) => state.showMiniTimer);
   const appMode = useAppStore((state) => state.appMode);
+  const [appTheme, toggleAppTheme] = useAppStore((state) => [state.appTheme, state.toggleAppTheme]);
 
   const handleUpdate = () => {
     EventsEmit("do-update");
@@ -40,6 +43,12 @@ const AppFooter: React.FC<{}> = () => {
   return (
     <AppBar position="fixed" color="primary" sx={{ top: "auto", bottom: 0 }}>
       <Toolbar>
+        {/* <ThemeModeSwitch value={appTheme === "light"} onChange={toggleAppTheme} /> */}
+        <Tooltip title={`Toggle light/dark mode. Currently ${appTheme} mode`} placement="top-end">
+          <IconButton color="inherit" onClick={toggleAppTheme}>
+            {appTheme === "light" ? <DarkModeIcon /> : <LightModeIcon />}
+          </IconButton>
+        </Tooltip>
         {updateAvailable && (
           <Tooltip title="Update available. Click to restart and apply." placement="top-end">
             <IconButton color="inherit" size="small" onClick={handleUpdate}>

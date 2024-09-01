@@ -1,7 +1,7 @@
 import { GetAllProjects, GetWorkSessions, ShowWindow, TimeElapsed } from "@go/main/App";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import React from "react";
+import React, { useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -135,12 +135,26 @@ const alertTimeSubscription = useAppStore.subscribe(
   }
 );
 
-const container = document.getElementById("root");
-const root = createRoot(container!);
+const AppWithTheme = () => {
+  const appTheme = useAppStore((state) => state.appTheme);
 
-root.render(
-  <React.StrictMode>
-    <ThemeProvider theme={darkTheme}>
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: appTheme === "dark" ? "dark" : "light",
+          ...(appTheme === "light" && {
+            background: {
+              default: "#f0f0f0",
+            },
+          }),
+        },
+      }),
+    [appTheme]
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       {/* Notifcation container */}
       <ToastContainer />
@@ -149,5 +163,14 @@ root.render(
       <RouterProvider router={router} />
       <AppFooter />
     </ThemeProvider>
+  );
+};
+
+const container = document.getElementById("root");
+const root = createRoot(container!);
+
+root.render(
+  <React.StrictMode>
+    <AppWithTheme />
   </React.StrictMode>
 );
