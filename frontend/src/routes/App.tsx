@@ -43,7 +43,7 @@ import {
   Box,
   CircularProgress,
   Divider,
-  Grid,
+  Grid2,
   IconButton,
   ListItemIcon,
   Menu,
@@ -551,51 +551,36 @@ function App() {
       </AppBar>
 
       {/* The main portion, our timer */}
-      <div style={{ marginTop: 15, minHeight: 375, minWidth: 500 }}>
+      <Box marginTop={1} alignItems="center" sx={{ minHeight: 375, minWidth: 500 }}>
         {!isScreenHeightLessThan510px && (
-          <Grid
+          <Grid2
             container
-            spacing={{ xs: 2, md: 4 }}
-            columns={{ xs: 4, sm: 8, md: 12 }}
+            justifyContent="center"
             sx={{
               marginBottom: 4,
-              justifyContent: "space-evenly",
-              paddingLeft: (theme) => theme.spacing(6),
-              paddingRight: (theme) => theme.spacing(3),
             }}
           >
-            <Grid item xs={12} sm={4} md={4}>
-              <WorkTimeListing
-                title="Today's Work Total"
-                orgTotal={orgDayTotal}
-                projName={activeProj?.name || ""}
-                projTotal={projDayTotal}
-              />
-            </Grid>
+            <Grid2 size={{ xs: 12, sm: 4 }}>
+              <WorkTimeListing title="Today's Work Total" orgTotal={orgDayTotal} projTotal={projDayTotal} />
+            </Grid2>
 
-            <Grid item xs={12} sm={4} md={4}>
-              <WorkTimeListing
-                title="Weekly Work Total"
-                orgTotal={orgWeekTotal}
-                projName={activeProj?.name || ""}
-                projTotal={projWeekTotal}
-              />
-            </Grid>
+            <Grid2 size={{ xs: 12, sm: 4 }}>
+              <WorkTimeListing title="Weekly Work Total" orgTotal={orgWeekTotal} projTotal={projWeekTotal} />
+            </Grid2>
 
-            <Grid item xs={12} sm={4} md={4}>
+            <Grid2 size={{ xs: 12, sm: 4 }}>
               <WorkTimeListing
                 title={`${months[currentMonth]}'s Work Total`}
                 orgTotal={orgMonthTotal}
-                projName={activeProj?.name || ""}
                 projTotal={projMonthTotal}
               />
-            </Grid>
-          </Grid>
+            </Grid2>
+          </Grid2>
         )}
 
         {/* Current session */}
         <ActiveSession stopTimer={stopTimer} />
-      </div>
+      </Box>
 
       {/* Handle settings dialog */}
       <SettingsDialog showSettings={showSettings} setShowSettings={setShowSettings} handleMenuClose={handleMenuClose} />
