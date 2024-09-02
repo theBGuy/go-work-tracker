@@ -1,10 +1,11 @@
 import NavBar from "@/components/NavBar";
+import AppBar from "@/components/ui/AppBar";
 import { useAppStore } from "@/stores/main";
 import { useTimerStore } from "@/stores/timer";
 import { formatTime, getMonth, months } from "@/utils/utils";
 import { GetDailyWorkTimeByMonth, GetProjects } from "@go/main/App";
 import { main } from "@go/models";
-import { AppBar, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Paper, Select, Stack, Toolbar } from "@mui/material";
 import { type AxisConfig } from "@mui/x-charts";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useMemo, useState } from "react";

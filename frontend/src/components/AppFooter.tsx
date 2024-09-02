@@ -1,8 +1,9 @@
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import { AppBar, Badge, IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
+import { Badge, IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
+import AppBar from "@/components/ui/AppBar";
 import { useAppStore } from "@/stores/main";
 import { useTimerStore } from "@/stores/timer";
 import { GetVersion, UpdateAvailable } from "@go/main/App";
@@ -43,7 +44,6 @@ const AppFooter: React.FC<{}> = () => {
   return (
     <AppBar position="fixed" color="primary" sx={{ top: "auto", bottom: 0 }}>
       <Toolbar>
-        {/* <ThemeModeSwitch value={appTheme === "light"} onChange={toggleAppTheme} /> */}
         <Tooltip title={`Toggle light/dark mode. Currently ${appTheme} mode`} placement="top-end">
           <IconButton color="inherit" onClick={toggleAppTheme}>
             {appTheme === "light" ? <DarkModeIcon /> : <LightModeIcon />}

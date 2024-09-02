@@ -1,13 +1,14 @@
-import { AppBar, Box, MenuItem, Select, Stack, Toolbar, Typography } from "@mui/material";
-import NavBar from "../components/NavBar";
-import WorkTimeAccordion from "../components/WorkTimeAccordian";
-import { useAppStore } from "../stores/main";
-import { useEffect, useState } from "react";
+import NavBar from "@/components/NavBar";
+import AppBar from "@/components/ui/AppBar";
+import { useAppStore } from "@/stores/main";
+import { handleSort } from "@/utils/utils";
 import { GetProjects } from "@go/main/App";
 import { main } from "@go/models";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
-import { handleSort } from "../utils/utils";
+import { Box, MenuItem, Select, Stack, Toolbar, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import WorkTimeAccordion from "../components/WorkTimeAccordian";
 
 function Tables() {
   const [activeOrganization, setActiveOrganization] = useState(useAppStore.getState().getActiveOrganization());
