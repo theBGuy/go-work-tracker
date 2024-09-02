@@ -16,12 +16,6 @@ import { useAppStore } from "./stores/main";
 import { useTimerStore } from "./stores/timer";
 import "./style.css";
 
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-  },
-});
-
 const router = createHashRouter([
   {
     path: "/",
