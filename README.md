@@ -2,7 +2,13 @@
 
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/theBGuy/go-work-tracker/total?style=for-the-badge)
 
-Work Tracker is a time tracking application that allows you to record and total your work time for each day, month, and year, and per organization. It provides a simple and intuitive interface for starting and stopping the timer, changing the organization, and viewing the total work time.
+Go Work Tracker is a time tracking application that allows you to record and total your work time for each day, month, and year, and per organization. It provides a simple and intuitive interface for starting and stopping the timer, changing the organization, and viewing the total work time.
+
+# Table of contents
+- [Features](#features)
+- [Requirements](#requirements)
+- [Tech Stack/Dependencies](#dependencies)
+- [Screenshots](#screenshots)
 
 ## Features
 
@@ -42,7 +48,9 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-![image](https://github.com/user-attachments/assets/7dee1a67-c021-4189-9d85-b3273fd2166a)
+## Screenshots
+
+![image](https://github.com/user-attachments/assets/68eb1895-7ad2-446f-ad91-f01c68206a44)
 
 ![image](https://github.com/user-attachments/assets/0c281416-7169-460c-8400-723b1bc39110)
 
