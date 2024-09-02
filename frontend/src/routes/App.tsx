@@ -10,6 +10,7 @@ import ActiveSession from "@/components/ActiveSession";
 import EditProjectDialog from "@/components/EditProjectDialog";
 import ModelSelect from "@/components/ModelSelect";
 import NavBar from "@/components/NavBar";
+import AppBar from "@/components/ui/AppBar";
 import WorkTimeListing from "@/components/WorkTimeListing";
 import { useAppStore } from "@/stores/main";
 import { useTimerStore } from "@/stores/timer";
@@ -39,7 +40,6 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
-  AppBar,
   Box,
   CircularProgress,
   Divider,

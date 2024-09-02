@@ -9,6 +9,8 @@ interface Store {
   appTheme: "light" | "dark";
   setAppTheme: (theme: "light" | "dark") => void;
   toggleAppTheme: () => void;
+  enableColorOnDark: boolean;
+  toggleEnableColorOnDark: () => void;
   organizations: main.Organization[];
   getOrganizations: () => main.Organization[];
   addOrganization: (organization: main.Organization) => void;
@@ -73,6 +75,11 @@ export const useAppStore = create(
         const theme = get().appTheme === "dark" ? "light" : "dark";
         localStorage.setItem("appTheme", theme);
         set({ appTheme: theme });
+      },
+      enableColorOnDark: JSON.parse(localStorage.getItem("enableColorOnDark") ?? "false"),
+      toggleEnableColorOnDark: () => {
+        localStorage.setItem("enableColorOnDark", JSON.stringify(!get().enableColorOnDark));
+        set((state) => ({ enableColorOnDark: !state.enableColorOnDark }));
       },
       organizations: [],
       getOrganizations: () => JSON.parse(JSON.stringify(get().organizations)),

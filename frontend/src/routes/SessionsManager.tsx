@@ -1,4 +1,5 @@
 import NavBar from "@/components/NavBar";
+import AppBar from "@/components/ui/AppBar";
 import { useTimerStore } from "@/stores/timer";
 import { formatTime } from "@/utils/utils";
 import { DeleteWorkSession, GetWorkSessions, TransferWorkSession } from "@go/main/App";
@@ -6,7 +7,6 @@ import { main } from "@go/models";
 import Delete from "@mui/icons-material/Delete";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
-  AppBar,
   Box,
   Button,
   Dialog,
