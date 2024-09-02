@@ -47,8 +47,8 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
     <>
       {appMode === "normal" &&
         (mode === "normal" ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <Card sx={{ display: "inline-block", transform: "scale(0.9)" }}>
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Card sx={{ display: "inline-block", transform: "scale(0.9)", minWidth: 180, borderRadius: 2 }}>
               <Tooltip title="Open in widget mode" placement="right">
                 <IconButton sx={{ position: "absolute", top: -5, right: -5 }} onClick={minimize}>
                   <OpenInNew />
@@ -70,7 +70,7 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
                 )}
               </CardActions>
             </Card>
-          </div>
+          </Box>
         ) : (
           // sorta hate how this looks
           <Box
