@@ -17,6 +17,8 @@
     "@mui/material": "^6.0.1",
     "@mui/x-charts": "^7.15.0",
     "@mui/x-data-grid": "^7.15.0",
+    "@mui/x-date-pickers": "^7.21.0",
+    "dayjs": "^1.11.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.1",
@@ -25,6 +27,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/node": "^20.14.12",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
