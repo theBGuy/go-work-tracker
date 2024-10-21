@@ -448,7 +448,10 @@ const WorkTimeAccordion: React.FC<WorkTimeAccordionProps> = ({ activeOrganizatio
                                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                       .map(([day, workTimes]) => (
                                         <React.Fragment key={day}>
-                                          <TableRow onClick={() => handleRowClick(day)}>
+                                          <TableRow
+                                            onClick={() => handleRowClick(day)}
+                                            hover
+                                          >
                                             <TableCell
                                               component="th"
                                               scope="row"
