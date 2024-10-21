@@ -1,3 +1,6 @@
+import { useAppStore } from "@/stores/main";
+import { useTimerStore } from "@/stores/timer";
+import { formatTime } from "@/utils/utils";
 import { MinimizeWindow, NormalizeWindow } from "@go/main/App";
 import OpenInFull from "@mui/icons-material/OpenInFull";
 import OpenInNew from "@mui/icons-material/OpenInNew";
@@ -11,13 +14,11 @@ import {
   CardContent,
   CardHeader,
   IconButton,
+  Paper,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useAppStore } from "../stores/main";
-import { useTimerStore } from "../stores/timer";
-import { formatTime } from "../utils/utils";
 
 interface activeSessionProps {
   stopTimer: () => void;
@@ -73,7 +74,7 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
           </Box>
         ) : (
           // sorta hate how this looks
-          <Box
+          <Paper
             sx={{
               position: "fixed",
               bottom: 70,
@@ -82,7 +83,6 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
               boxShadow: 3,
               borderRadius: 4,
               zIndex: 1000,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
             }}
           >
             <Stack>
@@ -96,7 +96,7 @@ const ActiveSession: React.FC<activeSessionProps> = ({ stopTimer, mode = "normal
                 </IconButton>
               </Stack>
             </Stack>
-          </Box>
+          </Paper>
         ))}
       {appMode === "widget" && (
         <Box
