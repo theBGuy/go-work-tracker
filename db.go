@@ -470,6 +470,78 @@ func (a *App) GetWorkTime(date string, organizationID uint) (seconds int, err er
 	return totalSeconds, nil
 }
 
+// GetWorkTimeForRange(startDate, endDate, organizationID)
+func (a *App) GetWorkTimeForRange(startDate, endDate string, organizationID uint) (workTimes map[string]int, err error) {
+	if startDate == "" || endDate == "" || organizationID == 0 {
+		return nil, nil
+	}
+
+	organization, err := a.getOrganization(organizationID)
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+
+	totalSeconds := 0
+	workTimes = make(map[string]int)
+
+	// Query to get the total work time for each project within the given date range
+	rows, err := a.db.Model(&WorkHours{}).
+		Select("projects.name, COALESCE(SUM(work_hours.seconds), 0) as total_seconds").
+		Joins("JOIN projects ON projects.id = work_hours.project_id").
+		Where("projects.organization_id = ? AND projects.deleted_at IS NULL", organization.ID).
+		Where("work_hours.date >= ? AND work_hours.date <= ?", startDate, endDate).
+		Group("projects.name").
+		Rows()
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate over the rows and populate the map
+	for rows.Next() {
+		var projectName string
+		var projectSeconds int
+		if err := rows.Scan(&projectName, &projectSeconds); err != nil {
+			Logger.Println(err)
+			return nil, err
+		}
+		workTimes[projectName] = projectSeconds
+		totalSeconds += projectSeconds
+	}
+	workTimes["total"] = totalSeconds
+
+	return workTimes, nil
+}
+
+// GetProjectWorkTimeForRange(startDate, endDate, projectID) (seconds, err)
+func (a *App) GetProjectWorkTimeForRange(startDate, endDate string, projectID uint) (seconds int, err error) {
+	if startDate == "" || endDate == "" || projectID == 0 {
+		return 0, nil
+	}
+
+	// Find the project
+	project, err := a.getProject(projectID)
+	if err != nil {
+		Logger.Println(err)
+		return 0, err
+	}
+
+	// Get the total work time for the project within the given date range
+	var totalSeconds int
+	err = a.db.Model(&WorkHours{}).
+		Where("project_id = ? AND date >= ? AND date <= ?", project.ID, startDate, endDate).
+		Select("COALESCE(SUM(seconds), 0)").
+		Row().Scan(&totalSeconds)
+	if err != nil {
+		Logger.Println(err, totalSeconds)
+		return 0, err
+	}
+
+	return totalSeconds, nil
+}
+
 // GetDailyWorkTime returns the total seconds worked for each day for the specified organization
 // func (a *App) GetDailyWorkTime(organizationName string) (dailyWorkTime map[string]int, err error) {
 // 	dailyWorkTime = make(map[string]int)

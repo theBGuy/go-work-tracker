@@ -66,6 +66,10 @@ export function GetProjWorkTimeByWeek(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['GetProjWorkTimeByWeek'](arg1, arg2, arg3, arg4);
 }
 
+export function GetProjectWorkTimeForRange(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetProjectWorkTimeForRange'](arg1, arg2, arg3);
+}
+
 export function GetProjects(arg1) {
   return window['go']['main']['App']['GetProjects'](arg1);
 }
@@ -108,6 +112,10 @@ export function GetWorkTimeByProject(arg1, arg2) {
 
 export function GetWorkTimeByWeek(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['GetWorkTimeByWeek'](arg1, arg2, arg3, arg4);
+}
+
+export function GetWorkTimeForRange(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetWorkTimeForRange'](arg1, arg2, arg3);
 }
 
 export function GetYearlyWorkTime(arg1, arg2) {
