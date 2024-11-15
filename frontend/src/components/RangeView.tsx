@@ -56,26 +56,7 @@ const RangeView: React.FC<RangeViewProps> = ({ openRangeView, setOpenRangeView }
       <DialogTitle>Get Work totals for a date range</DialogTitle>
       <DialogContent>
         <DialogContentText>Select Start and End dates and a Organization</DialogContentText>
-        {/* {workTime !== null && (
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            Total Work Time: {workTime} seconds
-          </Typography>
-        )} */}
         <Box sx={{ p: 3 }}>
-          {/* <Input type="date" value={startDate} onChange={handleStartDateChange} />
-          <Input type="date" value={endDate} onChange={handleEndDateChange} />
-          <FormControl sx={{ minWidth: 200, mt: 2 }}>
-            <Select value={selectedOrg} onChange={(event) => setSelectedOrg(event.target.value as number)} displayEmpty>
-              <MenuItem value="" disabled>
-                Select Organization
-              </MenuItem>
-              {orgs.map((org) => (
-                <MenuItem key={org.id} value={org.id}>
-                  {org.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl> */}
           <Grid
             container
             spacing={2}
