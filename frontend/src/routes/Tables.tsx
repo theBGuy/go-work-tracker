@@ -58,7 +58,6 @@ function Tables() {
           </Box>
         </Toolbar>
       </AppBar>
-      <h2>Yearly Work Time</h2>
       {activeOrganization && (
         <WorkTimeAccordion activeOrganization={activeOrganization} projects={projects.map((proj) => proj.name)} />
       )}
