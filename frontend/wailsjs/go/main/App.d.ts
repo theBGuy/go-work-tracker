@@ -35,6 +35,8 @@ export function GetProjWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):
 
 export function GetProjWorkTimeByWeek(arg1:number,arg2:time.Month,arg3:number,arg4:number):Promise<number>;
 
+export function GetProjectWorkTimeForRange(arg1:string,arg2:string,arg3:number):Promise<number>;
+
 export function GetProjects(arg1:number):Promise<Array<main.Project>>;
 
 export function GetVersion():Promise<string>;
@@ -56,6 +58,8 @@ export function GetWorkTimeByMonth(arg1:number,arg2:time.Month,arg3:number):Prom
 export function GetWorkTimeByProject(arg1:number,arg2:string):Promise<number>;
 
 export function GetWorkTimeByWeek(arg1:number,arg2:time.Month,arg3:number,arg4:number):Promise<{[key: string]: number}>;
+
+export function GetWorkTimeForRange(arg1:string,arg2:string,arg3:number):Promise<{[key: string]: number}>;
 
 export function GetYearlyWorkTime(arg1:number,arg2:number):Promise<number>;
 

@@ -46,14 +46,17 @@ const router = createHashRouter([
       const projects = await GetAllProjects();
       const orgNames = new Map<number, string>();
       const orgMap = new Map<number, string>();
-      useAppStore.getState().organizations.forEach((org) => {
+      for (const org of useAppStore.getState().organizations) {
         orgNames.set(org.id, org.name);
-      });
+      }
       const projectsMap = new Map<number, string>();
-      projects.forEach((proj) => {
+      for (const proj of projects) {
         projectsMap.set(proj.id, proj.name);
-        orgMap.set(proj.id, orgNames.get(proj.organization_id)!);
-      });
+        const orgName = orgNames.get(proj.organization_id);
+        if (orgName) {
+          orgMap.set(proj.id, orgName);
+        }
+      }
       return { sessions, projectsMap, orgMap };
     },
   },
@@ -92,11 +95,14 @@ const timerSubscription = useTimerStore.subscribe(
       const openConfirm = useTimerStore.getState().openConfirm;
       if (!openConfirm && alertTime > 0) {
         console.debug(`Setting confirmation interval for ${alertTime} minutes`);
-        confirmationInterval = setInterval(() => {
-          ShowWindow().then(() => {
-            setOpenConfirm(true);
-          });
-        }, 1000 * 60 * alertTime); // Show the alert every x minutes
+        confirmationInterval = setInterval(
+          () => {
+            ShowWindow().then(() => {
+              setOpenConfirm(true);
+            });
+          },
+          1000 * 60 * alertTime,
+        ); // Show the alert every x minutes
       }
     } else {
       clearInterval(workTimeInterval);
@@ -109,7 +115,7 @@ const timerSubscription = useTimerStore.subscribe(
       updateOrgMonthTotal(elapsedTime);
       updateProjMonthTotal(elapsedTime);
     }
-  }
+  },
 );
 /**
  * Update the alert time interval if the user changes it
@@ -121,16 +127,19 @@ const alertTimeSubscription = useAppStore.subscribe(
     if (!useTimerStore.getState().running) return;
     clearInterval(confirmationInterval);
     if (curr > 0) {
-      confirmationInterval = setInterval(() => {
-        ShowWindow().then(() => {
-          setOpenConfirm(true);
-        });
-      }, 1000 * 60 * curr); // Show the alert every x minutes
+      confirmationInterval = setInterval(
+        () => {
+          ShowWindow().then(() => {
+            setOpenConfirm(true);
+          });
+        },
+        1000 * 60 * curr,
+      ); // Show the alert every x minutes
     } else {
       console.debug("Clearing confirmation interval");
       clearInterval(confirmationInterval);
     }
-  }
+  },
 );
 
 const AppWithTheme = () => {
@@ -148,7 +157,7 @@ const AppWithTheme = () => {
           }),
         },
       }),
-    [appTheme]
+    [appTheme],
   );
 
   return (
@@ -165,10 +174,11 @@ const AppWithTheme = () => {
 };
 
 const container = document.getElementById("root");
+// biome-ignore lint/style/noNonNullAssertion: <explanation>
 const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
     <AppWithTheme />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

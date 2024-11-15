@@ -10,6 +10,7 @@ import ActiveSession from "@/components/ActiveSession";
 import EditProjectDialog from "@/components/EditProjectDialog";
 import ModelSelect from "@/components/ModelSelect";
 import NavBar from "@/components/NavBar";
+import RangeView from "@/components/RangeView";
 import AppBar from "@/components/ui/AppBar";
 import WorkTimeListing from "@/components/WorkTimeListing";
 import { useAppStore } from "@/stores/main";
@@ -54,10 +55,6 @@ import {
 } from "@mui/material";
 import { EventsOn } from "@runtime/runtime";
 import { useNavigate } from "react-router-dom";
-
-// type LoaderData = {
-//   orgs: main.Organization[];
-// };
 
 function App() {
   // const renderCount = useRef(0);
@@ -108,6 +105,7 @@ function App() {
   const [openNewProj, setOpenNewProj] = useState(false);
   const [openEditOrg, setOpenEditOrg] = useState(false);
   const [openEditProj, setOpenEditProj] = useState(false);
+  const [openRangeView, setOpenRangeView] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Editables
@@ -195,6 +193,11 @@ function App() {
     setAnchorEl(null);
     setEditProj(projectID);
     setOpenEditProj(true);
+  };
+
+  const handleOpenRangeView = () => {
+    setAnchorEl(null);
+    setOpenRangeView(true);
   };
 
   const toggleFavoriteOrg = (organizationID: number) => {
@@ -487,6 +490,7 @@ function App() {
             </MenuItem>
             <Divider />
             <MenuItem onClick={() => navigate("/sessions")}>Manage Work Sessions</MenuItem>
+            <MenuItem onClick={handleOpenRangeView}>Open Range View</MenuItem>
             <MenuItem onClick={() => handleOpenEditOrg(activeOrg?.id)}>Edit Current Organization</MenuItem>
             <MenuItem onClick={() => handleDeleteOrganization(activeOrg?.id)}>Delete Current Organization</MenuItem>
           </Menu>
@@ -584,6 +588,9 @@ function App() {
 
       {/* Handle settings dialog */}
       <SettingsDialog showSettings={showSettings} setShowSettings={setShowSettings} handleMenuClose={handleMenuClose} />
+
+      {/* Handle RangeView - hacky way to sum total worktime between two dates without being limited by month or weeks */}
+      <RangeView openRangeView={openRangeView} setOpenRangeView={setOpenRangeView} />
 
       {/* Handle creating a new organization */}
       <NewOrganizationDialog openNewOrg={openNewOrg} setOpenNewOrg={setOpenNewOrg} />
